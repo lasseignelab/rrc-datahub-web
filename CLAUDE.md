@@ -26,8 +26,10 @@ requirements.txt    # Pinned Python dependencies
 
 ```bash
 source venv/bin/activate
-python app.py          # dev server at http://localhost:8050 (debug=True)
+python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
 ```
+
+`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
 
 For production:
 

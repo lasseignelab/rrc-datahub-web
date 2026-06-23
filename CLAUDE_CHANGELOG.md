@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Fixed WCAG 2.1 AA: Dash debug button has no accessible label
+Set `dev_tools_ui=False` in `app.run()` to suppress Dash's debug panel button, which has no text or ARIA label (axe DevTools critical issue). Hot reload and error catching remain active. Removed the `hideElements` workaround from `.pa11yci` since the element no longer renders. Updated CLAUDE.md to document this requirement.
+
+
+
 ### Fixed pa11y-ci CI failure — Chromium sandbox and Node.js version
 - `.pa11yci`: Added `chromeLaunchConfig.args: ["--no-sandbox", "--disable-setuid-sandbox"]` — required for Puppeteer to launch Chromium in GitHub Actions' containerized environment.
 - `.github/workflows/accessibility.yml`: Bumped Node.js from 20 (deprecated on Actions) to 22.
