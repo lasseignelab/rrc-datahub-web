@@ -29,5 +29,3 @@ FILEIO_REPORTER: false
 PRE_COMMANDS:
   - command: pip install -r requirements.txt
     cwd: workspace
-
-PYTHON_PYLINT_DISABLE_ERRORS: true
