@@ -1,5 +1,5 @@
 from dash import Dash, html
-from dash.dcc import Graph
+from dash.dcc.Graph import Graph
 import plotly.express as px
 
 app = Dash(__name__)

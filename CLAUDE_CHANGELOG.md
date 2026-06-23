@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Fixed pyright `reportPrivateImportUsage` error in `app.py` (second attempt)
+Updated import to `from dash.dcc.Graph import Graph` per pyright's suggested path.
+
+
+
 ### Fixed pyright `reportPrivateImportUsage` error in `app.py`
 Replaced `dcc.Graph` with a direct import of `Graph` from `dash.dcc` to satisfy pyright's public export check. Removed unused `dcc` import.
 
