@@ -1,6 +1,6 @@
 # Project specific
 
-linter_logs
+megalinter-reports
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
