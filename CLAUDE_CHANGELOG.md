@@ -6,6 +6,16 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Set up ADA Title II / WCAG 2.1 AA accessibility linting
+Added `pa11y-ci` to test the running Dash app against WCAG 2.1 AA on every push. Created:
+- `package.json` — pa11y-ci dev dependency and `npm run a11y` script
+- `.pa11yrc.json` — pa11y config targeting WCAG2AA with 2s wait for React rendering
+- `.github/workflows/accessibility.yml` — CI job that starts the app and runs pa11y-ci
+- Updated `CLAUDE.md` with Dash-specific WCAG 2.1 AA conventions (text alternatives, form labels, heading hierarchy, color contrast, keyboard nav, skip links)
+- Updated `.gitignore` to exclude `pa11y-reports/` and `node_modules/`
+
+
+
 ### Added Git conventions section to CLAUDE.md
 Documented branch naming convention: lowercase with dashes, descriptive of functionality.
 

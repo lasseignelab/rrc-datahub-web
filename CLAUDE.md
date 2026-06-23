@@ -70,6 +70,54 @@ Configuration lives in [.mega-linter.yml](.mega-linter.yml).
 - Each function should have a docstring.
 - Inline comments explain *why*, not *what*.
 
+## Accessibility (ADA Title II / WCAG 2.1 AA)
+
+ADA Title II requires public-sector websites to meet WCAG 2.1 AA. All pages and components must comply.
+
+### Automated checking
+
+[pa11y-ci](https://github.com/pa11y/pa11y-ci) runs against the live app on every push via `.github/workflows/accessibility.yml`. Zero violations are required for the build to pass. To run locally:
+
+```bash
+# In one terminal — start the app
+source venv/bin/activate && python app.py
+
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+Configuration is in [.pa11yrc.json](.pa11yrc.json).
+
+### Dash-specific conventions
+
+**Text alternatives**
+- Every `dcc.Graph` must have a descriptive `aria-label` and a `config={"displayModeBar": False}` caption or `html.Figcaption` sibling explaining the data.
+- Images embedded via `html.Img` must have a non-empty `alt` attribute.
+
+**Forms and inputs**
+- Every `dcc.Input`, `dcc.Dropdown`, `dcc.Slider`, etc. must have an associated `html.Label` using `htmlFor` pointing to the input's `id`.
+- Never rely on `placeholder` text alone as a label.
+
+**Heading hierarchy**
+- Use exactly one `html.H1` per page. Follow with `H2`, `H3`, etc. in order — do not skip levels.
+
+**Color and contrast**
+- Normal text must meet a 4.5:1 contrast ratio against its background (WCAG AA).
+- Large text (≥18pt or ≥14pt bold) must meet 3:1.
+- Never convey information by color alone — pair color with a label, pattern, or icon.
+- Use colorblind-safe palettes for Plotly figures (e.g., `px.colors.qualitative.Safe`).
+
+**Keyboard navigation**
+- All interactive components must be reachable and operable via keyboard alone.
+- Modals and dialogs must trap focus while open and return focus on close.
+
+**Language**
+- Set the page language: `app = Dash(__name__, suppress_callback_exceptions=True)` and include `html.Html(lang="en")` in the layout, or pass `meta_tags=[{"name": "lang", "content": "en"}]` to the Dash constructor.
+
+**Skip navigation**
+- Include a "Skip to main content" link as the first focusable element on every page, linking to the `id` of the main content container.
+
 ## Git conventions
 
 Branch names must be **lowercase with dashes** and describe the functionality they contain.
