@@ -3,7 +3,10 @@
     "standard": "WCAG2AA",
     "timeout": 30000,
     "wait": 2000,
-    "hideElements": "#_dash-global-error-container"
+    "hideElements": "#_dash-global-error-container",
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    }
   },
   "urls": [
     {

@@ -6,6 +6,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Fixed pa11y-ci CI failure — Chromium sandbox and Node.js version
+- `.pa11yci`: Added `chromeLaunchConfig.args: ["--no-sandbox", "--disable-setuid-sandbox"]` — required for Puppeteer to launch Chromium in GitHub Actions' containerized environment.
+- `.github/workflows/accessibility.yml`: Bumped Node.js from 20 (deprecated on Actions) to 22.
+
+
+
 ### Fixed WCAG 2.1 AA violations found by pa11y-ci
 - `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1).
 - `.pa11yci`: Added `hideElements: "#_dash-global-error-container"` to exclude Dash's dev-only debug button, which has no accessible name but is absent in production.
