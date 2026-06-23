@@ -6,6 +6,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Fixed WCAG 2.1 AA violations found by pa11y-ci
+- `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1).
+- `.pa11yci`: Added `hideElements: "#_dash-global-error-container"` to exclude Dash's dev-only debug button, which has no accessible name but is absent in production.
+
+
+
 ### Fixed pa11y-ci config — renamed to `.pa11yci` and corrected format
 pa11y-ci looks for `.pa11yci` by default, not `.pa11yrc.json`. Renamed via `git mv` and restructured config to use the `defaults` key for shared options, which is required by pa11y-ci's config schema. Updated CLAUDE.md reference.
 
