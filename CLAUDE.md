@@ -87,7 +87,7 @@ npm install
 npm run a11y
 ```
 
-Configuration is in [.pa11yrc.json](.pa11yrc.json).
+Configuration is in [.pa11yci](.pa11yci).
 
 ### Dash-specific conventions
 

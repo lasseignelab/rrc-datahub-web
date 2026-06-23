@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Fixed pa11y-ci config — renamed to `.pa11yci` and corrected format
+pa11y-ci looks for `.pa11yci` by default, not `.pa11yrc.json`. Renamed via `git mv` and restructured config to use the `defaults` key for shared options, which is required by pa11y-ci's config schema. Updated CLAUDE.md reference.
+
+
+
 ### Set up ADA Title II / WCAG 2.1 AA accessibility linting
 Added `pa11y-ci` to test the running Dash app against WCAG 2.1 AA on every push. Created:
 - `package.json` — pa11y-ci dev dependency and `npm run a11y` script

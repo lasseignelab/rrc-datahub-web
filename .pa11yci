@@ -1,0 +1,13 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 30000,
+    "wait": 2000
+  },
+  "urls": [
+    {
+      "url": "http://localhost:8050/",
+      "screenCapture": "pa11y-reports/home.png"
+    }
+  ]
+}
