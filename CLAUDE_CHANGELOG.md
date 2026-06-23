@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-23
 
+### Added Git conventions section to CLAUDE.md
+Documented branch naming convention: lowercase with dashes, descriptive of functionality.
+
+
+
 ### Fixed pyright `reportPrivateImportUsage` error in `app.py` (second attempt)
 Updated import to `from dash.dcc.Graph import Graph` per pyright's suggested path.
 

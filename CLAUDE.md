@@ -70,6 +70,13 @@ Configuration lives in [.mega-linter.yml](.mega-linter.yml).
 - Each function should have a docstring.
 - Inline comments explain *why*, not *what*.
 
+## Git conventions
+
+Branch names must be **lowercase with dashes** and describe the functionality they contain.
+
+Good: `add-plotly-graph`, `fix-pyright-imports`, `setup-db-connection`  
+Bad: `DASH-BUILD-V1`, `feature/MyFeature`, `fix1`
+
 ## Pull requests
 
 Use the PR template at [.github/pull_request_template.md](.github/pull_request_template.md). All MegaLinter checks must pass before merge. Request both a primary and a secondary reviewer.
