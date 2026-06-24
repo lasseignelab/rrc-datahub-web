@@ -1,6 +1,9 @@
 # Project specific
 
 megalinter-reports
+pa11y-reports
+node_modules
+test-reports
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

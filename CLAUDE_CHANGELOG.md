@@ -4,6 +4,18 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-24
+
+### Set up dash[testing] + pytest infrastructure
+Added automated testing with dash[testing] and pytest:
+- `requirements-dev.txt` — test dependencies (dash[testing], pytest, pytest-html)
+- `tests/conftest.py` — shared `app` fixture
+- `tests/test_app.py` — 5 initial tests: server sanity, layout structure, H1 render, graph render, and `lang="en"` WCAG check
+- `pytest.ini` — configures testpath and HTML report output
+- `.github/workflows/tests.yml` — CI job that installs deps and runs pytest on every push
+- Updated `.gitignore` to exclude `test-reports/`
+- Updated `CLAUDE.md` with testing conventions, structure, and what-to-test guidance
+
 ## 2026-06-23
 
 ### Added Git conventions section to CLAUDE.md

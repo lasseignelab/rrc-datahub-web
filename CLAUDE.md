@@ -19,7 +19,12 @@ db/
   queries.py        # SQL query functions
 assets/
   style.css         # Global CSS
-requirements.txt    # Pinned Python dependencies
+requirements.txt        # Pinned production dependencies
+requirements-dev.txt    # Test/dev dependencies (pytest, dash[testing])
+tests/
+  conftest.py           # Shared pytest fixtures
+  test_app.py           # Tests for app.py
+pytest.ini              # pytest configuration
 ```
 
 ## Running the app
@@ -49,6 +54,44 @@ To add a package:
 pip install <package>
 pip freeze > requirements.txt
 ```
+
+## Testing
+
+Tests live in `tests/` and run with pytest. CI runs them on every push via `.github/workflows/tests.yml`.
+
+Install test dependencies (keep separate from `requirements.txt`):
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run tests locally:
+
+```bash
+pytest
+```
+
+An HTML report is generated at `test-reports/report.html` after each run (gitignored).
+
+### Test structure
+
+- `tests/conftest.py` — shared fixtures, including the `app` fixture that provides the Dash app to `dash_duo`
+- `tests/test_<module>.py` — one test file per app module or page
+
+### What to test
+
+| Type | Tool | What it covers |
+|---|---|---|
+| Unit | pytest | Callback logic, data transforms, DB query functions |
+| Integration | `dash_duo` | Layout renders, component interactions, callback outputs in browser |
+| Accessibility | `dash_duo` + `execute_script` | `lang` attribute, ARIA roles on dynamic content |
+
+### Conventions
+
+- Use `dash_duo` fixtures for anything that requires a browser. Use plain pytest for pure Python logic.
+- Each `dash_duo` test calls `dash_duo.start_server(app)` as its first line.
+- Use `dash_duo.wait_for_element()` and `dash_duo.wait_for_text_to_equal()` — never `time.sleep()`.
+- Test file names mirror the module they test: `components/charts.py` → `tests/test_charts.py`.
 
 ## Linting (MegaLinter)
 
