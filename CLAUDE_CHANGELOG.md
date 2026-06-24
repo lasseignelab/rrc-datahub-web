@@ -6,14 +6,22 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-24
 
+### Set up dash[testing] + pytest infrastructure
+Added automated testing with dash[testing] and pytest:
+- `requirements-dev.txt` — test dependencies (dash[testing], pytest, pytest-html)
+- `tests/conftest.py` — shared `app` fixture
+- `tests/test_app.py` — 5 initial tests: server sanity, layout structure, H1 render, graph render, and `lang="en"` WCAG check
+- `pytest.ini` — configures testpath and HTML report output
+- `.github/workflows/tests.yml` — CI job that installs deps and runs pytest on every push
+- Updated `.gitignore` to exclude `test-reports/`
+- Updated `CLAUDE.md` with testing conventions, structure, and what-to-test guidance
+
 ### Aligned CLAUDE.md accessibility conventions with PR template checklist
 - Fixed stale Language section — now correctly documents `app.index_string` as the mechanism for `lang="en"`, not the removed `html.Html()` approach.
 - Fixed alt text rule — decorative images must use `alt=""`, not a non-empty value.
 - Added focus indicator convention — never remove `outline` without a replacement.
 - Added Dynamic content section — Dash callbacks require `role="status"` or `role="alert"` for screen reader announcements.
 - Added axe DevTools to the automated checking guidance.
-
-
 
 ### Added ADA accessibility checklist to PR template
 Added a focused WCAG 2.1 AA checklist to `.github/pull_request_template.md` covering automated scans, content (alt text, chart descriptions, contrast), interaction (keyboard nav, focus, labels, skip link), and structure (heading hierarchy, ARIA live regions, lang attribute).
