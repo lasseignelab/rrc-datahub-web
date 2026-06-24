@@ -1,4 +1,5 @@
 """Tests for the main Dash app layout and rendering."""
+
 from app import app
 
 
@@ -10,6 +11,7 @@ def test_server_is_flask_app():
 def test_layout_contains_h1():
     """Layout includes an H1 element."""
     from dash import html
+
     children = app.layout.children
     h1_elements = [c for c in children if isinstance(c, html.H1)]
     assert len(h1_elements) == 1
@@ -31,7 +33,5 @@ def test_graph_renders(dash_duo):
 def test_lang_attribute(dash_duo):
     """HTML element has lang attribute set to 'en' (WCAG 3.1.1)."""
     dash_duo.start_server(app)
-    lang = dash_duo.driver.execute_script(
-        "return document.documentElement.lang"
-    )
+    lang = dash_duo.driver.execute_script("return document.documentElement.lang")
     assert lang == "en"

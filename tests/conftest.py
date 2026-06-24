@@ -2,6 +2,7 @@ import os
 import shutil
 
 import pytest
+
 from app import app as dash_app
 
 
@@ -14,6 +15,7 @@ def pytest_configure(config):
     if not shutil.which("chromedriver"):
         try:
             from webdriver_manager.chrome import ChromeDriverManager
+
             driver_path = ChromeDriverManager().install()
             driver_dir = os.path.dirname(driver_path)
             os.environ["PATH"] = driver_dir + os.pathsep + os.environ.get("PATH", "")

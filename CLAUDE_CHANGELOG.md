@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-24
 
+### Fixed MegaLinter errors from test infrastructure addition
+- `app.py`, `tests/test_app.py`, `tests/conftest.py`: Applied black and isort formatting.
+- `.mega-linter.yml`: Added `pip install -r requirements-dev.txt` to PRE_COMMANDS so pylint and pyright can resolve `pytest` and `webdriver_manager` imports.
+- `pyproject.toml`: Added `[tool.bandit] exclude_dirs = ["tests"]` to suppress B101 (assert_used) false positives in pytest test files.
+
 ### Fixed ChromeDriver setup and restored lang="en" (caught by test)
 Added `webdriver-manager` to `requirements-dev.txt` and wired it into `conftest.py` via `pytest_configure` so ChromeDriver is auto-downloaded when not already in PATH. `test_lang_attribute` revealed that `app.index_string` (which sets `lang="en"`) had been removed — restored it. All 5 tests now pass.
 

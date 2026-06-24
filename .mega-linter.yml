@@ -29,3 +29,5 @@ FILEIO_REPORTER: false
 PRE_COMMANDS:
   - command: pip install -r requirements.txt
     cwd: workspace
+  - command: pip install -r requirements-dev.txt
+    cwd: workspace
