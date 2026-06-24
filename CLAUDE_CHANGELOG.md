@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-24
+
+### Added ADA accessibility checklist to PR template
+Added a focused WCAG 2.1 AA checklist to `.github/pull_request_template.md` covering automated scans, content (alt text, chart descriptions, contrast), interaction (keyboard nav, focus, labels, skip link), and structure (heading hierarchy, ARIA live regions, lang attribute).
+
 ## 2026-06-23
 
 ### Fixed WCAG 2.1 AA: Dash debug button has no accessible label
