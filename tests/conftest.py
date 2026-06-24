@@ -1,7 +1,8 @@
+# pylint: disable=import-error
 import os
 import shutil
 
-import pytest
+import pytest  # type: ignore[import-untyped]
 
 from app import app as dash_app
 
@@ -14,7 +15,8 @@ def pytest_configure(config):
     """
     if not shutil.which("chromedriver"):
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
+            from webdriver_manager.chrome import \
+                ChromeDriverManager  # type: ignore[import-untyped]
 
             driver_path = ChromeDriverManager().install()
             driver_dir = os.path.dirname(driver_path)

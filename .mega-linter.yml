@@ -26,6 +26,8 @@ FILEIO_REPORTER: false
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass
 # DISABLE_ERRORS: true
 
+PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: "tests/"
+
 PRE_COMMANDS:
   - command: pip install -r requirements.txt
     cwd: workspace
