@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-24
 
+### Fixed ChromeDriver setup and restored lang="en" (caught by test)
+Added `webdriver-manager` to `requirements-dev.txt` and wired it into `conftest.py` via `pytest_configure` so ChromeDriver is auto-downloaded when not already in PATH. `test_lang_attribute` revealed that `app.index_string` (which sets `lang="en"`) had been removed — restored it. All 5 tests now pass.
+
 ### Set up dash[testing] + pytest infrastructure
 Added automated testing with dash[testing] and pytest:
 - `requirements-dev.txt` — test dependencies (dash[testing], pytest, pytest-html)

@@ -1,3 +1,4 @@
 dash[testing]
 pytest
 pytest-html
+webdriver-manager
