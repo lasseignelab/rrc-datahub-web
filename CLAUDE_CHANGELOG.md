@@ -6,6 +6,14 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-24
 
+### Fixed dash_duo Chrome crash in GitHub Actions CI
+- `tests/conftest.py`: Added `pytest_setup_options` hook that passes `--no-sandbox`, `--disable-dev-shm-usage`, and `--disable-setuid-sandbox` to Chrome. GitHub Actions containers do not support Chrome's sandbox, causing all three browser-driven tests to fail with `SessionNotCreatedException`.
+
+### Fixed MegaLinter black/isort formatting conflicts
+- `tests/conftest.py`: Collapsed webdriver_manager import to a single 82-char line so black and isort agree without needing to wrap it; removed extraneous blank line between import groups.
+- `pyproject.toml`: Added `profile = "black"` to isort config so the two formatters stay compatible going forward.
+- `CLAUDE.md`: Updated local linting section to document the full docker command.
+
 ### Fixed remaining MegaLinter errors (second pass)
 - `tests/conftest.py`: Added `# pylint: disable=import-error` module-level directive and `# type: ignore[import-untyped]` on pytest and webdriver_manager imports — pylint/pyright use isolated environments in MegaLinter and cannot resolve dev-only packages via PRE_COMMANDS.
 - `.mega-linter.yml`: Added `PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: "tests/"` — `pyproject.toml` `exclude_dirs` is not read by MegaLinter's bandit runner.
