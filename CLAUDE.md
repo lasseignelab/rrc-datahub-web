@@ -99,11 +99,16 @@ An HTML report is generated at `test-reports/report.html` after each run (gitign
 
 CI runs MegaLinter on every push via `.github/workflows/mega-linter.yml`. Only the `PYTHON` linter family is enabled (pylint + ruff). Pylint errors **will** fail the build.
 
-To approximate CI locally:
+To run MegaLinter locally (matches CI exactly):
 
 ```bash
-pylint **/*.py
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$(pwd)":/tmp/lint \
+  oxsecurity/megalinter:v9
 ```
+
+Reports are written to `megalinter-reports/` (gitignored).
 
 Configuration lives in [.mega-linter.yml](.mega-linter.yml).
 
