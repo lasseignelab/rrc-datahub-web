@@ -91,11 +91,13 @@ npm run a11y
 
 Configuration is in [.pa11yci](.pa11yci).
 
+During development, also run [axe DevTools](https://www.deque.com/axe/devtools/) in the browser to catch issues before push.
+
 ### Dash-specific conventions
 
 **Text alternatives**
 - Every `dcc.Graph` must have a descriptive `aria-label` and a `config={"displayModeBar": False}` caption or `html.Figcaption` sibling explaining the data.
-- Images embedded via `html.Img` must have a non-empty `alt` attribute.
+- Images embedded via `html.Img` must have a meaningful `alt` attribute. Decorative images must use `alt=""`.
 
 **Forms and inputs**
 - Every `dcc.Input`, `dcc.Dropdown`, `dcc.Slider`, etc. must have an associated `html.Label` using `htmlFor` pointing to the input's `id`.
@@ -112,10 +114,14 @@ Configuration is in [.pa11yci](.pa11yci).
 
 **Keyboard navigation**
 - All interactive components must be reachable and operable via keyboard alone.
+- Every focusable element must have a visible focus indicator. Never use `outline: none` without a custom replacement.
 - Modals and dialogs must trap focus while open and return focus on close.
 
 **Language**
-- Set the page language: `app = Dash(__name__, suppress_callback_exceptions=True)` and include `html.Html(lang="en")` in the layout, or pass `meta_tags=[{"name": "lang", "content": "en"}]` to the Dash constructor.
+- The `<html lang="en">` attribute is set via `app.index_string` in `app.py`. Do not remove or replace `app.index_string` without preserving `lang="en"`.
+
+**Dynamic content (Dash callbacks)**
+- Callback updates that change visible content must be announced to screen readers. Wrap status messages in an element with `role="status"` (polite) or `role="alert"` (assertive). Dash does not do this automatically.
 
 **Skip navigation**
 - Include a "Skip to main content" link as the first focusable element on every page, linking to the `id` of the main content container.
