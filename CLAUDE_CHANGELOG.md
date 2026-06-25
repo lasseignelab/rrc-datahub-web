@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-25 (continued, third)
+
+### Fixed Cheaha SSH auth — switch from password-auth to keyboard-interactive via Transport
+- `etl/download.py`: Cheaha rejects the SSH `password` protocol method and closes the connection, preventing fallback to keyboard-interactive. Fixed by using `paramiko.Transport` directly and calling `transport.auth_interactive()` with a handler that responds to prompts with the user's password. Host key is still verified against `~/.ssh/known_hosts` using `paramiko.HostKeys`. Also fixed pyright errors: `makefile()` returns bytes so output is now decoded with `.decode("utf-8")`; `SFTPClient.from_transport()` can return `None` so a guard was added.
+
 ## 2026-06-25 (continued, second)
 
 ### Added Dataset ORM model, Alembic migration, and ETL load script

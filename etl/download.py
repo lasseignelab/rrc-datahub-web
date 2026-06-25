@@ -9,7 +9,6 @@
 #   GITHUB_TOKEN          — personal access token with repo read scope
 #   CHEAHA_HOST           — Cheaha SSH hostname (e.g. cheaha.rc.uab.edu)
 #   CHEAHA_USER           — Cheaha SSH username
-#   CHEAHA_SSH_KEY        — path to SSH private key for Cheaha
 #   CHEAHA_BASE_PATH      — remote base path containing PRJNA* directories
 #   STAGING_DIR           — local directory for downloaded files (default: staging/)
 
@@ -19,6 +18,7 @@ import logging
 import os
 import re
 from pathlib import Path
+from typing import Sequence
 
 import paramiko  # type: ignore[import-untyped]
 import requests  # type: ignore[import-untyped]
@@ -83,20 +83,56 @@ def _download_github_directory(repo_path: str, dest: Path) -> None:
             _download_github_directory(entry["path"], entry_dest)
 
 
-def _list_cheaha_tpm_files(ssh: paramiko.SSHClient, base_path: str) -> list[str]:
+def _open_cheaha_transport(host: str, user: str, password: str) -> paramiko.Transport:
+    """Open and authenticate a Transport to Cheaha using keyboard-interactive auth.
+
+    Cheaha rejects the SSH password-auth protocol method and uses
+    keyboard-interactive instead (server sends prompts; client responds).
+    SSHClient.connect(password=...) tries password-auth first, which causes the
+    server to close the connection before keyboard-interactive is attempted.
+    Using Transport directly lets us call auth_interactive() without that detour.
+    """
+    transport = paramiko.Transport((host, 22))
+    transport.start_client()
+
+    # Verify the server's host key against ~/.ssh/known_hosts.
+    server_key = transport.get_remote_server_key()
+    known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
+    host_keys = paramiko.HostKeys()
+    host_keys.load(known_hosts_path)
+    if not host_keys.check(host, server_key):
+        transport.close()
+        raise paramiko.SSHException(
+            f"Host key for {host!r} not found in {known_hosts_path}. "
+            f"Run: ssh-keyscan {host} >> {known_hosts_path}"
+        )
+
+    def _kbd_handler(
+        _title: str, _instructions: str, prompts: Sequence[tuple[str, bool]]
+    ) -> list[str]:
+        return [password for _ in prompts]
+
+    transport.auth_interactive(user, _kbd_handler)
+    return transport
+
+
+def _list_cheaha_tpm_files(transport: paramiko.Transport, base_path: str) -> list[str]:
     """Return all matching salmon.merged.gene_tpm.tsv paths under base_path.
 
     base_path comes from CHEAHA_BASE_PATH, a trusted environment variable
     controlled by the operator, not end-user input.
     """
     find_cmd = f"find {base_path} -path '{CHEAHA_TPM_GLOB}' -type f"
-    _, stdout, stderr = ssh.exec_command(find_cmd)  # nosec B601
-    errors = stderr.read().decode().strip()
-    if errors:
-        log.warning("Cheaha find stderr: %s", errors)
-    return [
-        line.strip() for line in stdout.read().decode().splitlines() if line.strip()
-    ]
+    channel = transport.open_session()  # nosec B601
+    try:
+        channel.exec_command(find_cmd)  # nosec B601
+        output = channel.makefile("rb").read().decode("utf-8")
+        errors = channel.makefile_stderr("rb").read().decode("utf-8").strip()
+        if errors:
+            log.warning("Cheaha find stderr: %s", errors)
+        return [line.strip() for line in output.splitlines() if line.strip()]
+    finally:
+        channel.close()
 
 
 def download_geo_datasets(staging: Path) -> Path:
@@ -124,19 +160,18 @@ def download_tpm_files(staging: Path) -> list[Path]:
     password = getpass.getpass(f"Cheaha password for {user}@{host}: ")
 
     log.info("Connecting to Cheaha (%s@%s)…", user, host)
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
-    ssh.connect(hostname=host, username=user, password=password)
+    transport = _open_cheaha_transport(host, user, password)
 
     downloaded: list[Path] = []
     try:
-        remote_files = _list_cheaha_tpm_files(ssh, base_path)
+        remote_files = _list_cheaha_tpm_files(transport, base_path)
         if not remote_files:
             log.warning("No TPM files found under %s", base_path)
             return downloaded
 
-        sftp = ssh.open_sftp()
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        if sftp is None:
+            raise RuntimeError("Failed to open SFTP session.")
         try:
             for remote_path in remote_files:
                 # Preserve the PRJNA accession as a subdirectory in staging.
@@ -150,7 +185,7 @@ def download_tpm_files(staging: Path) -> list[Path]:
         finally:
             sftp.close()
     finally:
-        ssh.close()
+        transport.close()
 
     return downloaded
 
