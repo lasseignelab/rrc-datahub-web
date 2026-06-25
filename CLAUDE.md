@@ -19,6 +19,9 @@ db/
   queries.py        # SQL query functions
 assets/
   style.css         # Global CSS
+etl/
+  download.py       # ETL download step (GitHub + Cheaha → local staging)
+.env.example            # Template for required environment variables
 requirements.txt        # Pinned production dependencies
 requirements-dev.txt    # Test/dev dependencies (pytest, dash[testing])
 tests/
@@ -26,6 +29,34 @@ tests/
   test_app.py           # Tests for app.py
 pytest.ini              # pytest configuration
 ```
+
+## Environment setup
+
+Configuration is loaded from a `.env` file in the project root using `python-dotenv`. This file is gitignored and must never be committed.
+
+To set up your local environment:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and fill in the values for your environment:
+
+| Variable | Description |
+|---|---|
+| `DB_HOST` | PostgreSQL host |
+| `DB_PORT` | PostgreSQL port (default `5432`) |
+| `DB_NAME` | Database name |
+| `DB_USER` | Database user |
+| `DB_PASSWORD` | Database password |
+| `GITHUB_TOKEN` | Personal access token with `repo` read scope for `lasseignelab/rrc-datahub` |
+| `CHEAHA_HOST` | UAB Cheaha SSH hostname (e.g. `cheaha.rc.uab.edu`) |
+| `CHEAHA_USER` | Your Cheaha username |
+| `CHEAHA_SSH_KEY` | Path to your SSH private key for Cheaha (default `~/.ssh/id_rsa`) |
+| `CHEAHA_BASE_PATH` | Remote base path containing `PRJNA*` directories on Cheaha |
+| `STAGING_DIR` | Local directory for ETL-downloaded files (default `staging/`) |
+
+The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step.
 
 ## Running the app
 
