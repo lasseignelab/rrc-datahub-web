@@ -70,7 +70,7 @@ pip install -r requirements-dev.txt
 Run tests locally:
 
 ```bash
-pytest
+source venv/bin/activate && pytest --headless
 ```
 
 An HTML report is generated at `test-reports/report.html` after each run (gitignored).
