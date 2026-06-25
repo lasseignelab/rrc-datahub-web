@@ -4,6 +4,18 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-25
+
+### Added SQLAlchemy and Alembic
+- Installed `sqlalchemy==2.0.51`, `alembic==1.18.5`, and `Mako==1.3.12` (alembic dependency).
+- Updated `requirements.txt` via `pip freeze`.
+
+### Fixed CI browser tests — Chrome crashes without display
+- `.github/workflows/tests.yml`: Added `--headless` to the pytest command. `ubuntu-latest` runners have no display server; Chrome launched in windowed mode crashes immediately with "session not created: Chrome instance exited".
+
+### Restricted all CI workflows to push events only
+- `.github/workflows/accessibility.yml` and `tests.yml`: Changed `on: [push, pull_request]` to `on: [push]`. MegaLinter was already push-only.
+
 ## 2026-06-24
 
 ### Fixed dash_duo Chrome crash in GitHub Actions CI
