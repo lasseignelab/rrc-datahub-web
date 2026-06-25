@@ -4,6 +4,17 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-25 (continued, second)
+
+### Added Dataset ORM model, Alembic migration, and ETL load script
+- `db/__init__.py`: Added package marker with header comment.
+- `db/models.py`: Created `Base` (declarative base) and `Dataset` ORM model with integer surrogate primary key `id` and unique `bioproject` varchar column.
+- `db/connection.py`: Implemented `_db_url()`, `engine`, and `SessionLocal` using env vars via `python-dotenv`.
+- `alembic.ini`: Initialized Alembic config; URL intentionally left blank (set dynamically in env.py).
+- `migrations/env.py`: Configured Alembic environment to read DB URL from env vars and use `Base.metadata` for autogenerate support.
+- `migrations/versions/4df4fc616701_create_dataset_table.py`: Initial migration — creates `dataset` table with `id` (integer PK) and `bioproject` (varchar 20, unique, not null).
+- `etl/load.py`: New ETL load script — reads `staging/geo_datasets.csv`, upserts bioproject accessions into the `dataset` table, skipping rows already present. Safe to run repeatedly.
+
 ## 2026-06-25 (continued)
 
 ### Fixed ETL Cheaha auth — password prompt instead of SSH key
