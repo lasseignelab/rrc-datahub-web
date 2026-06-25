@@ -73,6 +73,33 @@ For production:
 gunicorn app:server
 ```
 
+## ETL load script
+
+The ETL process downloads source data to a local staging directory and (once the load step is implemented) inserts it into the database. Make sure `.env` is populated before running.
+
+### Download step
+
+Downloads from three sources into `STAGING_DIR` (default `staging/`):
+
+| Destination | Source |
+|---|---|
+| `staging/geo_datasets.csv` | `doc/geo_datasets.csv` from `lasseignelab/rrc-datahub` (GitHub) |
+| `staging/transformed-metadata/` | `results/transformed-metadata/` from `lasseignelab/rrc-datahub` (GitHub) |
+| `staging/tpm/<PRJNA*>/salmon.merged.gene_tpm.tsv` | UAB Cheaha via SSH/SCP |
+
+```bash
+source venv/bin/activate
+python -m etl.download
+```
+
+The script logs progress to stdout. On success it prints a summary line with the count of metadata files and TPM files downloaded.
+
+**Cheaha SSH access** — your SSH key (`CHEAHA_SSH_KEY`) must be authorized on Cheaha before running. The script uses `RejectPolicy` for host-key verification, so the host must already be in your `~/.ssh/known_hosts`:
+
+```bash
+ssh-keyscan cheaha.rc.uab.edu >> ~/.ssh/known_hosts
+```
+
 ## Dependencies
 
 Managed with `pip`. The virtualenv lives in `venv/`. After pulling changes:
