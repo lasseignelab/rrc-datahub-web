@@ -4,6 +4,20 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-25 (continued)
+
+### Fixed ETL Cheaha auth — password prompt instead of SSH key
+- `etl/download.py`: Replaced SSH key authentication with `getpass.getpass()` interactive password prompt. Cheaha uses username/password rather than SSH key auth. Password is never stored.
+- `etl/download.py`: Added `import getpass`; removed `CHEAHA_SSH_KEY` env var usage.
+- `.env.example`: Removed `CHEAHA_SSH_KEY` variable; added note that password is prompted at runtime.
+- `CLAUDE.md`: Updated Cheaha access instructions to reflect password prompt instead of SSH key.
+
+### Fixed MegaLinter linter failures (pylint/mypy/pyright) caused by Docker SSL errors
+- `app.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on third-party imports. MegaLinter's Docker container cannot reach PyPI due to SSL errors, so PRE_COMMANDS fail to install packages; linters then report all third-party imports as unresolvable.
+- `etl/download.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on paramiko, requests, and dotenv imports.
+- `tests/conftest.py`: Added `# type: ignore[import-untyped]` to selenium import (was missing the suppress comment).
+- `tests/test_app.py`: Added `# pylint: disable=import-error` at module level and `# type: ignore[import-untyped]` to the `from dash import html` import inside the test function. All 8 MegaLinter linters now pass ✅.
+
 ## 2026-06-25
 
 ### Added SQLAlchemy and Alembic

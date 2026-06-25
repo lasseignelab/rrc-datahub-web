@@ -1,6 +1,7 @@
-import plotly.express as px
-from dash import Dash, html
-from dash.dcc.Graph import Graph
+# pylint: disable=import-error
+import plotly.express as px  # type: ignore[import-untyped]
+from dash import Dash, html  # type: ignore[import-untyped]
+from dash.dcc.Graph import Graph  # type: ignore[import-untyped]
 
 app = Dash(__name__)
 

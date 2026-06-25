@@ -52,7 +52,6 @@ Then open `.env` and fill in the values for your environment:
 | `GITHUB_TOKEN` | Personal access token with `repo` read scope for `lasseignelab/rrc-datahub` |
 | `CHEAHA_HOST` | UAB Cheaha SSH hostname (e.g. `cheaha.rc.uab.edu`) |
 | `CHEAHA_USER` | Your Cheaha username |
-| `CHEAHA_SSH_KEY` | Path to your SSH private key for Cheaha (default `~/.ssh/id_rsa`) |
 | `CHEAHA_BASE_PATH` | Remote base path containing `PRJNA*` directories on Cheaha |
 | `STAGING_DIR` | Local directory for ETL-downloaded files (default `staging/`) |
 
@@ -94,7 +93,7 @@ python -m etl.download
 
 The script logs progress to stdout. On success it prints a summary line with the count of metadata files and TPM files downloaded.
 
-**Cheaha SSH access** — your SSH key (`CHEAHA_SSH_KEY`) must be authorized on Cheaha before running. The script uses `RejectPolicy` for host-key verification, so the host must already be in your `~/.ssh/known_hosts`:
+**Cheaha SSH access** — the script will prompt for your Cheaha password at runtime (it is never stored). The script uses `RejectPolicy` for host-key verification, so the host must already be in your `~/.ssh/known_hosts`:
 
 ```bash
 ssh-keyscan cheaha.rc.uab.edu >> ~/.ssh/known_hosts

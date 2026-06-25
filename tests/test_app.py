@@ -1,3 +1,4 @@
+# pylint: disable=import-error
 """Tests for the main Dash app layout and rendering."""
 
 from app import app
@@ -10,7 +11,7 @@ def test_server_is_flask_app():
 
 def test_layout_contains_h1():
     """Layout includes an H1 element."""
-    from dash import html
+    from dash import html  # type: ignore[import-untyped]
 
     children = app.layout.children
     h1_elements = [c for c in children if isinstance(c, html.H1)]

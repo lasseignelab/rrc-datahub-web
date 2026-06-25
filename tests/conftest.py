@@ -4,7 +4,7 @@ import shutil
 
 import pytest  # type: ignore[import-untyped]
 from app import app as dash_app
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import Options  # type: ignore[import-untyped]
 
 
 def pytest_configure(config):

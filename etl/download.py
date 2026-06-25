@@ -13,14 +13,16 @@
 #   CHEAHA_BASE_PATH      — remote base path containing PRJNA* directories
 #   STAGING_DIR           — local directory for downloaded files (default: staging/)
 
+# pylint: disable=import-error
+import getpass
 import logging
 import os
 import re
 from pathlib import Path
 
-import paramiko
-import requests
-from dotenv import load_dotenv
+import paramiko  # type: ignore[import-untyped]
+import requests  # type: ignore[import-untyped]
+from dotenv import load_dotenv  # type: ignore[import-untyped]
 
 load_dotenv()
 
@@ -117,13 +119,15 @@ def download_tpm_files(staging: Path) -> list[Path]:
     """Download all PRJNA*/star_salmon/salmon.merged.gene_tpm.tsv files from Cheaha."""
     host = os.environ["CHEAHA_HOST"]
     user = os.environ["CHEAHA_USER"]
-    key_path = os.environ["CHEAHA_SSH_KEY"]
     base_path = os.environ["CHEAHA_BASE_PATH"]
+
+    password = getpass.getpass(f"Cheaha password for {user}@{host}: ")
 
     log.info("Connecting to Cheaha (%s@%s)…", user, host)
     ssh = paramiko.SSHClient()
+    ssh.load_system_host_keys()
     ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
-    ssh.connect(hostname=host, username=user, key_filename=key_path)
+    ssh.connect(hostname=host, username=user, password=password)
 
     downloaded: list[Path] = []
     try:
