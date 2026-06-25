@@ -102,11 +102,13 @@ CI runs MegaLinter on every push via `.github/workflows/mega-linter.yml`. Only t
 To run MegaLinter locally (matches CI exactly):
 
 ```bash
-docker run --rm \
+rm -rf megalinter-reports && docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v "$(pwd)":/tmp/lint \
   oxsecurity/megalinter:v9
 ```
+
+Always remove `megalinter-reports/` before running — MegaLinter appends to existing logs rather than replacing them, so stale errors from previous runs will appear in the new report.
 
 Reports are written to `megalinter-reports/` (gitignored).
 
