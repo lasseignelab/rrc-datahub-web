@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-26
+
+### Updated Git conventions to Gitflow-inspired branching model
+- `CLAUDE.md`: Replaced single-line branch naming rule with a full branching model section documenting `main`, `develop`, `feature/*`, and `release/*` branches — when to branch, where to merge, reviewer requirements, and the terminal commands for merging a release branch back into `develop`.
+
 ## 2026-06-25 (continued, third)
 
 ### Fixed Cheaha SSH auth — switch from password-auth to keyboard-interactive via Transport

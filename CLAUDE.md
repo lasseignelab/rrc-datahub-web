@@ -235,14 +235,46 @@ During development, also run [axe DevTools](https://www.deque.com/axe/devtools/)
 
 ## Git conventions
 
-Branch names must be **lowercase with dashes** and describe the functionality they contain.
+This project uses a Gitflow-inspired model combined with elements of GitHub Flow. Active branches are `main`, `develop`, `feature/*`, and `release/*`.
 
-Good: `add-plotly-graph`, `fix-pyright-imports`, `setup-db-connection`  
-Bad: `DASH-BUILD-V1`, `feature/MyFeature`, `fix1`
+### Branch overview
+
+| Branch | Branches from | Merges into | Purpose |
+|---|---|---|---|
+| `main` | — | — | Stable, released code. Protected; requires two reviewers. |
+| `develop` | `main` | — | Integration branch for completed features. Protected; requires one reviewer. |
+| `feature/*` | `develop` | `develop` (via PR) | One feature or fix per branch. |
+| `release/*` | `develop` | `main` (via PR) + `develop` (via CLI) | Release stabilization; bug fixes only. |
+
+### Rules for each branch type
+
+**`feature/*`**
+- Branch from `develop`.
+- Name as `feature/<short-description>`, e.g. `feature/add-ada-automation`.
+- Merge back to `develop` via pull request. MegaLinter and all CI checks must pass before merge.
+
+**`release/*`**
+- Branch from `develop` when a release is ready to stabilize.
+- Name as `release/<version>`, e.g. `release/v0.1.0`.
+- Only bug fixes may be committed directly to a release branch — no new features.
+- Merge to `main` via pull request (two reviewers required).
+- After merging to `main`, merge back into `develop` via the terminal:
+  ```bash
+  git checkout develop
+  git merge --no-ff release/vX.Y.Z
+  git push
+  ```
+
+### Branch naming rules
+
+Branch names must be **lowercase with dashes**. The `feature/` and `release/` prefixes are required for those types.
+
+Good: `feature/add-plotly-graph`, `feature/fix-pyright-imports`, `release/v0.1.0`  
+Bad: `DASH-BUILD-V1`, `feature/MyFeature`, `fix1`, `add-plotly-graph` (missing prefix)
 
 ## Pull requests
 
-Use the PR template at [.github/pull_request_template.md](.github/pull_request_template.md). All MegaLinter checks must pass before merge. Request both a primary and a secondary reviewer.
+Use the PR template at [.github/pull_request_template.md](.github/pull_request_template.md). All MegaLinter checks must pass before merge. Feature PRs require one reviewer; release and main PRs require two.
 
 ## Database
 
