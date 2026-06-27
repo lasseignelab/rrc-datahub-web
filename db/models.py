@@ -1,6 +1,10 @@
 # SQLAlchemy ORM models for the RRC DataHub database.
 
-from sqlalchemy import Integer, String
+from datetime import datetime
+from typing import Any
+
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import NUMRANGE
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -19,3 +23,53 @@ class Dataset(Base):
     def __repr__(self) -> str:
         """Return a developer-readable representation."""
         return f"Dataset(id={self.id!r}, bioproject={self.bioproject!r})"
+
+
+class Sample(Base):
+    """One row per SRA run (sequencing sample) within a BioProject dataset."""
+
+    __tablename__ = "sample"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    dataset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dataset.id"), nullable=False, index=True
+    )
+    run: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    biosample: Mapped[str | None] = mapped_column(String(20))
+    sample_name: Mapped[str | None] = mapped_column(String(100))
+    experiment: Mapped[str | None] = mapped_column(String(20))
+    sra_study: Mapped[str | None] = mapped_column(String(20))
+    submission: Mapped[str | None] = mapped_column(String(20))
+    release_date: Mapped[datetime | None] = mapped_column(DateTime)
+    load_date: Mapped[datetime | None] = mapped_column(DateTime)
+    bases: Mapped[int | None] = mapped_column(BigInteger)
+    spots: Mapped[int | None] = mapped_column(BigInteger)
+    avg_length: Mapped[int | None] = mapped_column(Integer)
+    size_mb: Mapped[int | None] = mapped_column(Integer)
+    library_layout: Mapped[str | None] = mapped_column(String(10))
+    platform: Mapped[str | None] = mapped_column(String(50))
+    model: Mapped[str | None] = mapped_column(String(100))
+    fastq_ftp: Mapped[str | None] = mapped_column(Text)
+    fastq_md5: Mapped[str | None] = mapped_column(String(32))
+    run_hash: Mapped[str | None] = mapped_column(String(32))
+    read_hash: Mapped[str | None] = mapped_column(String(32))
+    tax_id: Mapped[int | None] = mapped_column(Integer)
+    scientific_name: Mapped[str | None] = mapped_column(String(100))
+    source_name: Mapped[str | None] = mapped_column(String(200))
+    sample_type: Mapped[str | None] = mapped_column(String(50))
+    underlying_variant: Mapped[str | None] = mapped_column(String(200))
+    genotype: Mapped[str | None] = mapped_column(String(200))
+    strain: Mapped[str | None] = mapped_column(String(200))
+    strain_raw: Mapped[str | None] = mapped_column(String(200))
+    tissue: Mapped[str | None] = mapped_column(String(100))
+    age_raw: Mapped[str | None] = mapped_column(String(100))
+    age_range: Mapped[Any] = mapped_column(NUMRANGE, nullable=True)
+    sex: Mapped[str | None] = mapped_column(String(20))
+    treatment: Mapped[str | None] = mapped_column(String(200))
+    treatment_group: Mapped[str | None] = mapped_column(String(200))
+
+    def __repr__(self) -> str:
+        """Return a developer-readable representation."""
+        return (
+            f"Sample(id={self.id!r}, run={self.run!r}, dataset_id={self.dataset_id!r})"
+        )

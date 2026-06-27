@@ -4,6 +4,18 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-26 (continued)
+
+### Added Sample ORM model and migration
+- `db/models.py`: Added `Sample` model — 34 columns matching the TSV schema. Surrogate integer PK; `dataset_id` integer FK to `dataset.id` (indexed); `run` unique constraint. Date columns use `DateTime`, large counts use `BigInteger`, `age_range` uses PostgreSQL `NUMRANGE` (replaces separate lower/upper columns), long URL uses `Text`; all non-key columns nullable.
+- `migrations/versions/8e767ddb148f_create_sample_table.py`: Creates `sample` table with `ix_sample_dataset_id` index; downgrade drops both.
+
+
+
+### Added Sample ORM model and migration
+- `db/models.py`: Added `Sample` model — 35 columns matching the TSV schema (all 14 transformed-metadata files share identical headers). Surrogate integer PK, `bioproject` FK to `dataset.bioproject` with an index, `run` unique constraint. Date columns use `DateTime`, large count columns use `BigInteger`, age bounds use `Numeric`, long URL field uses `Text`; all non-key columns nullable.
+- `migrations/versions/8e767ddb148f_create_sample_table.py`: Migration that creates `sample` table and `ix_sample_bioproject` index; downgrade drops both.
+
 ## 2026-06-26
 
 ### Updated Git conventions to Gitflow-inspired branching model
