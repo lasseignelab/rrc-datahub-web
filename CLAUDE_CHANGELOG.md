@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-01
+
+### Suppress selenium DeprecationWarnings in pytest output
+- `pytest.ini`: Added `filterwarnings = ignore::DeprecationWarning:selenium` to silence urllib3 deprecation warnings emitted by selenium internals on every test run.
+
 ## 2026-06-24
 
 ### Fixed dash_duo Chrome crash in GitHub Actions CI
