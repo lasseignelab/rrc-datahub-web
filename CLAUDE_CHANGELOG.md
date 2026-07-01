@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-01
 
+### Added Windows instructions to accessibility automated checking section
+- `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
+
 ### Added Node.js install instructions to accessibility section
 - `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
 

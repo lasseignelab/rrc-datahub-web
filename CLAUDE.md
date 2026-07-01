@@ -86,19 +86,41 @@ pa11y-ci requires Node.js. Check whether it is installed:
 node --version
 ```
 
-If the command is not found, install Node.js via [nvm](https://github.com/nvm-sh/nvm) (recommended) or the [Node.js installer](https://nodejs.org/):
+If the command is not found, install Node.js:
+
+**macOS** — use [nvm](https://github.com/nvm-sh/nvm) (recommended) or the [Node.js installer](https://nodejs.org/):
 
 ```bash
-# via nvm (install nvm first if needed: https://github.com/nvm-sh/nvm#installing-and-updating)
+# install nvm if needed: https://github.com/nvm-sh/nvm#installing-and-updating
 nvm install --lts
 nvm use --lts
 ```
 
+**Windows** — use [nvm-windows](https://github.com/coreybutler/nvm-windows) (recommended) or the [Node.js installer](https://nodejs.org/):
+
+```powershell
+# install nvm-windows first: https://github.com/coreybutler/nvm-windows#installation--upgrades
+nvm install lts
+nvm use lts
+```
+
 Then run the checker:
 
+**macOS**
 ```bash
 # In one terminal — start the app
 source venv/bin/activate && python app.py
+
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+**Windows** (PowerShell)
+```powershell
+# In one terminal — start the app
+venv\Scripts\Activate.ps1
+python app.py
 
 # In another terminal — run the checker
 npm install
