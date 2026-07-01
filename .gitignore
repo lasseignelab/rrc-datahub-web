@@ -4,6 +4,7 @@ megalinter-reports
 pa11y-reports
 node_modules
 test-reports
+staging/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
