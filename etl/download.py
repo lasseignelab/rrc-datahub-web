@@ -18,7 +18,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Sequence
 
 import paramiko  # type: ignore[import-untyped]
 import requests  # type: ignore[import-untyped]
@@ -33,7 +32,7 @@ GITHUB_API = "https://api.github.com"
 GITHUB_REPO = "lasseignelab/rrc-datahub"
 GEO_DATASETS_PATH = "doc/geo_datasets.csv"
 TRANSFORMED_METADATA_PATH = "results/transformed-metadata"
-CHEAHA_TPM_GLOB = "PRJNA*/star_salmon/salmon.merged.gene_tpm.tsv"
+CHEAHA_TPM_GLOB = "**/star_salmon/salmon.merged.gene_tpm.tsv"
 
 
 def _staging_dir() -> Path:
@@ -107,12 +106,7 @@ def _open_cheaha_transport(host: str, user: str, password: str) -> paramiko.Tran
             f"Run: ssh-keyscan {host} >> {known_hosts_path}"
         )
 
-    def _kbd_handler(
-        _title: str, _instructions: str, prompts: Sequence[tuple[str, bool]]
-    ) -> list[str]:
-        return [password for _ in prompts]
-
-    transport.auth_interactive(user, _kbd_handler)
+    transport.auth_password(user, password)
     return transport
 
 

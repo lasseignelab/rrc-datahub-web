@@ -50,7 +50,7 @@ class Sample(Base):
     platform: Mapped[str | None] = mapped_column(String(50))
     model: Mapped[str | None] = mapped_column(String(100))
     fastq_ftp: Mapped[str | None] = mapped_column(Text)
-    fastq_md5: Mapped[str | None] = mapped_column(String(32))
+    fastq_md5: Mapped[str | None] = mapped_column(Text)
     run_hash: Mapped[str | None] = mapped_column(String(32))
     read_hash: Mapped[str | None] = mapped_column(String(32))
     tax_id: Mapped[int | None] = mapped_column(Integer)

@@ -4,6 +4,17 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-06-26 (continued, third)
+
+### Fixed fastq_md5 column overflow for paired-end reads
+- `db/models.py`: Changed `fastq_md5` from `String(32)` to `Text`. Paired-end runs store two MD5 hashes joined by `;` (65 chars), exceeding the original 32-char limit.
+- `migrations/versions/bd35225208f8_widen_fastq_md5_to_text.py`: Migration to ALTER the column type.
+
+## 2026-06-26 (continued, second)
+
+### Added load_samples ETL function
+- `etl/load.py`: Added `load_samples()` — scans `staging/transformed-metadata/**/*_transformed.tsv`, looks up `dataset_id` by bioproject, and inserts new rows into the `sample` table. Idempotent (skips runs already present). Added helper functions `_opt_str`, `_opt_int`, `_opt_datetime`, and `_opt_numrange` to handle type conversion and "NP"/"NA" sentinels. `age_range_lower` + `age_range_upper` TSV columns are combined into a `psycopg2.extras.NumericRange` with closed bounds. Added `# pylint: disable=import-error` for MegaLinter compatibility. `__main__` now runs `load_datasets()` then `load_samples()`.
+
 ## 2026-06-26 (continued)
 
 ### Added Sample ORM model and migration
