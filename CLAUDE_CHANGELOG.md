@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-01
+
+### Added Node.js install instructions to accessibility section
+- `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
+
 ## 2026-06-24
 
 ### Aligned CLAUDE.md accessibility conventions with PR template checklist
