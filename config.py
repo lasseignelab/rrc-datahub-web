@@ -1,7 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-DB_DIR   = BASE_DIR / "db"
+DB_DIR = BASE_DIR / "db"
 
 
 def get_available_datasets() -> list[str]:
@@ -12,7 +12,7 @@ def get_available_datasets() -> list[str]:
 def dataset_paths(accession: str) -> dict:
     d = DB_DIR / accession
     return {
-        "tpm":      d / "salmon.merged.gene_tpm.tsv",
-        "samples":  d / "samplesheet.csv",
+        "tpm": d / "salmon.merged.gene_tpm.tsv",
+        "samples": d / "samplesheet.csv",
         "metadata": d / "extended_metadata.csv",
     }

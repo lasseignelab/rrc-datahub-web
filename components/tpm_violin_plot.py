@@ -19,12 +19,13 @@ non-interactive backend before importing pyplot in your driver script:
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Optional, Sequence, Union
 
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
@@ -32,6 +33,7 @@ from scipy import stats
 # --------------------------------------------------------------------------
 # Data preparation
 # --------------------------------------------------------------------------
+
 
 def melt_nfcore_tpm(
     tpm_wide: pd.DataFrame,
@@ -45,27 +47,42 @@ def melt_nfcore_tpm(
     format) into a tidy long-format dataframe annotated with group
     membership.
     """
-    sample_cols = [c for c in tpm_wide.columns if c in set(sample_metadata[sample_id_col])]
+    sample_cols = [
+        c for c in tpm_wide.columns if c in set(sample_metadata[sample_id_col])
+    ]
+
     if not sample_cols:
         raise ValueError(
             "No overlap between tpm_wide columns and sample_metadata "
             f"'{sample_id_col}' values — check that sample names match."
         )
+
     long_df = tpm_wide.melt(
-        id_vars=[id_col], value_vars=sample_cols, var_name=sample_id_col, value_name="TPM"
+        id_vars=[id_col],
+        value_vars=sample_cols,
+        var_name=sample_id_col,
+        value_name="TPM",
     )
+
     long_df = long_df.merge(
-        sample_metadata[[sample_id_col, group_col]], on=sample_id_col, how="left"
+        sample_metadata[[sample_id_col, group_col]],
+        on=sample_id_col,
+        how="left",
     )
+
     missing = long_df[group_col].isna().sum()
-    if missing:
-        print(f"Warning: {missing} sample rows had no matching group in metadata.")
+    if missing > 0:
+        print(
+            f"Warning: {missing} sample rows had no matching group in metadata."
+        )
+
     return long_df
 
 
 # --------------------------------------------------------------------------
 # Core plotting function — works for any number of groups
 # --------------------------------------------------------------------------
+
 
 def plot_tpm_violin(
     data: pd.DataFrame,
@@ -82,19 +99,20 @@ def plot_tpm_violin(
     box_width: float = 0.18,
     title: Optional[str] = None,
     ylabel: Optional[str] = None,
-    ax: Optional[plt.Axes] = None,
+    ax: Optional[Axes] = None,
     show_n: bool = True,
     stat_test: Optional[str] = None,
-) -> plt.Axes:
+) -> Axes:
     data = data.dropna(subset=[group_col, value_col]).copy()
 
     if group_order is None:
         group_order = sorted(data[group_col].unique())
+
     n_groups = len(group_order)
 
     if ax is None:
         fig_width = max(3.5, 1.4 * n_groups)
-        fig, ax = plt.subplots(figsize=(fig_width, 4.5))
+        _, ax = plt.subplots(figsize=(fig_width, 4.5))
 
     plot_col = value_col
     if log_scale:
@@ -102,47 +120,99 @@ def plot_tpm_violin(
         data[plot_col] = np.log10(data[value_col] + pseudocount)
 
     sns.violinplot(
-        data=data, x=group_col, y=plot_col, order=group_order,
-        hue=group_col, hue_order=group_order, palette=palette, legend=False,
-        inner=None, cut=0, linewidth=1.0, ax=ax,
+        data=data,
+        x=group_col,
+        y=plot_col,
+        order=group_order,
+        hue=group_col,
+        hue_order=group_order,
+        palette=palette,
+        legend=False,
+        inner=None,
+        cut=0,
+        linewidth=1.0,
+        ax=ax,
     )
+
     for collection in ax.collections:
         collection.set_alpha(violin_alpha)
 
     sns.boxplot(
-        data=data, x=group_col, y=plot_col, order=group_order,
-        hue=group_col, hue_order=group_order, legend=False,
-        width=box_width, showcaps=True, boxprops={"facecolor": "white", "zorder": 3},
-        whiskerprops={"zorder": 3}, medianprops={"color": "black", "zorder": 4},
-        showfliers=False, ax=ax,
+        data=data,
+        x=group_col,
+        y=plot_col,
+        order=group_order,
+        hue=group_col,
+        hue_order=group_order,
+        legend=False,
+        width=box_width,
+        showcaps=True,
+        boxprops={"facecolor": "white", "zorder": 3},
+        whiskerprops={"zorder": 3},
+        medianprops={"color": "black", "zorder": 4},
+        showfliers=False,
+        ax=ax,
     )
 
     sns.stripplot(
-        data=data, x=group_col, y=plot_col, order=group_order,
-        hue=group_col, hue_order=group_order, legend=False,
-        palette=["black"] * len(group_order), size=point_size, alpha=point_alpha, jitter=jitter,
-        ax=ax, zorder=5,
+        data=data,
+        x=group_col,
+        y=plot_col,
+        order=group_order,
+        hue=group_col,
+        hue_order=group_order,
+        legend=False,
+        palette=["black"] * len(group_order),
+        size=point_size,
+        alpha=point_alpha,
+        jitter=jitter,
+        ax=ax,
+        zorder=5,
     )
 
     ax.set_xlabel(group_col)
-    ax.set_ylabel(ylabel or (f"log10({value_col} + {pseudocount})" if log_scale else value_col))
+    ax.set_ylabel(
+        ylabel
+        or (
+            f"log10({value_col} + {pseudocount})"
+            if log_scale
+            else value_col
+        )
+    )
 
     if n_groups > 4:
         ax.tick_params(axis="x", rotation=30)
 
     if show_n:
         ymax = data[plot_col].max()
-        ypad = (data[plot_col].max() - data[plot_col].min()) * 0.06 + 1e-9
+        ypad = (ymax - data[plot_col].min()) * 0.06 + 1e-9
+
         for i, grp in enumerate(group_order):
             n = (data[group_col] == grp).sum()
-            ax.text(i, ymax + ypad, f"n={n}", ha="center", va="bottom", fontsize=8)
+            ax.text(
+                i,
+                ymax + ypad,
+                f"n={n}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
         ax.set_ylim(top=ymax + ypad * 3)
 
     full_title = title or ""
+
     if stat_test:
-        pval = _run_stat_test(data, group_col, plot_col, group_order, stat_test)
+        pval = _run_stat_test(
+            data,
+            group_col,
+            plot_col,
+            group_order,
+            stat_test,
+        )
         if pval is not None:
             full_title = f"{full_title}  (p={pval:.3g})".strip()
+
     if full_title:
         ax.set_title(full_title)
 
@@ -150,25 +220,46 @@ def plot_tpm_violin(
 
 
 def _run_stat_test(
-    data: pd.DataFrame, group_col: str, value_col: str,
-    group_order: Sequence[str], stat_test: str,
+    data: pd.DataFrame,
+    group_col: str,
+    value_col: str,
+    group_order: Sequence[str],
+    stat_test: str,
 ) -> Optional[float]:
-    groups = [data.loc[data[group_col] == g, value_col].values for g in group_order]
+    groups = [
+        data.loc[data[group_col] == g, value_col].values
+        for g in group_order
+    ]
+
     if stat_test == "mannwhitney":
         if len(groups) != 2:
-            print("Warning: mannwhitney requires exactly 2 groups; skipping stat test.")
+            print(
+                "Warning: mannwhitney requires exactly 2 groups; "
+                "skipping stat test."
+            )
             return None
-        _, p = stats.mannwhitneyu(groups[0], groups[1], alternative="two-sided")
+
+        _, p = stats.mannwhitneyu(
+            groups[0],
+            groups[1],
+            alternative="two-sided",
+        )
         return p
+
     if stat_test == "kruskal":
         _, p = stats.kruskal(*groups)
         return p
-    raise ValueError(f"Unknown stat_test: {stat_test!r}. Use 'mannwhitney' or 'kruskal'.")
+
+    raise ValueError(
+        f"Unknown stat_test: {stat_test!r}. "
+        "Use 'mannwhitney' or 'kruskal'."
+    )
 
 
 # --------------------------------------------------------------------------
 # Multi-gene grid wrapper
 # --------------------------------------------------------------------------
+
 
 def plot_multi_gene_violin(
     data: pd.DataFrame,
@@ -179,24 +270,38 @@ def plot_multi_gene_violin(
     ncols: int = 3,
     panel_size: tuple = (4.0, 3.8),
     **plot_kwargs,
-) -> plt.Figure:
+) -> Figure:
     n = len(genes)
     ncols = max(1, min(ncols, n))
     nrows = int(np.ceil(n / ncols))
+
     fig, axes = plt.subplots(
-        nrows, ncols, figsize=(panel_size[0] * ncols, panel_size[1] * nrows), squeeze=False
+        nrows,
+        ncols,
+        figsize=(panel_size[0] * ncols, panel_size[1] * nrows),
+        squeeze=False,
     )
+
     axes_flat = axes.flatten()
 
     for i, gene in enumerate(genes):
-        gene_data = data[data[gene_col] == gene]
+        gene_data = data.loc[data[gene_col] == gene].copy()
+
         if gene_data.empty:
-            print(f"Warning: no rows found for gene '{gene}', skipping panel.")
+            print(
+                f"Warning: no rows found for gene '{gene}', "
+                "skipping panel."
+            )
             axes_flat[i].set_visible(False)
             continue
+
         plot_tpm_violin(
-            gene_data, group_col=group_col, value_col=value_col,
-            ax=axes_flat[i], title=gene, **plot_kwargs,
+            gene_data,
+            group_col=group_col,
+            value_col=value_col,
+            ax=axes_flat[i],
+            title=gene,
+            **plot_kwargs,
         )
 
     for j in range(n, len(axes_flat)):

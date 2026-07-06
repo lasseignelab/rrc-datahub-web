@@ -47,7 +47,7 @@ def plot_tpm_violin_plotly(
     colors = _resolve_palette(palette, group_order)
 
     plot_col = value_col
-    ylabel   = value_col
+    ylabel = value_col
     if log_scale:
         plot_col = f"_log10_{value_col}"
         data[plot_col] = np.log10(data[value_col] + pseudocount)
@@ -57,9 +57,9 @@ def plot_tpm_violin_plotly(
 
     for i, group in enumerate(group_order):
         grp_data = data.loc[data[group_col] == group, plot_col].values
-        color    = colors[i]
-        n        = len(grp_data)
-        name     = f"{group} (n={n})" if show_n else group
+        color = colors[i]
+        n = len(grp_data)
+        name = f"{group} (n={n})" if show_n else group
 
         fig.add_trace(go.Violin(
             x=np.full(n, i),
@@ -88,7 +88,11 @@ def plot_tpm_violin_plotly(
             showlegend=False,
         ))
 
-        x_jittered = i + np.random.default_rng(42 + i).uniform(-jitter, jitter, n)
+        x_jittered = i + np.random.default_rng(42 + i).uniform(
+            -jitter,
+            jitter,
+            n,
+        )
         fig.add_trace(go.Scatter(
             x=x_jittered,
             y=grp_data,
@@ -122,7 +126,12 @@ def plot_tpm_violin_plotly(
         font=dict(family="Arial", size=13),
     )
     fig.update_xaxes(showgrid=False, linecolor="black", ticks="outside")
-    fig.update_yaxes(showgrid=True, gridcolor="#eeeeee", linecolor="black", ticks="outside")
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="#eeeeee",
+        linecolor="black",
+        ticks="outside",
+    )
 
     return fig
 
@@ -131,16 +140,24 @@ def _resolve_palette(
     palette: Optional[Union[dict, list]], group_order: list
 ) -> list:
     if palette is None:
-        return [_DEFAULT_COLORS[i % len(_DEFAULT_COLORS)] for i in range(len(group_order))]
+        return [
+            _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)]
+            for i in range(len(group_order))
+        ]
     if isinstance(palette, dict):
-        return [palette.get(g, _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)])
-                for i, g in enumerate(group_order)]
+        return [
+            palette.get(g, _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)])
+            for i, g in enumerate(group_order)
+        ]
     return list(palette)
 
 
 def _run_stat_test(
-    data: pd.DataFrame, group_col: str, value_col: str,
-    group_order: list, stat_test: str,
+    data: pd.DataFrame,
+    group_col: str,
+    value_col: str,
+    group_order: list,
+    stat_test: str,
 ) -> Optional[float]:
     groups = [data.loc[data[group_col] == g, value_col].values for g in group_order]
     if stat_test == "mannwhitney":
@@ -152,4 +169,7 @@ def _run_stat_test(
     if stat_test == "kruskal":
         _, p = stats.kruskal(*groups)
         return p
-    raise ValueError(f"Unknown stat_test: {stat_test!r}. Use 'mannwhitney' or 'kruskal'.")
+    raise ValueError(
+        f"Unknown stat_test: {stat_test!r}. "
+        "Use 'mannwhitney' or 'kruskal'."
+    )
