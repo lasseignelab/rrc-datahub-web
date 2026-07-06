@@ -2,7 +2,7 @@ import dash
 from dash import Input, Output, callback, dcc, html
 import pandas as pd
 
-from components.tpm_violin_plot import melt_nfcore_tpm
+from components.data_utils import melt_nfcore_tpm
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from config import dataset_paths, get_available_datasets
 
