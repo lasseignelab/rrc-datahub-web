@@ -96,8 +96,8 @@ layout = html.Div([
             id="stat-test",
             options=[
                 {"label": "None",           "value": "none"},
-                {"label": "Mann-Whitney",   "value": "mannwhitney"},
-                {"label": "Kruskal-Wallis", "value": "kruskal"},
+                {"label": "Mann-Whitney (2 groups)",   "value": "mannwhitney"},
+                {"label": "Kruskal-Wallis (3 or more groups)", "value": "kruskal"},
             ],
             value="none",
             inline=True,
@@ -122,7 +122,10 @@ def update_selectors(accession):
     if not accession:
         return [], None, [], []
 
-    long_df = _cache.get(accession) or _load_dataset(accession)
+    if accession not in _cache:
+    	_load_dataset(accession)
+
+    long_df = _cache[accession]
 
     genes  = sorted(long_df["gene_name"].unique())
     groups = sorted(long_df["genotype"].unique())
