@@ -1,5 +1,6 @@
 from dash import html, dcc
 
+
 def navbar():
     return html.Div([
         dcc.Link("Home",   href="/",       style={"marginRight": "16px"}),
