@@ -1,14 +1,11 @@
-from dash import Dash, html
-from dash.dcc.Graph import Graph
-import plotly.express as px
+from dash import Dash, html, page_container
+from components.navbar import navbar
 
-app = Dash(__name__)
-
-fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+app = Dash(__name__, use_pages=True)
 
 app.layout = html.Div([
-    html.H1("Hello World"),
-    Graph(figure=fig)
+    navbar(),
+    page_container,
 ])
 
 if __name__ == "__main__":
