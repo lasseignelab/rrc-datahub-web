@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-07
+
+### Simplified Node.js/pa11y-ci setup instructions
+- `CLAUDE.md`: Streamlined the accessibility automated checking section — remove the version-check step and go straight to install, drop the Node.js installer as an alternative (nvm/nvm-windows only), split the two-terminal run steps into separate code blocks.
+
 ## 2026-07-01
 
 ### Added Windows instructions to accessibility automated checking section
