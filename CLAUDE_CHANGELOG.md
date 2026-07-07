@@ -8,6 +8,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ### Suppress selenium DeprecationWarnings in pytest output
 - `pytest.ini`: Added `filterwarnings = ignore::DeprecationWarning:selenium` to silence urllib3 deprecation warnings emitted by selenium internals on every test run.
+### Added Windows instructions to accessibility automated checking section
+- `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
+
+### Added Node.js install instructions to accessibility section
+- `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
 
 ## 2026-06-24
 

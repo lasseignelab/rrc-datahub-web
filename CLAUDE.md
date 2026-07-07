@@ -128,9 +128,47 @@ ADA Title II requires public-sector websites to meet WCAG 2.1 AA. All pages and 
 
 [pa11y-ci](https://github.com/pa11y/pa11y-ci) runs against the live app on every push via `.github/workflows/accessibility.yml`. Zero violations are required for the build to pass. To run locally:
 
+pa11y-ci requires Node.js. Check whether it is installed:
+
+```bash
+node --version
+```
+
+If the command is not found, install Node.js:
+
+**macOS** — use [nvm](https://github.com/nvm-sh/nvm) (recommended) or the [Node.js installer](https://nodejs.org/):
+
+```bash
+# install nvm if needed: https://github.com/nvm-sh/nvm#installing-and-updating
+nvm install --lts
+nvm use --lts
+```
+
+**Windows** — use [nvm-windows](https://github.com/coreybutler/nvm-windows) (recommended) or the [Node.js installer](https://nodejs.org/):
+
+```powershell
+# install nvm-windows first: https://github.com/coreybutler/nvm-windows#installation--upgrades
+nvm install lts
+nvm use lts
+```
+
+Then run the checker:
+
+**macOS**
 ```bash
 # In one terminal — start the app
 source venv/bin/activate && python app.py
+
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+**Windows** (PowerShell)
+```powershell
+# In one terminal — start the app
+venv\Scripts\Activate.ps1
+python app.py
 
 # In another terminal — run the checker
 npm install
