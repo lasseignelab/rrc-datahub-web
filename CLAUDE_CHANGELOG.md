@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-08 (third entry)
+
+### Fixed percy AttributeError breaking dash_duo tests
+- `requirements-dev.txt`: Pinned `percy==1.1.1`. dash[testing] uses `percy.Runner` which was removed in percy v2. Without the pin, pip installs the latest percy (2.x), causing `AttributeError: module 'percy' has no attribute 'Runner'` on all browser-driven tests.
+
 ## 2026-07-08 (second entry)
 
 ### Fixed all MegaLinter linter errors; added pre-commit gate to CLAUDE.md
