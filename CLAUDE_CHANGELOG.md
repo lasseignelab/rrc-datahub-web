@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-08
 
+### Fixed pytest tests broken by multi-page app refactor
+- `tests/test_app.py`: Updated `test_layout_contains_h1` to check `pages.home.layout` directly instead of `app.layout.children` (H1 now lives in the home page module, not the root layout). Updated `test_graph_renders` to navigate to `/charts` where the `dcc.Graph` lives.
+
 ### Fixed WCAG 2.1 AA: missing lang attribute on html element
 - `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1). pa11y-ci now passes with 0 errors.
 
