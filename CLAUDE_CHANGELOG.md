@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-08
+
+### Fixed WCAG 2.1 AA: missing lang attribute on html element
+- `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1). pa11y-ci now passes with 0 errors.
+
 ## 2026-07-07
 
 ### Simplified Node.js/pa11y-ci setup instructions
