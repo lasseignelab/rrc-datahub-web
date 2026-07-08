@@ -9,10 +9,11 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from db.connection import SessionLocal
-from db.models import Dataset, Sample
 from dotenv import load_dotenv  # type: ignore[import-untyped]
 from psycopg2.extras import NumericRange  # type: ignore[import-untyped]
+
+from db.connection import SessionLocal
+from db.models import Dataset, Sample
 
 load_dotenv()
 
@@ -55,7 +56,9 @@ def _opt_numrange(lower_str: str, upper_str: str) -> Any:
     upper_stripped = upper_str.strip()
     if lower_stripped in _NUMERIC_NULLS or upper_stripped in _NUMERIC_NULLS:
         return None
-    return NumericRange(Decimal(lower_stripped), Decimal(upper_stripped), bounds="[]")
+    lower = Decimal(lower_stripped)
+    upper = Decimal(upper_stripped)
+    return NumericRange(lower, upper, bounds="[]")  # type: ignore[arg-type]
 
 
 def load_datasets(staging: Path | None = None) -> int:
@@ -127,8 +130,7 @@ def load_samples(staging: Path | None = None) -> int:
     skipped = 0
     try:
         bioproject_to_id = {
-            bp: did
-            for bp, did in session.query(Dataset.bioproject, Dataset.id).all()
+            bp: did for bp, did in session.query(Dataset.bioproject, Dataset.id).all()
         }
         existing_runs = {run for (run,) in session.query(Sample.run).all()}
 
@@ -198,7 +200,7 @@ def load_samples(staging: Path | None = None) -> int:
 
         session.commit()
         log.info(
-            "Loaded %d new sample rows (skipped %d already present or missing dataset).",
+            "Loaded %d sample rows; skipped %d (already present or no dataset match).",
             inserted,
             skipped,
         )

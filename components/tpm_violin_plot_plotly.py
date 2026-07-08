@@ -8,14 +8,15 @@ Data preparation (melt_nfcore_tpm) is shared with the original module —
 import it from tpm_violin_plot.py as usual.
 """
 
+# pylint: disable=import-error
 from __future__ import annotations
 
 from typing import Optional, Sequence, Union
 
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from scipy import stats
+import numpy as np  # type: ignore[import-untyped]
+import pandas as pd  # type: ignore[import-untyped]
+import plotly.graph_objects as go  # type: ignore[import-untyped]
+from scipy import stats  # type: ignore[import-untyped]
 
 _DEFAULT_COLORS = [
     "#66c2a5",

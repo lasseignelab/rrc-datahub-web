@@ -1,7 +1,5 @@
 # pylint: disable=import-error
-import plotly.express as px  # type: ignore[import-untyped]
 from dash import Dash, html, page_container  # type: ignore[import-untyped]
-from dash.dcc.Graph import Graph  # type: ignore[import-untyped]
 
 from components.navbar import navbar
 
