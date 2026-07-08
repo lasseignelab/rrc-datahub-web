@@ -11,9 +11,10 @@ def test_server_is_flask_app():
 def test_layout_contains_h1():
     """Home page layout includes an H1 element."""
     from dash import html
+
     from pages import home
 
-    children = home.layout.children
+    children = home.layout.children or []
     h1_elements = [c for c in children if isinstance(c, html.H1)]
     assert len(h1_elements) == 1
     assert h1_elements[0].children == "Hello World"

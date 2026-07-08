@@ -4,6 +4,17 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-08 (second entry)
+
+### Fixed all MegaLinter linter errors; added pre-commit gate to CLAUDE.md
+- `app.py`, `pages/home.py`, `components/navbar.py`, `components/data_utils.py`, `components/tpm_violin_plot_plotly.py`, `pages/charts.py`: Applied black and isort formatting (black prefers expanded function-call style; isort alphabetizes within sections).
+- `pages/__init__.py`: Created empty file so mypy resolves `pages.home` without the "source file found twice" error.
+- `tests/test_app.py`: Fixed pyright error (`home.layout.children or []`); added blank line between `from dash` and `from pages` imports so isort's first-party/third-party separator is preserved.
+- `tests/conftest.py`: Reordered imports — `selenium` (third-party) before `app` (first-party) with blank line separator.
+- `.mega-linter.yml`: Added `PYTHON_ISORT_ARGUMENTS` with `-p` flags for first-party modules (`app`, `components`, `config`, `db`, `pages`) because MegaLinter's Docker isort does not reliably pick up `pyproject.toml` `known_first_party`.
+- `pyproject.toml`: Added `config` to `known_first_party` so local isort matches Docker isort behavior.
+- `CLAUDE.md`: Added pre-commit instruction — run `pytest --headless` and MegaLinter before every commit/push. Added `rm -rf megalinter-reports` reminder and expanded Docker command.
+
 ## 2026-07-08
 
 ### Fixed pytest tests broken by multi-page app refactor

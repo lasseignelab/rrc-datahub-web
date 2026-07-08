@@ -3,4 +3,4 @@ exclude_dirs = ["tests"]
 
 [tool.isort]
 profile = "black"
-known_first_party = ["app", "components", "db", "pages"]
+known_first_party = ["app", "components", "config", "db", "pages"]

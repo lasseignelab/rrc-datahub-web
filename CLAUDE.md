@@ -4,6 +4,7 @@
 
 - At the start of every session, read [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) to understand the recent history of changes in this project.
 - After making any change to this project, append an entry to [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) describing what was changed and why. Use the date `YYYY-MM-DD` and group changes under it. Add new entries at the top, below the header.
+- **Before every commit and push**: run the full test suite (`pytest --headless`) and MegaLinter (Docker command below). Both must pass with zero errors before committing or pushing. Fix any failures first.
 
 Dash + Plotly web application for the RRC DataHub. Built in Python, served via Flask/Gunicorn, backed by a PostgreSQL database.
 
@@ -102,11 +103,13 @@ CI runs MegaLinter on every push via `.github/workflows/mega-linter.yml`. Only t
 To run MegaLinter locally (matches CI exactly):
 
 ```bash
-docker run --rm \
+rm -rf megalinter-reports && docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v "$(pwd)":/tmp/lint \
   oxsecurity/megalinter:v9
 ```
+
+Always remove `megalinter-reports/` before running — MegaLinter appends to existing logs rather than replacing them, so stale errors from previous runs will appear in the new report.
 
 Reports are written to `megalinter-reports/` (gitignored).
 

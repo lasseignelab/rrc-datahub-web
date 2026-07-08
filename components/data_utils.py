@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-
 # --------------------------------------------------------------------------
 # TPM data preparation
 # --------------------------------------------------------------------------
@@ -56,8 +55,6 @@ def melt_nfcore_tpm(
 
     missing = long_df[group_col].isna().sum()
     if missing > 0:
-        print(
-            f"Warning: {missing} sample rows had no matching group in metadata."
-        )
+        print(f"Warning: {missing} sample rows had no matching group in metadata.")
 
     return long_df
