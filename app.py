@@ -1,9 +1,11 @@
 # pylint: disable=import-error
 import plotly.express as px  # type: ignore[import-untyped]
-from dash import Dash, html  # type: ignore[import-untyped]
+from dash import Dash, html, page_container  # type: ignore[import-untyped]
 from dash.dcc.Graph import Graph  # type: ignore[import-untyped]
 
-app = Dash(__name__)
+from components.navbar import navbar
+
+app = Dash(__name__, use_pages=True)
 
 app.index_string = """<!DOCTYPE html>
 <html lang="en">
@@ -23,9 +25,12 @@ app.index_string = """<!DOCTYPE html>
     </body>
 </html>"""
 
-fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
-
-app.layout = html.Div([html.H1("Hello World"), Graph(figure=fig)])
+app.layout = html.Div(
+    [
+        navbar(),
+        page_container,
+    ]
+)
 
 if __name__ == "__main__":
     app.run(debug=True, dev_tools_ui=False)

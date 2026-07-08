@@ -73,6 +73,44 @@ A log of changes made by Claude Code in this project, newest first.
 
 ### Restricted all CI workflows to push events only
 - `.github/workflows/accessibility.yml` and `tests.yml`: Changed `on: [push, pull_request]` to `on: [push]`. MegaLinter was already push-only.
+## 2026-07-08 (third entry)
+
+### Fixed percy AttributeError breaking dash_duo tests
+- `requirements-dev.txt`: Pinned `percy==1.1.1`. dash[testing] uses `percy.Runner` which was removed in percy v2. Without the pin, pip installs the latest percy (2.x), causing `AttributeError: module 'percy' has no attribute 'Runner'` on all browser-driven tests.
+
+## 2026-07-08 (second entry)
+
+### Fixed all MegaLinter linter errors; added pre-commit gate to CLAUDE.md
+- `app.py`, `pages/home.py`, `components/navbar.py`, `components/data_utils.py`, `components/tpm_violin_plot_plotly.py`, `pages/charts.py`: Applied black and isort formatting (black prefers expanded function-call style; isort alphabetizes within sections).
+- `pages/__init__.py`: Created empty file so mypy resolves `pages.home` without the "source file found twice" error.
+- `tests/test_app.py`: Fixed pyright error (`home.layout.children or []`); added blank line between `from dash` and `from pages` imports so isort's first-party/third-party separator is preserved.
+- `tests/conftest.py`: Reordered imports — `selenium` (third-party) before `app` (first-party) with blank line separator.
+- `.mega-linter.yml`: Added `PYTHON_ISORT_ARGUMENTS` with `-p` flags for first-party modules (`app`, `components`, `config`, `db`, `pages`) because MegaLinter's Docker isort does not reliably pick up `pyproject.toml` `known_first_party`.
+- `pyproject.toml`: Added `config` to `known_first_party` so local isort matches Docker isort behavior.
+- `CLAUDE.md`: Added pre-commit instruction — run `pytest --headless` and MegaLinter before every commit/push. Added `rm -rf megalinter-reports` reminder and expanded Docker command.
+
+## 2026-07-08
+
+### Fixed pytest tests broken by multi-page app refactor
+- `tests/test_app.py`: Updated `test_layout_contains_h1` to check `pages.home.layout` directly instead of `app.layout.children` (H1 now lives in the home page module, not the root layout). Updated `test_graph_renders` to navigate to `/charts` where the `dcc.Graph` lives.
+
+### Fixed WCAG 2.1 AA: missing lang attribute on html element
+- `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1). pa11y-ci now passes with 0 errors.
+
+## 2026-07-07
+
+### Simplified Node.js/pa11y-ci setup instructions
+- `CLAUDE.md`: Streamlined the accessibility automated checking section — remove the version-check step and go straight to install, drop the Node.js installer as an alternative (nvm/nvm-windows only), split the two-terminal run steps into separate code blocks.
+
+## 2026-07-01
+
+### Suppress selenium DeprecationWarnings in pytest output
+- `pytest.ini`: Added `filterwarnings = ignore::DeprecationWarning:selenium` to silence urllib3 deprecation warnings emitted by selenium internals on every test run.
+### Added Windows instructions to accessibility automated checking section
+- `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
+
+### Added Node.js install instructions to accessibility section
+- `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
 
 ## 2026-06-24
 

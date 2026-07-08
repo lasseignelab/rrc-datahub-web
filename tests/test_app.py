@@ -10,10 +10,12 @@ def test_server_is_flask_app():
 
 
 def test_layout_contains_h1():
-    """Layout includes an H1 element."""
-    from dash import html  # type: ignore[import-untyped]
+    """Home page layout includes an H1 element."""
+    from dash import html
 
-    children = app.layout.children
+    from pages import home
+
+    children = home.layout.children or []
     h1_elements = [c for c in children if isinstance(c, html.H1)]
     assert len(h1_elements) == 1
     assert h1_elements[0].children == "Hello World"
@@ -26,8 +28,9 @@ def test_heading_renders(dash_duo):
 
 
 def test_graph_renders(dash_duo):
-    """Plotly bar chart renders in the browser."""
+    """Plotly violin chart renders in the browser on the charts page."""
     dash_duo.start_server(app)
+    dash_duo.driver.get(dash_duo.server_url + "/charts")
     dash_duo.wait_for_element(".js-plotly-plot")
 
 

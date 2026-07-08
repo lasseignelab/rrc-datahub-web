@@ -1,0 +1,11 @@
+sample,fastq_1,fastq_2,strandedness
+SRR2050895,../data/raw-data/PRJNA285844/SRR2050895.fastq.gz,,auto
+SRR2050896,../data/raw-data/PRJNA285844/SRR2050896.fastq.gz,,auto
+SRR2050897,../data/raw-data/PRJNA285844/SRR2050897.fastq.gz,,auto
+SRR2050898,../data/raw-data/PRJNA285844/SRR2050898.fastq.gz,,auto
+SRR2050899,../data/raw-data/PRJNA285844/SRR2050899.fastq.gz,,auto
+SRR2050900,../data/raw-data/PRJNA285844/SRR2050900.fastq.gz,,auto
+SRR2050901,../data/raw-data/PRJNA285844/SRR2050901.fastq.gz,,auto
+SRR2050902,../data/raw-data/PRJNA285844/SRR2050902.fastq.gz,,auto
+SRR2050903,../data/raw-data/PRJNA285844/SRR2050903.fastq.gz,,auto
+SRR2050904,../data/raw-data/PRJNA285844/SRR2050904.fastq.gz,,auto

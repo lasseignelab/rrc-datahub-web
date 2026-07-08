@@ -4,6 +4,7 @@
 
 - At the start of every session, read [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) to understand the recent history of changes in this project.
 - After making any change to this project, append an entry to [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) describing what was changed and why. Use the date `YYYY-MM-DD` and group changes under it. Add new entries at the top, below the header.
+- **Before every commit and push**: run the full test suite (`pytest --headless`) and MegaLinter (Docker command below). Both must pass with zero errors before committing or pushing. Fix any failures first.
 
 Dash + Plotly web application for the RRC DataHub. Built in Python, served via Flask/Gunicorn, backed by a PostgreSQL database.
 
@@ -187,9 +188,42 @@ ADA Title II requires public-sector websites to meet WCAG 2.1 AA. All pages and 
 
 [pa11y-ci](https://github.com/pa11y/pa11y-ci) runs against the live app on every push via `.github/workflows/accessibility.yml`. Zero violations are required for the build to pass. To run locally:
 
+pa11y-ci requires the Node.js lts version. Make sure it is installed with the following commands:
+
+**macOS** — use [nvm](https://github.com/nvm-sh/nvm).
+
+```bash
+# install nvm if needed: https://github.com/nvm-sh/nvm#installing-and-updating
+nvm install --lts
+nvm use --lts
+```
+
+**Windows** — use [nvm-windows](https://github.com/coreybutler/nvm-windows):
+
+```powershell
+# install nvm-windows first: https://github.com/coreybutler/nvm-windows#installation--upgrades
+nvm install lts
+nvm use lts
+```
+
+Then run the checker:
+
+**macOS**
 ```bash
 # In one terminal — start the app
 source venv/bin/activate && python app.py
+```
+```bash
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+**Windows** (PowerShell)
+```powershell
+# In one terminal — start the app
+venv\Scripts\Activate.ps1
+python app.py
 
 # In another terminal — run the checker
 npm install
