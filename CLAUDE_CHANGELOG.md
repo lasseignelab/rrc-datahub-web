@@ -4,7 +4,71 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-08
+
+### Fixed WCAG 2.1 AA: missing lang attribute on html element
+- `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1). pa11y-ci now passes with 0 errors.
+
+## 2026-07-07
+
+### Simplified Node.js/pa11y-ci setup instructions
+- `CLAUDE.md`: Streamlined the accessibility automated checking section — remove the version-check step and go straight to install, drop the Node.js installer as an alternative (nvm/nvm-windows only), split the two-terminal run steps into separate code blocks.
+
+## 2026-07-01
+
+### Added Windows instructions to accessibility automated checking section
+- `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
+
+### Added Node.js install instructions to accessibility section
+- `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
+
+## 2026-06-24
+
+### Aligned CLAUDE.md accessibility conventions with PR template checklist
+- Fixed stale Language section — now correctly documents `app.index_string` as the mechanism for `lang="en"`, not the removed `html.Html()` approach.
+- Fixed alt text rule — decorative images must use `alt=""`, not a non-empty value.
+- Added focus indicator convention — never remove `outline` without a replacement.
+- Added Dynamic content section — Dash callbacks require `role="status"` or `role="alert"` for screen reader announcements.
+- Added axe DevTools to the automated checking guidance.
+
+
+
+### Added ADA accessibility checklist to PR template
+Added a focused WCAG 2.1 AA checklist to `.github/pull_request_template.md` covering automated scans, content (alt text, chart descriptions, contrast), interaction (keyboard nav, focus, labels, skip link), and structure (heading hierarchy, ARIA live regions, lang attribute).
+
 ## 2026-06-23
+
+### Fixed WCAG 2.1 AA: Dash debug button has no accessible label
+Set `dev_tools_ui=False` in `app.run()` to suppress Dash's debug panel button, which has no text or ARIA label (axe DevTools critical issue). Hot reload and error catching remain active. Removed the `hideElements` workaround from `.pa11yci` since the element no longer renders. Updated CLAUDE.md to document this requirement.
+
+
+
+### Fixed pa11y-ci CI failure — Chromium sandbox and Node.js version
+- `.pa11yci`: Added `chromeLaunchConfig.args: ["--no-sandbox", "--disable-setuid-sandbox"]` — required for Puppeteer to launch Chromium in GitHub Actions' containerized environment.
+- `.github/workflows/accessibility.yml`: Bumped Node.js from 20 (deprecated on Actions) to 22.
+
+
+
+### Fixed WCAG 2.1 AA violations found by pa11y-ci
+- `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1).
+- `.pa11yci`: Added `hideElements: "#_dash-global-error-container"` to exclude Dash's dev-only debug button, which has no accessible name but is absent in production.
+
+
+
+### Fixed pa11y-ci config — renamed to `.pa11yci` and corrected format
+pa11y-ci looks for `.pa11yci` by default, not `.pa11yrc.json`. Renamed via `git mv` and restructured config to use the `defaults` key for shared options, which is required by pa11y-ci's config schema. Updated CLAUDE.md reference.
+
+
+
+### Set up ADA Title II / WCAG 2.1 AA accessibility linting
+Added `pa11y-ci` to test the running Dash app against WCAG 2.1 AA on every push. Created:
+- `package.json` — pa11y-ci dev dependency and `npm run a11y` script
+- `.pa11yrc.json` — pa11y config targeting WCAG2AA with 2s wait for React rendering
+- `.github/workflows/accessibility.yml` — CI job that starts the app and runs pa11y-ci
+- Updated `CLAUDE.md` with Dash-specific WCAG 2.1 AA conventions (text alternatives, form labels, heading hierarchy, color contrast, keyboard nav, skip links)
+- Updated `.gitignore` to exclude `pa11y-reports/` and `node_modules/`
+
+
 
 ### Added Git conventions section to CLAUDE.md
 Documented branch naming convention: lowercase with dashes, descriptive of functionality.

@@ -26,8 +26,10 @@ requirements.txt    # Pinned Python dependencies
 
 ```bash
 source venv/bin/activate
-python app.py          # dev server at http://localhost:8050 (debug=True)
+python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
 ```
+
+`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
 
 For production:
 
@@ -69,6 +71,93 @@ Configuration lives in [.mega-linter.yml](.mega-linter.yml).
 - Each file should have a header comment describing its purpose.
 - Each function should have a docstring.
 - Inline comments explain *why*, not *what*.
+
+## Accessibility (ADA Title II / WCAG 2.1 AA)
+
+ADA Title II requires public-sector websites to meet WCAG 2.1 AA. All pages and components must comply.
+
+### Automated checking
+
+[pa11y-ci](https://github.com/pa11y/pa11y-ci) runs against the live app on every push via `.github/workflows/accessibility.yml`. Zero violations are required for the build to pass. To run locally:
+
+pa11y-ci requires the Node.js lts version. Make sure it is installed with the following commands:
+
+**macOS** — use [nvm](https://github.com/nvm-sh/nvm).
+
+```bash
+# install nvm if needed: https://github.com/nvm-sh/nvm#installing-and-updating
+nvm install --lts
+nvm use --lts
+```
+
+**Windows** — use [nvm-windows](https://github.com/coreybutler/nvm-windows):
+
+```powershell
+# install nvm-windows first: https://github.com/coreybutler/nvm-windows#installation--upgrades
+nvm install lts
+nvm use lts
+```
+
+Then run the checker:
+
+**macOS**
+```bash
+# In one terminal — start the app
+source venv/bin/activate && python app.py
+```
+```bash
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+**Windows** (PowerShell)
+```powershell
+# In one terminal — start the app
+venv\Scripts\Activate.ps1
+python app.py
+
+# In another terminal — run the checker
+npm install
+npm run a11y
+```
+
+Configuration is in [.pa11yci](.pa11yci).
+
+During development, also run [axe DevTools](https://www.deque.com/axe/devtools/) in the browser to catch issues before push.
+
+### Dash-specific conventions
+
+**Text alternatives**
+- Every `dcc.Graph` must have a descriptive `aria-label` and a `config={"displayModeBar": False}` caption or `html.Figcaption` sibling explaining the data.
+- Images embedded via `html.Img` must have a meaningful `alt` attribute. Decorative images must use `alt=""`.
+
+**Forms and inputs**
+- Every `dcc.Input`, `dcc.Dropdown`, `dcc.Slider`, etc. must have an associated `html.Label` using `htmlFor` pointing to the input's `id`.
+- Never rely on `placeholder` text alone as a label.
+
+**Heading hierarchy**
+- Use exactly one `html.H1` per page. Follow with `H2`, `H3`, etc. in order — do not skip levels.
+
+**Color and contrast**
+- Normal text must meet a 4.5:1 contrast ratio against its background (WCAG AA).
+- Large text (≥18pt or ≥14pt bold) must meet 3:1.
+- Never convey information by color alone — pair color with a label, pattern, or icon.
+- Use colorblind-safe palettes for Plotly figures (e.g., `px.colors.qualitative.Safe`).
+
+**Keyboard navigation**
+- All interactive components must be reachable and operable via keyboard alone.
+- Every focusable element must have a visible focus indicator. Never use `outline: none` without a custom replacement.
+- Modals and dialogs must trap focus while open and return focus on close.
+
+**Language**
+- The `<html lang="en">` attribute is set via `app.index_string` in `app.py`. Do not remove or replace `app.index_string` without preserving `lang="en"`.
+
+**Dynamic content (Dash callbacks)**
+- Callback updates that change visible content must be announced to screen readers. Wrap status messages in an element with `role="status"` (polite) or `role="alert"` (assertive). Dash does not do this automatically.
+
+**Skip navigation**
+- Include a "Skip to main content" link as the first focusable element on every page, linking to the `id` of the main content container.
 
 ## Git conventions
 

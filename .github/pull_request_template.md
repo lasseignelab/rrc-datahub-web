@@ -25,6 +25,30 @@
 - Random seed is set
 - Confirm the code performs the intended functionality 
 
+## Accessibility Checklist (ADA Title II / WCAG 2.1 AA)
+<!-- Complete if this PR touches any UI, layout, or content. Skip only for back-end/data-only changes. -->
+
+**Automated**
+- [ ] pa11y scan passes (`npm run a11y` with app running)
+- [ ] No axe DevTools errors in the browser
+
+**Content**
+- [ ] All images have meaningful `alt` text (decorative images use `alt=""`)
+- [ ] All Plotly charts have a text description or caption explaining the data
+- [ ] Text contrast meets WCAG AA (4.5:1 normal, 3:1 large text)
+- [ ] Information is not conveyed by color alone
+
+**Interaction**
+- [ ] All interactive elements are reachable and operable by keyboard alone
+- [ ] Visible focus indicator is present on all focusable elements
+- [ ] Every form field has a visible `<label>`
+- [ ] Page includes a "Skip to Main Content" link as the first focusable element
+
+**Structure**
+- [ ] Page has exactly one `<H1>`; heading levels are not skipped
+- [ ] Dash callback updates that change content are announced to screen readers (`role="status"` or `role="alert"`)
+- [ ] `<html lang="en">` is set (handled by `app.index_string` — do not remove it)
+
 ## Setup
 <!-- How to setup the project before reproducing results? -->
 
