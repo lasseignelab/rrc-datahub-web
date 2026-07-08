@@ -1,6 +1,6 @@
 import dash
-from dash import Input, Output, callback, dcc, html
 import pandas as pd
+from dash import Input, Output, callback, dcc, html
 
 from components.data_utils import melt_nfcore_tpm
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
@@ -23,12 +23,16 @@ def _load_dataset(accession: str) -> pd.DataFrame:
     samplesheet = pd.read_csv(paths["samples"])
     metadata = pd.read_csv(paths["metadata"], sep="\t")
 
-    sample_metadata = samplesheet[["sample"]].merge(
-        metadata[["run", "genotype"]],
-        left_on="sample",
-        right_on="run",
-        how="left",
-    ).drop(columns="run")
+    sample_metadata = (
+        samplesheet[["sample"]]
+        .merge(
+            metadata[["run", "genotype"]],
+            left_on="sample",
+            right_on="run",
+            how="left",
+        )
+        .drop(columns="run")
+    )
 
     unmatched = sample_metadata[sample_metadata["genotype"].isna()]["sample"].tolist()
     if unmatched:
@@ -182,8 +186,7 @@ def update_plot(accession, gene, selected_groups, stat_test):
     all_groups = sorted(long_df["genotype"].unique())
 
     gene_df = long_df.loc[
-        (long_df["gene_name"] == gene)
-        & (long_df["genotype"].isin(selected_groups))
+        (long_df["gene_name"] == gene) & (long_df["genotype"].isin(selected_groups))
     ].copy()
 
     return plot_tpm_violin_plotly(

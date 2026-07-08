@@ -4,7 +4,26 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-08 (third entry)
+
+### Fixed percy AttributeError breaking dash_duo tests
+- `requirements-dev.txt`: Pinned `percy==1.1.1`. dash[testing] uses `percy.Runner` which was removed in percy v2. Without the pin, pip installs the latest percy (2.x), causing `AttributeError: module 'percy' has no attribute 'Runner'` on all browser-driven tests.
+
+## 2026-07-08 (second entry)
+
+### Fixed all MegaLinter linter errors; added pre-commit gate to CLAUDE.md
+- `app.py`, `pages/home.py`, `components/navbar.py`, `components/data_utils.py`, `components/tpm_violin_plot_plotly.py`, `pages/charts.py`: Applied black and isort formatting (black prefers expanded function-call style; isort alphabetizes within sections).
+- `pages/__init__.py`: Created empty file so mypy resolves `pages.home` without the "source file found twice" error.
+- `tests/test_app.py`: Fixed pyright error (`home.layout.children or []`); added blank line between `from dash` and `from pages` imports so isort's first-party/third-party separator is preserved.
+- `tests/conftest.py`: Reordered imports — `selenium` (third-party) before `app` (first-party) with blank line separator.
+- `.mega-linter.yml`: Added `PYTHON_ISORT_ARGUMENTS` with `-p` flags for first-party modules (`app`, `components`, `config`, `db`, `pages`) because MegaLinter's Docker isort does not reliably pick up `pyproject.toml` `known_first_party`.
+- `pyproject.toml`: Added `config` to `known_first_party` so local isort matches Docker isort behavior.
+- `CLAUDE.md`: Added pre-commit instruction — run `pytest --headless` and MegaLinter before every commit/push. Added `rm -rf megalinter-reports` reminder and expanded Docker command.
+
 ## 2026-07-08
+
+### Fixed pytest tests broken by multi-page app refactor
+- `tests/test_app.py`: Updated `test_layout_contains_h1` to check `pages.home.layout` directly instead of `app.layout.children` (H1 now lives in the home page module, not the root layout). Updated `test_graph_renders` to navigate to `/charts` where the `dcc.Graph` lives.
 
 ### Fixed WCAG 2.1 AA: missing lang attribute on html element
 - `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1). pa11y-ci now passes with 0 errors.
@@ -16,6 +35,8 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-01
 
+### Suppress selenium DeprecationWarnings in pytest output
+- `pytest.ini`: Added `filterwarnings = ignore::DeprecationWarning:selenium` to silence urllib3 deprecation warnings emitted by selenium internals on every test run.
 ### Added Windows instructions to accessibility automated checking section
 - `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
 
@@ -24,14 +45,43 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-06-24
 
+### Fixed dash_duo Chrome crash in GitHub Actions CI
+- `tests/conftest.py`: Added `pytest_setup_options` hook that passes `--no-sandbox`, `--disable-dev-shm-usage`, and `--disable-setuid-sandbox` to Chrome. GitHub Actions containers do not support Chrome's sandbox, causing all three browser-driven tests to fail with `SessionNotCreatedException`.
+
+### Fixed MegaLinter black/isort formatting conflicts
+- `tests/conftest.py`: Collapsed webdriver_manager import to a single 82-char line so black and isort agree without needing to wrap it; removed extraneous blank line between import groups.
+- `pyproject.toml`: Added `profile = "black"` to isort config so the two formatters stay compatible going forward.
+- `CLAUDE.md`: Updated local linting section to document the full docker command.
+
+### Fixed remaining MegaLinter errors (second pass)
+- `tests/conftest.py`: Added `# pylint: disable=import-error` module-level directive and `# type: ignore[import-untyped]` on pytest and webdriver_manager imports — pylint/pyright use isolated environments in MegaLinter and cannot resolve dev-only packages via PRE_COMMANDS.
+- `.mega-linter.yml`: Added `PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: "tests/"` — `pyproject.toml` `exclude_dirs` is not read by MegaLinter's bandit runner.
+- `pyproject.toml`: Added `[tool.isort] known_first_party` so isort correctly separates first-party app imports from third-party ones with a blank line.
+
+### Fixed MegaLinter errors from test infrastructure addition
+- `app.py`, `tests/test_app.py`, `tests/conftest.py`: Applied black and isort formatting.
+- `.mega-linter.yml`: Added `pip install -r requirements-dev.txt` to PRE_COMMANDS so pylint and pyright can resolve `pytest` and `webdriver_manager` imports.
+- `pyproject.toml`: Added `[tool.bandit] exclude_dirs = ["tests"]` to suppress B101 (assert_used) false positives in pytest test files.
+
+### Fixed ChromeDriver setup and restored lang="en" (caught by test)
+Added `webdriver-manager` to `requirements-dev.txt` and wired it into `conftest.py` via `pytest_configure` so ChromeDriver is auto-downloaded when not already in PATH. `test_lang_attribute` revealed that `app.index_string` (which sets `lang="en"`) had been removed — restored it. All 5 tests now pass.
+
+### Set up dash[testing] + pytest infrastructure
+Added automated testing with dash[testing] and pytest:
+- `requirements-dev.txt` — test dependencies (dash[testing], pytest, pytest-html)
+- `tests/conftest.py` — shared `app` fixture
+- `tests/test_app.py` — 5 initial tests: server sanity, layout structure, H1 render, graph render, and `lang="en"` WCAG check
+- `pytest.ini` — configures testpath and HTML report output
+- `.github/workflows/tests.yml` — CI job that installs deps and runs pytest on every push
+- Updated `.gitignore` to exclude `test-reports/`
+- Updated `CLAUDE.md` with testing conventions, structure, and what-to-test guidance
+
 ### Aligned CLAUDE.md accessibility conventions with PR template checklist
 - Fixed stale Language section — now correctly documents `app.index_string` as the mechanism for `lang="en"`, not the removed `html.Html()` approach.
 - Fixed alt text rule — decorative images must use `alt=""`, not a non-empty value.
 - Added focus indicator convention — never remove `outline` without a replacement.
 - Added Dynamic content section — Dash callbacks require `role="status"` or `role="alert"` for screen reader announcements.
 - Added axe DevTools to the automated checking guidance.
-
-
 
 ### Added ADA accessibility checklist to PR template
 Added a focused WCAG 2.1 AA checklist to `.github/pull_request_template.md` covering automated scans, content (alt text, chart descriptions, contrast), interaction (keyboard nav, focus, labels, skip link), and structure (heading hierarchy, ARIA live regions, lang attribute).

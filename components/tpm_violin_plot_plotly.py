@@ -17,9 +17,12 @@ import pandas as pd
 import plotly.graph_objects as go
 from scipy import stats
 
-
 _DEFAULT_COLORS = [
-    "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854",
+    "#66c2a5",
+    "#fc8d62",
+    "#8da0cb",
+    "#e78ac3",
+    "#a6d854",
 ]
 
 
@@ -61,46 +64,52 @@ def plot_tpm_violin_plotly(
         n = len(grp_data)
         name = f"{group} (n={n})" if show_n else group
 
-        fig.add_trace(go.Violin(
-            x=np.full(n, i),
-            y=grp_data,
-            name=name,
-            side="both",
-            line_color=color,
-            fillcolor=color,
-            opacity=0.45,
-            points=False,
-            box_visible=False,
-            meanline_visible=False,
-            spanmode="hard",
-            showlegend=True,
-        ))
+        fig.add_trace(
+            go.Violin(
+                x=np.full(n, i),
+                y=grp_data,
+                name=name,
+                side="both",
+                line_color=color,
+                fillcolor=color,
+                opacity=0.45,
+                points=False,
+                box_visible=False,
+                meanline_visible=False,
+                spanmode="hard",
+                showlegend=True,
+            )
+        )
 
-        fig.add_trace(go.Box(
-            x=np.full(n, i),
-            y=grp_data,
-            name=name,
-            marker_color=color,
-            line_color="black",
-            fillcolor="white",
-            width=0.12,
-            boxpoints=False,
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Box(
+                x=np.full(n, i),
+                y=grp_data,
+                name=name,
+                marker_color=color,
+                line_color="black",
+                fillcolor="white",
+                width=0.12,
+                boxpoints=False,
+                showlegend=False,
+            )
+        )
 
         x_jittered = i + np.random.default_rng(42 + i).uniform(
             -jitter,
             jitter,
             n,
         )
-        fig.add_trace(go.Scatter(
-            x=x_jittered,
-            y=grp_data,
-            mode="markers",
-            marker=dict(color="black", size=point_size, opacity=point_opacity),
-            name=name,
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=x_jittered,
+                y=grp_data,
+                mode="markers",
+                marker=dict(color="black", size=point_size, opacity=point_opacity),
+                name=name,
+                showlegend=False,
+            )
+        )
 
     full_title = title or ""
     if stat_test:
@@ -136,13 +145,10 @@ def plot_tpm_violin_plotly(
     return fig
 
 
-def _resolve_palette(
-    palette: Optional[Union[dict, list]], group_order: list
-) -> list:
+def _resolve_palette(palette: Optional[Union[dict, list]], group_order: list) -> list:
     if palette is None:
         return [
-            _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)]
-            for i in range(len(group_order))
+            _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)] for i in range(len(group_order))
         ]
     if isinstance(palette, dict):
         return [
@@ -170,6 +176,5 @@ def _run_stat_test(
         _, p = stats.kruskal(*groups)
         return p
     raise ValueError(
-        f"Unknown stat_test: {stat_test!r}. "
-        "Use 'mannwhitney' or 'kruskal'."
+        f"Unknown stat_test: {stat_test!r}. " "Use 'mannwhitney' or 'kruskal'."
     )

@@ -4,6 +4,7 @@
 
 - At the start of every session, read [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) to understand the recent history of changes in this project.
 - After making any change to this project, append an entry to [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) describing what was changed and why. Use the date `YYYY-MM-DD` and group changes under it. Add new entries at the top, below the header.
+- **Before every commit and push**: run the full test suite (`pytest --headless`) and MegaLinter (Docker command below). Both must pass with zero errors before committing or pushing. Fix any failures first.
 
 Dash + Plotly web application for the RRC DataHub. Built in Python, served via Flask/Gunicorn, backed by a PostgreSQL database.
 
@@ -19,7 +20,12 @@ db/
   queries.py        # SQL query functions
 assets/
   style.css         # Global CSS
-requirements.txt    # Pinned Python dependencies
+requirements.txt        # Pinned production dependencies
+requirements-dev.txt    # Test/dev dependencies (pytest, dash[testing])
+tests/
+  conftest.py           # Shared pytest fixtures
+  test_app.py           # Tests for app.py
+pytest.ini              # pytest configuration
 ```
 
 ## Running the app
@@ -52,15 +58,60 @@ pip install <package>
 pip freeze > requirements.txt
 ```
 
+## Testing
+
+Tests live in `tests/` and run with pytest. CI runs them on every push via `.github/workflows/tests.yml`.
+
+Install test dependencies (keep separate from `requirements.txt`):
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run tests locally:
+
+```bash
+pytest
+```
+
+An HTML report is generated at `test-reports/report.html` after each run (gitignored).
+
+### Test structure
+
+- `tests/conftest.py` — shared fixtures, including the `app` fixture that provides the Dash app to `dash_duo`
+- `tests/test_<module>.py` — one test file per app module or page
+
+### What to test
+
+| Type | Tool | What it covers |
+|---|---|---|
+| Unit | pytest | Callback logic, data transforms, DB query functions |
+| Integration | `dash_duo` | Layout renders, component interactions, callback outputs in browser |
+| Accessibility | `dash_duo` + `execute_script` | `lang` attribute, ARIA roles on dynamic content |
+
+### Conventions
+
+- Use `dash_duo` fixtures for anything that requires a browser. Use plain pytest for pure Python logic.
+- Each `dash_duo` test calls `dash_duo.start_server(app)` as its first line.
+- Use `dash_duo.wait_for_element()` and `dash_duo.wait_for_text_to_equal()` — never `time.sleep()`.
+- Test file names mirror the module they test: `components/charts.py` → `tests/test_charts.py`.
+
 ## Linting (MegaLinter)
 
 CI runs MegaLinter on every push via `.github/workflows/mega-linter.yml`. Only the `PYTHON` linter family is enabled (pylint + ruff). Pylint errors **will** fail the build.
 
-To approximate CI locally:
+To run MegaLinter locally (matches CI exactly):
 
 ```bash
-pylint **/*.py
+rm -rf megalinter-reports && docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$(pwd)":/tmp/lint \
+  oxsecurity/megalinter:v9
 ```
+
+Always remove `megalinter-reports/` before running — MegaLinter appends to existing logs rather than replacing them, so stale errors from previous runs will appear in the new report.
+
+Reports are written to `megalinter-reports/` (gitignored).
 
 Configuration lives in [.mega-linter.yml](.mega-linter.yml).
 
