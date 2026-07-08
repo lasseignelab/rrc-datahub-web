@@ -4,81 +4,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
-## 2026-06-26 (continued, third)
-
-### Fixed fastq_md5 column overflow for paired-end reads
-- `db/models.py`: Changed `fastq_md5` from `String(32)` to `Text`. Paired-end runs store two MD5 hashes joined by `;` (65 chars), exceeding the original 32-char limit.
-- `migrations/versions/bd35225208f8_widen_fastq_md5_to_text.py`: Migration to ALTER the column type.
-
-## 2026-06-26 (continued, second)
-
-### Added load_samples ETL function
-- `etl/load.py`: Added `load_samples()` — scans `staging/transformed-metadata/**/*_transformed.tsv`, looks up `dataset_id` by bioproject, and inserts new rows into the `sample` table. Idempotent (skips runs already present). Added helper functions `_opt_str`, `_opt_int`, `_opt_datetime`, and `_opt_numrange` to handle type conversion and "NP"/"NA" sentinels. `age_range_lower` + `age_range_upper` TSV columns are combined into a `psycopg2.extras.NumericRange` with closed bounds. Added `# pylint: disable=import-error` for MegaLinter compatibility. `__main__` now runs `load_datasets()` then `load_samples()`.
-
-## 2026-06-26 (continued)
-
-### Added Sample ORM model and migration
-- `db/models.py`: Added `Sample` model — 34 columns matching the TSV schema. Surrogate integer PK; `dataset_id` integer FK to `dataset.id` (indexed); `run` unique constraint. Date columns use `DateTime`, large counts use `BigInteger`, `age_range` uses PostgreSQL `NUMRANGE` (replaces separate lower/upper columns), long URL uses `Text`; all non-key columns nullable.
-- `migrations/versions/8e767ddb148f_create_sample_table.py`: Creates `sample` table with `ix_sample_dataset_id` index; downgrade drops both.
-
-
-
-### Added Sample ORM model and migration
-- `db/models.py`: Added `Sample` model — 35 columns matching the TSV schema (all 14 transformed-metadata files share identical headers). Surrogate integer PK, `bioproject` FK to `dataset.bioproject` with an index, `run` unique constraint. Date columns use `DateTime`, large count columns use `BigInteger`, age bounds use `Numeric`, long URL field uses `Text`; all non-key columns nullable.
-- `migrations/versions/8e767ddb148f_create_sample_table.py`: Migration that creates `sample` table and `ix_sample_bioproject` index; downgrade drops both.
-
-## 2026-06-26
-
-### Updated Git conventions to Gitflow-inspired branching model
-- `CLAUDE.md`: Replaced single-line branch naming rule with a full branching model section documenting `main`, `develop`, `feature/*`, and `release/*` branches — when to branch, where to merge, reviewer requirements, and the terminal commands for merging a release branch back into `develop`.
-
-## 2026-06-25 (continued, third)
-
-### Fixed Cheaha SSH auth — switch from password-auth to keyboard-interactive via Transport
-- `etl/download.py`: Cheaha rejects the SSH `password` protocol method and closes the connection, preventing fallback to keyboard-interactive. Fixed by using `paramiko.Transport` directly and calling `transport.auth_interactive()` with a handler that responds to prompts with the user's password. Host key is still verified against `~/.ssh/known_hosts` using `paramiko.HostKeys`. Also fixed pyright errors: `makefile()` returns bytes so output is now decoded with `.decode("utf-8")`; `SFTPClient.from_transport()` can return `None` so a guard was added.
-
-## 2026-06-25 (continued, second)
-
-### Added Dataset ORM model, Alembic migration, and ETL load script
-- `db/__init__.py`: Added package marker with header comment.
-- `db/models.py`: Created `Base` (declarative base) and `Dataset` ORM model with integer surrogate primary key `id` and unique `bioproject` varchar column.
-- `db/connection.py`: Implemented `_db_url()`, `engine`, and `SessionLocal` using env vars via `python-dotenv`.
-- `alembic.ini`: Initialized Alembic config; URL intentionally left blank (set dynamically in env.py).
-- `migrations/env.py`: Configured Alembic environment to read DB URL from env vars and use `Base.metadata` for autogenerate support.
-- `migrations/versions/4df4fc616701_create_dataset_table.py`: Initial migration — creates `dataset` table with `id` (integer PK) and `bioproject` (varchar 20, unique, not null).
-- `etl/load.py`: New ETL load script — reads `staging/geo_datasets.csv`, upserts bioproject accessions into the `dataset` table, skipping rows already present. Safe to run repeatedly.
-
-## 2026-06-25 (continued)
-
-### Fixed ETL Cheaha auth — password prompt instead of SSH key
-- `etl/download.py`: Replaced SSH key authentication with `getpass.getpass()` interactive password prompt. Cheaha uses username/password rather than SSH key auth. Password is never stored.
-- `etl/download.py`: Added `import getpass`; removed `CHEAHA_SSH_KEY` env var usage.
-- `.env.example`: Removed `CHEAHA_SSH_KEY` variable; added note that password is prompted at runtime.
-- `CLAUDE.md`: Updated Cheaha access instructions to reflect password prompt instead of SSH key.
-
-### Fixed MegaLinter linter failures (pylint/mypy/pyright) caused by Docker SSL errors
-- `app.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on third-party imports. MegaLinter's Docker container cannot reach PyPI due to SSL errors, so PRE_COMMANDS fail to install packages; linters then report all third-party imports as unresolvable.
-- `etl/download.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on paramiko, requests, and dotenv imports.
-- `tests/conftest.py`: Added `# type: ignore[import-untyped]` to selenium import (was missing the suppress comment).
-- `tests/test_app.py`: Added `# pylint: disable=import-error` at module level and `# type: ignore[import-untyped]` to the `from dash import html` import inside the test function. All 8 MegaLinter linters now pass ✅.
-
-## 2026-06-25
-
-### Added SQLAlchemy and Alembic
-- Installed `sqlalchemy==2.0.51`, `alembic==1.18.5`, and `Mako==1.3.12` (alembic dependency).
-- Updated `requirements.txt` via `pip freeze`.
-
-### Fixed CI browser tests — Chrome crashes without display
-- `.github/workflows/tests.yml`: Added `--headless` to the pytest command. `ubuntu-latest` runners have no display server; Chrome launched in windowed mode crashes immediately with "session not created: Chrome instance exited".
-
-### Restricted all CI workflows to push events only
-- `.github/workflows/accessibility.yml` and `tests.yml`: Changed `on: [push, pull_request]` to `on: [push]`. MegaLinter was already push-only.
-## 2026-07-08 (third entry)
+## 2026-07-08
 
 ### Fixed percy AttributeError breaking dash_duo tests
 - `requirements-dev.txt`: Pinned `percy==1.1.1`. dash[testing] uses `percy.Runner` which was removed in percy v2. Without the pin, pip installs the latest percy (2.x), causing `AttributeError: module 'percy' has no attribute 'Runner'` on all browser-driven tests.
-
-## 2026-07-08 (second entry)
 
 ### Fixed all MegaLinter linter errors; added pre-commit gate to CLAUDE.md
 - `app.py`, `pages/home.py`, `components/navbar.py`, `components/data_utils.py`, `components/tpm_violin_plot_plotly.py`, `pages/charts.py`: Applied black and isort formatting (black prefers expanded function-call style; isort alphabetizes within sections).
@@ -88,8 +17,6 @@ A log of changes made by Claude Code in this project, newest first.
 - `.mega-linter.yml`: Added `PYTHON_ISORT_ARGUMENTS` with `-p` flags for first-party modules (`app`, `components`, `config`, `db`, `pages`) because MegaLinter's Docker isort does not reliably pick up `pyproject.toml` `known_first_party`.
 - `pyproject.toml`: Added `config` to `known_first_party` so local isort matches Docker isort behavior.
 - `CLAUDE.md`: Added pre-commit instruction — run `pytest --headless` and MegaLinter before every commit/push. Added `rm -rf megalinter-reports` reminder and expanded Docker command.
-
-## 2026-07-08
 
 ### Fixed pytest tests broken by multi-page app refactor
 - `tests/test_app.py`: Updated `test_layout_contains_h1` to check `pages.home.layout` directly instead of `app.layout.children` (H1 now lives in the home page module, not the root layout). Updated `test_graph_renders` to navigate to `/charts` where the `dcc.Graph` lives.
@@ -106,11 +33,64 @@ A log of changes made by Claude Code in this project, newest first.
 
 ### Suppress selenium DeprecationWarnings in pytest output
 - `pytest.ini`: Added `filterwarnings = ignore::DeprecationWarning:selenium` to silence urllib3 deprecation warnings emitted by selenium internals on every test run.
+
 ### Added Windows instructions to accessibility automated checking section
 - `CLAUDE.md`: Expanded Node.js install and pa11y-ci run instructions to cover both macOS (nvm) and Windows (nvm-windows + PowerShell venv activation).
 
 ### Added Node.js install instructions to accessibility section
 - `CLAUDE.md`: Added `node --version` check and nvm-based install instructions before the pa11y-ci local run steps, so developers know how to get Node.js if it is not already present.
+
+## 2026-06-26
+
+### Fixed fastq_md5 column overflow for paired-end reads
+- `db/models.py`: Changed `fastq_md5` from `String(32)` to `Text`. Paired-end runs store two MD5 hashes joined by `;` (65 chars), exceeding the original 32-char limit.
+- `migrations/versions/bd35225208f8_widen_fastq_md5_to_text.py`: Migration to ALTER the column type.
+
+### Added load_samples ETL function
+- `etl/load.py`: Added `load_samples()` — scans `staging/transformed-metadata/**/*_transformed.tsv`, looks up `dataset_id` by bioproject, and inserts new rows into the `sample` table. Idempotent (skips runs already present). Added helper functions `_opt_str`, `_opt_int`, `_opt_datetime`, and `_opt_numrange` to handle type conversion and "NP"/"NA" sentinels. `age_range_lower` + `age_range_upper` TSV columns are combined into a `psycopg2.extras.NumericRange` with closed bounds. Added `# pylint: disable=import-error` for MegaLinter compatibility. `__main__` now runs `load_datasets()` then `load_samples()`.
+
+### Added Sample ORM model and migration
+- `db/models.py`: Added `Sample` model — 34 columns matching the TSV schema. Surrogate integer PK; `dataset_id` integer FK to `dataset.id` (indexed); `run` unique constraint. Date columns use `DateTime`, large counts use `BigInteger`, `age_range` uses PostgreSQL `NUMRANGE` (replaces separate lower/upper columns), long URL uses `Text`; all non-key columns nullable.
+- `migrations/versions/8e767ddb148f_create_sample_table.py`: Creates `sample` table with `ix_sample_dataset_id` index; downgrade drops both.
+
+### Updated Git conventions to Gitflow-inspired branching model
+- `CLAUDE.md`: Replaced single-line branch naming rule with a full branching model section documenting `main`, `develop`, `feature/*`, and `release/*` branches — when to branch, where to merge, reviewer requirements, and the terminal commands for merging a release branch back into `develop`.
+
+## 2026-06-25
+
+### Fixed Cheaha SSH auth — switch from password-auth to keyboard-interactive via Transport
+- `etl/download.py`: Cheaha rejects the SSH `password` protocol method and closes the connection, preventing fallback to keyboard-interactive. Fixed by using `paramiko.Transport` directly and calling `transport.auth_interactive()` with a handler that responds to prompts with the user's password. Host key is still verified against `~/.ssh/known_hosts` using `paramiko.HostKeys`. Also fixed pyright errors: `makefile()` returns bytes so output is now decoded with `.decode("utf-8")`; `SFTPClient.from_transport()` can return `None` so a guard was added.
+
+### Added Dataset ORM model, Alembic migration, and ETL load script
+- `db/__init__.py`: Added package marker with header comment.
+- `db/models.py`: Created `Base` (declarative base) and `Dataset` ORM model with integer surrogate primary key `id` and unique `bioproject` varchar column.
+- `db/connection.py`: Implemented `_db_url()`, `engine`, and `SessionLocal` using env vars via `python-dotenv`.
+- `alembic.ini`: Initialized Alembic config; URL intentionally left blank (set dynamically in env.py).
+- `migrations/env.py`: Configured Alembic environment to read DB URL from env vars and use `Base.metadata` for autogenerate support.
+- `migrations/versions/4df4fc616701_create_dataset_table.py`: Initial migration — creates `dataset` table with `id` (integer PK) and `bioproject` (varchar 20, unique, not null).
+- `etl/load.py`: New ETL load script — reads `staging/geo_datasets.csv`, upserts bioproject accessions into the `dataset` table, skipping rows already present. Safe to run repeatedly.
+
+### Fixed ETL Cheaha auth — password prompt instead of SSH key
+- `etl/download.py`: Replaced SSH key authentication with `getpass.getpass()` interactive password prompt. Cheaha uses username/password rather than SSH key auth. Password is never stored.
+- `etl/download.py`: Added `import getpass`; removed `CHEAHA_SSH_KEY` env var usage.
+- `.env.example`: Removed `CHEAHA_SSH_KEY` variable; added note that password is prompted at runtime.
+- `CLAUDE.md`: Updated Cheaha access instructions to reflect password prompt instead of SSH key.
+
+### Fixed MegaLinter linter failures (pylint/mypy/pyright) caused by Docker SSL errors
+- `app.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on third-party imports. MegaLinter's Docker container cannot reach PyPI due to SSL errors, so PRE_COMMANDS fail to install packages; linters then report all third-party imports as unresolvable.
+- `etl/download.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` on paramiko, requests, and dotenv imports.
+- `tests/conftest.py`: Added `# type: ignore[import-untyped]` to selenium import (was missing the suppress comment).
+- `tests/test_app.py`: Added `# pylint: disable=import-error` at module level and `# type: ignore[import-untyped]` to the `from dash import html` import inside the test function. All 8 MegaLinter linters now pass ✅.
+
+### Added SQLAlchemy and Alembic
+- Installed `sqlalchemy==2.0.51`, `alembic==1.18.5`, and `Mako==1.3.12` (alembic dependency).
+- Updated `requirements.txt` via `pip freeze`.
+
+### Fixed CI browser tests — Chrome crashes without display
+- `.github/workflows/tests.yml`: Added `--headless` to the pytest command. `ubuntu-latest` runners have no display server; Chrome launched in windowed mode crashes immediately with "session not created: Chrome instance exited".
+
+### Restricted all CI workflows to push events only
+- `.github/workflows/accessibility.yml` and `tests.yml`: Changed `on: [push, pull_request]` to `on: [push]`. MegaLinter was already push-only.
 
 ## 2026-06-24
 
@@ -160,24 +140,16 @@ Added a focused WCAG 2.1 AA checklist to `.github/pull_request_template.md` cove
 ### Fixed WCAG 2.1 AA: Dash debug button has no accessible label
 Set `dev_tools_ui=False` in `app.run()` to suppress Dash's debug panel button, which has no text or ARIA label (axe DevTools critical issue). Hot reload and error catching remain active. Removed the `hideElements` workaround from `.pa11yci` since the element no longer renders. Updated CLAUDE.md to document this requirement.
 
-
-
 ### Fixed pa11y-ci CI failure — Chromium sandbox and Node.js version
 - `.pa11yci`: Added `chromeLaunchConfig.args: ["--no-sandbox", "--disable-setuid-sandbox"]` — required for Puppeteer to launch Chromium in GitHub Actions' containerized environment.
 - `.github/workflows/accessibility.yml`: Bumped Node.js from 20 (deprecated on Actions) to 22.
-
-
 
 ### Fixed WCAG 2.1 AA violations found by pa11y-ci
 - `app.py`: Added `app.index_string` to set `lang="en"` on the `<html>` element (WCAG 3.1.1).
 - `.pa11yci`: Added `hideElements: "#_dash-global-error-container"` to exclude Dash's dev-only debug button, which has no accessible name but is absent in production.
 
-
-
 ### Fixed pa11y-ci config — renamed to `.pa11yci` and corrected format
 pa11y-ci looks for `.pa11yci` by default, not `.pa11yrc.json`. Renamed via `git mv` and restructured config to use the `defaults` key for shared options, which is required by pa11y-ci's config schema. Updated CLAUDE.md reference.
-
-
 
 ### Set up ADA Title II / WCAG 2.1 AA accessibility linting
 Added `pa11y-ci` to test the running Dash app against WCAG 2.1 AA on every push. Created:
@@ -187,32 +159,20 @@ Added `pa11y-ci` to test the running Dash app against WCAG 2.1 AA on every push.
 - Updated `CLAUDE.md` with Dash-specific WCAG 2.1 AA conventions (text alternatives, form labels, heading hierarchy, color contrast, keyboard nav, skip links)
 - Updated `.gitignore` to exclude `pa11y-reports/` and `node_modules/`
 
-
-
 ### Added Git conventions section to CLAUDE.md
 Documented branch naming convention: lowercase with dashes, descriptive of functionality.
-
-
 
 ### Fixed pyright `reportPrivateImportUsage` error in `app.py` (second attempt)
 Updated import to `from dash.dcc.Graph import Graph` per pyright's suggested path.
 
-
-
 ### Fixed pyright `reportPrivateImportUsage` error in `app.py`
 Replaced `dcc.Graph` with a direct import of `Graph` from `dash.dcc` to satisfy pyright's public export check. Removed unused `dcc` import.
-
-
 
 ### Fixed `.gitignore` linter directory name
 Changed `linter_logs` to `megalinter-reports` to match the actual directory name generated by MegaLinter.
 
-
-
 ### Updated CLAUDE.md — startup and changelog instructions
 Added instructions telling Claude Code to read `CLAUDE_CHANGELOG.md` at session start and to log all changes after making them.
-
-
 
 ### Created CLAUDE.md
 Initial project documentation file covering layout, run instructions, dependency management, linting, code style, PR process, and database setup.
