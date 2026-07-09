@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-08
 
+### Fixed CI pa11y failure — scipy missing from requirements.txt and percy version wrong
+- `requirements.txt`: Added `scipy==1.15.3` (used by `components/tpm_violin_plot_plotly.py`; omission caused `ModuleNotFoundError` in CI and prevented the app from starting). Downgraded `percy` to `1.1.1` (was `2.0.2` from a previous `pip freeze`; v2 removes `percy.Runner` which `dash[testing]` requires).
+
 ### Fixed all MegaLinter errors and suppressed Flask teardown warning in pytest
 - `app.py`: Removed unused imports (`plotly.express as px`, `dash.dcc.Graph.Graph`).
 - `components/tpm_violin_plot_plotly.py`: Added `# pylint: disable=import-error` and `# type: ignore[import-untyped]` to numpy, pandas, plotly, and scipy imports for MegaLinter Docker compatibility.
