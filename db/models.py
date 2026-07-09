@@ -3,7 +3,16 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import NUMRANGE
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -72,4 +81,40 @@ class Sample(Base):
         """Return a developer-readable representation."""
         return (
             f"Sample(id={self.id!r}, run={self.run!r}, dataset_id={self.dataset_id!r})"
+        )
+
+
+class Gene(Base):
+    """One row per reference gene from the Ensembl annotation."""
+
+    __tablename__ = "gene"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    gene_id: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
+    gene_name: Mapped[str | None] = mapped_column(String(100))
+
+    def __repr__(self) -> str:
+        """Return a developer-readable representation."""
+        return f"Gene(id={self.id!r}, gene_id={self.gene_id!r})"
+
+
+class SampleGene(Base):
+    """Per-sample, per-gene expression values (salmon output)."""
+
+    __tablename__ = "sample_gene"
+    __table_args__ = (Index("ix_sample_gene_gene_id", "gene_id"),)
+
+    sample_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("sample.id"), primary_key=True
+    )
+    gene_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("gene.id"), primary_key=True
+    )
+    tpm: Mapped[float] = mapped_column(Float, nullable=False)
+
+    def __repr__(self) -> str:
+        """Return a developer-readable representation."""
+        return (
+            f"SampleGene(sample_id={self.sample_id!r},"
+            f" gene_id={self.gene_id!r}, tpm={self.tpm!r})"
         )

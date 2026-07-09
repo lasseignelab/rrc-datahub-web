@@ -6,6 +6,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-09
 
+### Add gene model, sample_gene mapping table, and TPM load functions
+- `db/models.py`: Added `Gene` (Ensembl gene_id + gene_name) and `SampleGene` (composite PK on sample_id + gene_id, secondary index on gene_id for gene-centric queries) ORM models. Named `SampleGene` rather than `SampleGeneTpm` so additional expression metrics can be added as columns in the future.
+- `migrations/versions/a1b2c3d4e5f6_create_gene_table.py`: Alembic migration to create the `gene` table.
+- `migrations/versions/b2c3d4e5f6a7_create_sample_gene_table.py`: Alembic migration to create the `sample_gene` table with FKs to `sample` and `gene`.
+- `etl/load.py`: Added `load_genes()` — reads gene_id and gene_name from the first TPM reference file (all 14 files share the same 78,317-row Ensembl annotation) and bulk-inserts new genes. Added `load_tpm()` — for each `staging/tpm/PRJNA*/salmon.merged.gene_tpm.tsv`, maps SRR column headers to sample IDs, then bulk-inserts (sample_id, gene_id, tpm) rows via psycopg2 `execute_values` in 10,000-row batches for performance. Samples already present in `sample_gene` are skipped (idempotent). Both functions are called from `__main__`.
+
 ### Fixed urllib3 version conflict in requirements.txt
 - `requirements.txt`: Pinned `urllib3==1.26.20` (was `2.6.3` from a prior `pip freeze` that captured the locally upgraded version). `selenium==4.2.0` requires `urllib3~=1.26` (1.x only); the 2.x pin caused CI `pip install` to fail with a dependency conflict.
 
