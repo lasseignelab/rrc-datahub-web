@@ -79,7 +79,7 @@ trio==0.33.0
 trio-websocket==0.12.2
 typing_extensions==4.15.0
 tzdata==2026.1
-urllib3==2.6.3
+urllib3==1.26.20
 urllib3-secure-extra==0.1.0
 waitress==3.0.2
 webdriver-manager==4.1.2

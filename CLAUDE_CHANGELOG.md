@@ -4,6 +4,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-09
+
+### Fixed urllib3 version conflict in requirements.txt
+- `requirements.txt`: Pinned `urllib3==1.26.20` (was `2.6.3` from a prior `pip freeze` that captured the locally upgraded version). `selenium==4.2.0` requires `urllib3~=1.26` (1.x only); the 2.x pin caused CI `pip install` to fail with a dependency conflict.
+
+---
+
 ## 2026-07-08
 
 ### Fixed CI pa11y failure — scipy missing from requirements.txt and percy version wrong
