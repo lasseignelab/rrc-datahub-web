@@ -31,8 +31,8 @@ PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: "tests/"
 # isort does not reliably pick up pyproject.toml inside Docker; pass settings explicitly
 PYTHON_ISORT_ARGUMENTS: "--profile black -p app -p components -p config -p db -p pages"
 
-PRE_COMMANDS:
-  - command: pip install -r requirements.txt
-    cwd: workspace
-  - command: pip install -r requirements-dev.txt
-    cwd: workspace
+# PRE_COMMANDS:
+#   - command: pip install -r requirements.txt
+#     cwd: workspace
+#   - command: pip install -r requirements-dev.txt
+#     cwd: workspace
