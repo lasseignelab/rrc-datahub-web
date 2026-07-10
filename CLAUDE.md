@@ -381,7 +381,7 @@ Use the PR template at [.github/pull_request_template.md](.github/pull_request_t
 
 ## Database
 
-PostgreSQL via `psycopg2-binary`. Connection credentials are loaded from a `.env` file (not committed).
+The app uses PostgreSQL as its primary database. Python connects to it via `psycopg2-binary`, with the SQLAlchemy ORM managing models and queries and Alembic handling schema migrations. Connection credentials are loaded from `.env` at startup and are never committed to version control.
 
 ### Installing PostgreSQL
 
