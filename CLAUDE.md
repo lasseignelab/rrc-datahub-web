@@ -433,3 +433,11 @@ Then apply all migrations to create the tables:
 source venv/bin/activate
 alembic upgrade head
 ```
+
+### Query functions
+
+`db/queries.py` holds **shared** query functions — ones used by two or more pages or components. Queries that are only used in one place belong in that page or component file directly; SQLAlchemy's ORM is already an abstraction layer, so routing every query through `queries.py` adds indirection without benefit.
+
+Rule of thumb:
+- Query used in one page → write it in that page file.
+- Query used in two or more pages → move it to `db/queries.py`.

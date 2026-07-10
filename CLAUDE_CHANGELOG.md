@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-10
 
+### Document query function placement convention in CLAUDE.md
+- `CLAUDE.md`: Added "Query functions" subsection under Database explaining when to use `db/queries.py` vs. writing queries inline in page/component files. Rule: shared queries (used in 2+ places) go in `db/queries.py`; single-use queries stay in the page or component that needs them.
+
+---
+
 ### Centralize linter import suppression in config files; add pa11y to pre-commit gate
 A MegaLinter image update introduced pylint `E0401` (import-error) and pyright `reportMissingImports` failures across all files that import third-party packages not installed in the Docker image. Rather than scattering inline `# pylint: disable=import-error` and `# type: ignore[import-untyped]` comments across 14 source files, suppression was moved to central config:
 - `.mega-linter.yml`: Added `PYTHON_PYLINT_ARGUMENTS: "--disable=import-error"` and `PYTHON_MYPY_ARGUMENTS: "--disable-error-code=import-untyped"`.
