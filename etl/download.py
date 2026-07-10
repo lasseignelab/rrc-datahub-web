@@ -12,16 +12,15 @@
 #   CHEAHA_BASE_PATH      — remote base path containing PRJNA* directories
 #   STAGING_DIR           — local directory for downloaded files (default: staging/)
 
-# pylint: disable=import-error
 import getpass
 import logging
 import os
 import re
 from pathlib import Path
 
-import paramiko  # type: ignore[import-untyped]
-import requests  # type: ignore[import-untyped]
-from dotenv import load_dotenv  # type: ignore[import-untyped]
+import paramiko
+import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 

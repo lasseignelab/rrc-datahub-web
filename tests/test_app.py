@@ -1,4 +1,3 @@
-# pylint: disable=import-error
 """Tests for the main Dash app layout and rendering."""
 
 from app import app

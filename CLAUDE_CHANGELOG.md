@@ -6,6 +6,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-10
 
+### Centralize linter import suppression in config files; add pa11y to pre-commit gate
+A MegaLinter image update introduced pylint `E0401` (import-error) and pyright `reportMissingImports` failures across all files that import third-party packages not installed in the Docker image. Rather than scattering inline `# pylint: disable=import-error` and `# type: ignore[import-untyped]` comments across 14 source files, suppression was moved to central config:
+- `.mega-linter.yml`: Added `PYTHON_PYLINT_ARGUMENTS: "--disable=import-error"` and `PYTHON_MYPY_ARGUMENTS: "--disable-error-code=import-untyped"`.
+- `pyproject.toml`: Added `[tool.pyright]` section with `reportMissingImports = "none"` and `reportMissingModuleSource = "none"`.
+- Removed all `# pylint: disable=import-error` and `# type: ignore[import-untyped]` from every source file (`app.py`, `components/`, `pages/`, `db/`, `etl/`, `migrations/`, `tests/`).
+- `CLAUDE.md`: Updated "Instructions for Claude Code" to require `npm run a11y` (with the app running) alongside `pytest --headless` and MegaLinter before every commit and push.
+
 ### Expand Database section in CLAUDE.md with PostgreSQL install instructions
 - `CLAUDE.md`: Added "Installing PostgreSQL" subsection covering macOS (Homebrew), Windows (official installer), and Linux (apt-get). Added "Creating the database and user" subsection with `psql` commands. Added "Connecting the app" subsection showing how to populate `.env` and run `alembic upgrade head`.
 - `.env.example`: Updated `DB_USER` to `rrc_user` and `DB_PASSWORD` to `yourpassword` to match the credentials shown in the CLAUDE.md Database section.

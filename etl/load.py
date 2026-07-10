@@ -1,6 +1,5 @@
 # ETL load step: reads staged files and inserts records into the database.
 
-# pylint: disable=import-error
 import csv
 import logging
 import os
@@ -9,8 +8,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv  # type: ignore[import-untyped]
-from psycopg2.extras import NumericRange, execute_values  # type: ignore[import-untyped]
+from dotenv import load_dotenv
+from psycopg2.extras import NumericRange, execute_values
 
 from db.connection import SessionLocal, engine
 from db.models import Dataset, Gene, Sample, SampleGene
