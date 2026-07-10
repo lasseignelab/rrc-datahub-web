@@ -1,5 +1,74 @@
 # CLAUDE.md — rrc-datahub-web
 
+## Table of contents
+
+- [Getting started](#getting-started)
+- [Instructions for Claude Code](#instructions-for-claude-code)
+- [Project layout](#project-layout)
+- [Environment setup](#environment-setup)
+- [Running the app](#running-the-app)
+- [ETL load script](#etl-load-script)
+- [Dependencies](#dependencies)
+- [Testing](#testing)
+- [Linting (MegaLinter)](#linting-megalinter)
+- [Code style](#code-style)
+- [Accessibility (ADA Title II / WCAG 2.1 AA)](#accessibility-ada-title-ii--wcag-21-aa)
+- [Git conventions](#git-conventions)
+- [Pull requests](#pull-requests)
+- [Database](#database)
+
+## Getting started
+
+Follow these steps in order to get the project running locally.
+
+**1. Create a virtual environment and install dependencies** → [Dependencies](#dependencies)
+
+```bash
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+**2. Configure environment variables** → [Environment setup](#environment-setup)
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your database credentials. If you plan to run the ETL, also fill in `GITHUB_TOKEN` and the `CHEAHA_*` variables.
+
+**3. Set up the database and run migrations** → [Database](#database)
+
+Create a PostgreSQL database, populate the `DB_*` variables in `.env`, then apply all migrations:
+
+```bash
+alembic upgrade head
+```
+
+**4. Download and load source data** → [ETL load script](#etl-load-script)
+
+```bash
+source venv/bin/activate
+python -m etl.download   # pulls data from GitHub and Cheaha into staging/
+python -m etl.load       # inserts staged data into the database
+```
+
+**5. Start the app** → [Running the app](#running-the-app)
+
+```bash
+source venv/bin/activate
+python app.py            # dev server at http://localhost:8050
+```
+
+**6. Verify: run the test suite** → [Testing](#testing)
+
+```bash
+source venv/bin/activate && pytest --headless
+```
+
+---
+
 ## Instructions for Claude Code
 
 - At the start of every session, read [CLAUDE_CHANGELOG.md](CLAUDE_CHANGELOG.md) to understand the recent history of changes in this project.
