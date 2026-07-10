@@ -381,12 +381,55 @@ Use the PR template at [.github/pull_request_template.md](.github/pull_request_t
 
 ## Database
 
-PostgreSQL via `psycopg2-binary`. Connection credentials are loaded from a `.env` file (not committed). Copy `.env.example` if one exists, or set the following variables:
+PostgreSQL via `psycopg2-binary`. Connection credentials are loaded from a `.env` file (not committed).
+
+### Installing PostgreSQL
+
+**macOS** — use [Homebrew](https://brew.sh):
+
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Windows** — download and run the installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). Accept the defaults and note the password you set for the `postgres` superuser.
+
+**Linux (Ubuntu/Debian)**:
+
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl enable --now postgresql
+```
+
+### Creating the database and user
+
+After installing, open a `psql` shell and create a dedicated database and user:
+
+```bash
+psql -U postgres          # macOS/Linux; Windows: open "SQL Shell (psql)" from Start menu
+```
+
+```sql
+CREATE USER rrc_user WITH PASSWORD 'yourpassword';
+CREATE DATABASE rrc_datahub OWNER rrc_user;
+\q
+```
+
+### Connecting the app
+
+Populate the `DB_*` variables in `.env` with the values you just created:
 
 ```
-DB_HOST=
-DB_PORT=
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=rrc_datahub
+DB_USER=rrc_user
+DB_PASSWORD=yourpassword
+```
+
+Then apply all migrations to create the tables:
+
+```bash
+source venv/bin/activate
+alembic upgrade head
 ```

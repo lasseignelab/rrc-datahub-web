@@ -4,6 +4,14 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-10
+
+### Expand Database section in CLAUDE.md with PostgreSQL install instructions
+- `CLAUDE.md`: Added "Installing PostgreSQL" subsection covering macOS (Homebrew), Windows (official installer), and Linux (apt-get). Added "Creating the database and user" subsection with `psql` commands. Added "Connecting the app" subsection showing how to populate `.env` and run `alembic upgrade head`.
+- `.env.example`: Updated `DB_USER` to `rrc_user` and `DB_PASSWORD` to `yourpassword` to match the credentials shown in the CLAUDE.md Database section.
+
+---
+
 ## 2026-07-09
 
 ### Add gene model, sample_gene mapping table, and TPM load functions
