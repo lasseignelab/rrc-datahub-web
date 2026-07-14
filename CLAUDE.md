@@ -9,8 +9,8 @@
 - [Environment setup](#environment-setup)
 - [Database](#database)
 - [ETL load script](#etl-load-script)
-- [Running the app](#running-the-app)
 - [Testing](#testing)
+- [Running the app](#running-the-app)
 - [Linting (MegaLinter)](#linting-megalinter)
 - [Code style](#code-style)
 - [Accessibility (ADA Title II / WCAG 2.1 AA)](#accessibility-ada-title-ii--wcag-21-aa)
@@ -29,9 +29,9 @@ Follow these steps in order to get the project running locally.
 
 **4. Download and load source data** → [ETL load script](#etl-load-script)
 
-**5. Start the app** → [Running the app](#running-the-app)
+**5. Verify: run the test suite** → [Testing](#testing)
 
-**6. Verify: run the test suite** → [Testing](#testing)
+**6. Start the app** → [Running the app](#running-the-app)
 
 ---
 
@@ -225,21 +225,6 @@ source venv/bin/activate
 python -m etl.load
 ```
 
-## Running the app
-
-```bash
-source venv/bin/activate
-python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
-```
-
-`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
-
-For production:
-
-```bash
-gunicorn app:server
-```
-
 ## Testing
 
 Tests live in `tests/` and run with pytest. CI runs them on every push via `.github/workflows/tests.yml`.
@@ -277,6 +262,21 @@ An HTML report is generated at `test-reports/report.html` after each run (gitign
 - Each `dash_duo` test calls `dash_duo.start_server(app)` as its first line.
 - Use `dash_duo.wait_for_element()` and `dash_duo.wait_for_text_to_equal()` — never `time.sleep()`.
 - Test file names mirror the module they test: `components/charts.py` → `tests/test_charts.py`.
+
+## Running the app
+
+```bash
+source venv/bin/activate
+python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
+```
+
+`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
+
+For production:
+
+```bash
+gunicorn app:server
+```
 
 ## Linting (MegaLinter)
 

@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-14
 
+### Move Testing before Running the app in Getting Started and section order
+- `CLAUDE.md`: Swapped steps 5 and 6 in Getting Started so the test suite runs before starting the app. Moved the Testing section before Running the app in the document body and Table of Contents to match.
+
 ### Update CLAUDE.md: streamline Getting Started, expand ETL and Dependencies sections
 - `CLAUDE.md`: Condensed Getting Started to step titles with links only (detail moved to the referenced sections). Expanded Dependencies section to include the full venv creation and install commands. Expanded Environment setup to clarify variables are filled in progressively across setup steps. Added GitHub Token instructions (fine-grained PAT creation and org admin approval steps) to the ETL load script section.
 
