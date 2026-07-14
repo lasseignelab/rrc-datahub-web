@@ -4,6 +4,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-14
+
+### Reorder CLAUDE.md sections to match Getting Started sequence
+- `CLAUDE.md`: Reordered sections so the detailed reference sections appear in the same order as the Getting Started steps: Dependencies → Environment setup → Database → ETL load script → Running the app → Testing. Contributor sections (Linting, Code style, Accessibility, Git conventions, Pull requests) remain grouped at the end. Updated Table of Contents to match.
+
+---
+
 ## 2026-07-10
 
 ### Document query function placement convention in CLAUDE.md

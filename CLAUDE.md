@@ -5,17 +5,17 @@
 - [Getting started](#getting-started)
 - [Instructions for Claude Code](#instructions-for-claude-code)
 - [Project layout](#project-layout)
-- [Environment setup](#environment-setup)
-- [Running the app](#running-the-app)
-- [ETL load script](#etl-load-script)
 - [Dependencies](#dependencies)
+- [Environment setup](#environment-setup)
+- [Database](#database)
+- [ETL load script](#etl-load-script)
+- [Running the app](#running-the-app)
 - [Testing](#testing)
 - [Linting (MegaLinter)](#linting-megalinter)
 - [Code style](#code-style)
 - [Accessibility (ADA Title II / WCAG 2.1 AA)](#accessibility-ada-title-ii--wcag-21-aa)
 - [Git conventions](#git-conventions)
 - [Pull requests](#pull-requests)
-- [Database](#database)
 
 ## Getting started
 
@@ -40,7 +40,7 @@ Open `.env` and fill in your database credentials. If you plan to run the ETL, a
 
 **3. Set up the database and run migrations** → [Database](#database)
 
-Create a PostgreSQL database, populate the `DB_*` variables in `.env`, then apply all migrations:
+Once your database is setup, apply all migrations:
 
 ```bash
 alembic upgrade head
@@ -100,6 +100,21 @@ tests/
 pytest.ini              # pytest configuration
 ```
 
+## Dependencies
+
+Managed with `pip`. The virtualenv lives in `venv/`. After pulling changes:
+
+```bash
+pip install -r requirements.txt
+```
+
+To add a package:
+
+```bash
+pip install <package>
+pip freeze > requirements.txt
+```
+
 ## Environment setup
 
 Configuration is loaded from a `.env` file in the project root using `python-dotenv`. This file is gitignored and must never be committed.
@@ -127,20 +142,68 @@ Then open `.env` and fill in the values for your environment:
 
 The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step.
 
-## Running the app
+## Database
+
+The app uses PostgreSQL as its primary database. Python connects to it via `psycopg2-binary`, with the SQLAlchemy ORM managing models and queries and Alembic handling schema migrations. Connection credentials are loaded from `.env` at startup and are never committed to version control.
+
+### Installing PostgreSQL
+
+**macOS** — use [Homebrew](https://brew.sh):
+
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Windows** — download and run the installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). Accept the defaults and note the password you set for the `postgres` superuser.
+
+**Linux (Ubuntu/Debian)**:
+
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl enable --now postgresql
+```
+
+### Creating the database and user
+
+After installing, open a `psql` shell and create a dedicated database and user:
+
+```bash
+psql -U $(whoami) -d postgres  # macOS/Linux; Windows: open "SQL Shell (psql)" from Start menu
+```
+
+```sql
+CREATE USER rrc_user WITH PASSWORD 'yourpassword';
+CREATE DATABASE rrc_datahub OWNER rrc_user;
+\q
+```
+
+### Connecting the app
+
+Populate the `DB_*` variables in `.env` with the values you just created:
+
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=rrc_datahub
+DB_USER=rrc_user
+DB_PASSWORD=yourpassword
+```
+
+Then apply all migrations to create the tables:
 
 ```bash
 source venv/bin/activate
-python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
+alembic upgrade head
 ```
 
-`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
+### Query functions
 
-For production:
+`db/queries.py` holds **shared** query functions — ones used by two or more pages or components. Queries that are only used in one place belong in that page or component file directly; SQLAlchemy's ORM is already an abstraction layer, so routing every query through `queries.py` adds indirection without benefit.
 
-```bash
-gunicorn app:server
-```
+Rule of thumb:
+- Query used in one page → write it in that page file.
+- Query used in two or more pages → move it to `db/queries.py`.
 
 ## ETL load script
 
@@ -156,6 +219,12 @@ Downloads from three sources into `STAGING_DIR` (default `staging/`):
 | `staging/transformed-metadata/` | `results/transformed-metadata/` from `lasseignelab/rrc-datahub` (GitHub) |
 | `staging/tpm/<PRJNA*>/salmon.merged.gene_tpm.tsv` | UAB Cheaha via SSH/SCP |
 
+**Cheaha SSH access** — the script will prompt for your Cheaha password at runtime (it is never stored). The script uses `RejectPolicy` for host-key verification, so the host must already be in your `~/.ssh/known_hosts`:
+
+```bash
+ssh-keyscan cheaha.rc.uab.edu >> ~/.ssh/known_hosts
+```
+
 ```bash
 source venv/bin/activate
 python -m etl.download
@@ -163,25 +232,26 @@ python -m etl.download
 
 The script logs progress to stdout. On success it prints a summary line with the count of metadata files and TPM files downloaded.
 
-**Cheaha SSH access** — the script will prompt for your Cheaha password at runtime (it is never stored). The script uses `RejectPolicy` for host-key verification, so the host must already be in your `~/.ssh/known_hosts`:
+### Load step
 
 ```bash
-ssh-keyscan cheaha.rc.uab.edu >> ~/.ssh/known_hosts
+source venv/bin/activate
+python -m etl.load
 ```
 
-## Dependencies
-
-Managed with `pip`. The virtualenv lives in `venv/`. After pulling changes:
+## Running the app
 
 ```bash
-pip install -r requirements.txt
+source venv/bin/activate
+python app.py          # dev server at http://localhost:8050 (debug=True, dev_tools_ui=False)
 ```
 
-To add a package:
+`dev_tools_ui=False` suppresses Dash's debug panel button, which has no accessible label and violates WCAG 2.1 AA. Hot reload and error catching remain active.
+
+For production:
 
 ```bash
-pip install <package>
-pip freeze > requirements.txt
+gunicorn app:server
 ```
 
 ## Testing
@@ -378,66 +448,3 @@ Bad: `DASH-BUILD-V1`, `feature/MyFeature`, `fix1`, `add-plotly-graph` (missing p
 ## Pull requests
 
 Use the PR template at [.github/pull_request_template.md](.github/pull_request_template.md). All MegaLinter checks must pass before merge. Feature PRs require one reviewer; release and main PRs require two.
-
-## Database
-
-The app uses PostgreSQL as its primary database. Python connects to it via `psycopg2-binary`, with the SQLAlchemy ORM managing models and queries and Alembic handling schema migrations. Connection credentials are loaded from `.env` at startup and are never committed to version control.
-
-### Installing PostgreSQL
-
-**macOS** — use [Homebrew](https://brew.sh):
-
-```bash
-brew install postgresql@16
-brew services start postgresql@16
-```
-
-**Windows** — download and run the installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). Accept the defaults and note the password you set for the `postgres` superuser.
-
-**Linux (Ubuntu/Debian)**:
-
-```bash
-sudo apt-get install postgresql postgresql-contrib
-sudo systemctl enable --now postgresql
-```
-
-### Creating the database and user
-
-After installing, open a `psql` shell and create a dedicated database and user:
-
-```bash
-psql -U postgres          # macOS/Linux; Windows: open "SQL Shell (psql)" from Start menu
-```
-
-```sql
-CREATE USER rrc_user WITH PASSWORD 'yourpassword';
-CREATE DATABASE rrc_datahub OWNER rrc_user;
-\q
-```
-
-### Connecting the app
-
-Populate the `DB_*` variables in `.env` with the values you just created:
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=rrc_datahub
-DB_USER=rrc_user
-DB_PASSWORD=yourpassword
-```
-
-Then apply all migrations to create the tables:
-
-```bash
-source venv/bin/activate
-alembic upgrade head
-```
-
-### Query functions
-
-`db/queries.py` holds **shared** query functions — ones used by two or more pages or components. Queries that are only used in one place belong in that page or component file directly; SQLAlchemy's ORM is already an abstraction layer, so routing every query through `queries.py` adds indirection without benefit.
-
-Rule of thumb:
-- Query used in one page → write it in that page file.
-- Query used in two or more pages → move it to `db/queries.py`.
