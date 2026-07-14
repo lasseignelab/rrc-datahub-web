@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-14
 
+### Update CLAUDE.md: streamline Getting Started, expand ETL and Dependencies sections
+- `CLAUDE.md`: Condensed Getting Started to step titles with links only (detail moved to the referenced sections). Expanded Dependencies section to include the full venv creation and install commands. Expanded Environment setup to clarify variables are filled in progressively across setup steps. Added GitHub Token instructions (fine-grained PAT creation and org admin approval steps) to the ETL load script section.
+
 ### Reorder CLAUDE.md sections to match Getting Started sequence
 - `CLAUDE.md`: Reordered sections so the detailed reference sections appear in the same order as the Getting Started steps: Dependencies → Environment setup → Database → ETL load script → Running the app → Testing. Contributor sections (Linting, Code style, Accessibility, Git conventions, Pull requests) remain grouped at the end. Updated Table of Contents to match.
 

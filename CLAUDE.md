@@ -23,49 +23,15 @@ Follow these steps in order to get the project running locally.
 
 **1. Create a virtual environment and install dependencies** → [Dependencies](#dependencies)
 
-```bash
-python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
-
 **2. Configure environment variables** → [Environment setup](#environment-setup)
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and fill in your database credentials. If you plan to run the ETL, also fill in `GITHUB_TOKEN` and the `CHEAHA_*` variables.
 
 **3. Set up the database and run migrations** → [Database](#database)
 
-Once your database is setup, apply all migrations:
-
-```bash
-alembic upgrade head
-```
-
 **4. Download and load source data** → [ETL load script](#etl-load-script)
-
-```bash
-source venv/bin/activate
-python -m etl.download   # pulls data from GitHub and Cheaha into staging/
-python -m etl.load       # inserts staged data into the database
-```
 
 **5. Start the app** → [Running the app](#running-the-app)
 
-```bash
-source venv/bin/activate
-python app.py            # dev server at http://localhost:8050
-```
-
 **6. Verify: run the test suite** → [Testing](#testing)
-
-```bash
-source venv/bin/activate && pytest --headless
-```
 
 ---
 
@@ -104,8 +70,13 @@ pytest.ini              # pytest configuration
 
 Managed with `pip`. The virtualenv lives in `venv/`. After pulling changes:
 
+To install current dependencies:
+
 ```bash
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 To add a package:
@@ -125,8 +96,6 @@ To set up your local environment:
 cp .env.example .env
 ```
 
-Then open `.env` and fill in the values for your environment:
-
 | Variable | Description |
 |---|---|
 | `DB_HOST` | PostgreSQL host |
@@ -140,7 +109,7 @@ Then open `.env` and fill in the values for your environment:
 | `CHEAHA_BASE_PATH` | Remote base path containing `PRJNA*` directories on Cheaha |
 | `STAGING_DIR` | Local directory for ETL-downloaded files (default `staging/`) |
 
-The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step.
+Environment variables will be filled in as needed in subsequent setup steps. The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step.
 
 ## Database
 
@@ -207,7 +176,24 @@ Rule of thumb:
 
 ## ETL load script
 
-The ETL process downloads source data to a local staging directory and (once the load step is implemented) inserts it into the database. Make sure `.env` is populated before running.
+The ETL process downloads source data to a local staging directory and (once the load step is implemented) inserts it into the database. Make sure `.env` variables GITHUB_TOKEN and CHEAHA_USER are populated before running.
+
+### GitHub Token
+Follow these steps to create a token:
+- Navigate to the GitHub user Settings [Credentials](https://github.com/settings/credentials) section.
+- Select "Fine-grained personal access tokens".
+- Select "Generate new token".
+- Fill in the "Token name" field.
+- Select "lasseignelab" as the resource owner.
+- Choose "Only select repositories" as the "Repository access" option.
+- Select "lasseignelab/rrc-datahub" as the repository.
+- Click "Add permission" and select "Contents" from the options and leave the permission as "Access: Read-only".
+- Click "Generate token" and immediately copy the token or it will be lost.
+- Add the token to the GITHUB_TOKEN variable in the `.env` file.
+
+Follow these steps as an administrator to approve a token:
+- Navigate to the GitHub lasseignelab organization Settings tab [Pending access tokens](https://github.com/organizations/lasseignelab/settings/personal-access-token-requests) section to approve pending tokens.
+- Select and approve the pending tokens.
 
 ### Download step
 
