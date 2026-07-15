@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Pin dash[testing] version in requirements-dev.txt
+- `requirements-dev.txt`: Pinned `dash[testing]==4.1.0` to match `dash==4.1.0` in `requirements.txt`. Without a version pin, CI was upgrading dash to 4.4.0 when installing dev dependencies, pulling in new transitive requirements (`janus`, `pydantic`, `percy-python-selenium`) not present in `requirements.txt` and breaking the test environment.
+
 ### Server-side gene search in charts dropdown
 - `pages/charts.py`: Replaced full 78k-gene dropdown with server-side search. New `_search_genes(search)` queries the `gene` table directly (no sample_gene join) with an ILIKE prefix filter and a limit of 50 results. The gene dropdown now fires a callback on each keystroke and returns only matching genes, eliminating browser lag from rendering thousands of options. Split the previous single selector callback into two: one for gene options (search-driven) and one for group reset (dataset-driven).
 
