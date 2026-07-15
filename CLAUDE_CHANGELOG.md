@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Fix pyright reportOptionalMemberAccess on get_engine()
+- `db/connection.py`: Pyright couldn't narrow the type of the global `_engine` after `_get_factory()` set it, so `get_engine()` appeared to return `Engine | None`. Switched to a local variable pattern with an explicit `-> Engine` return annotation so pyright can confirm the return is always non-None.
+
 ### Add get_engine() and fix etl/load.py import after lazy refactor
 - `db/connection.py`: Added `get_engine()` public function that returns the lazily-created engine. The lazy refactor had removed the module-level `engine` name, breaking any caller that needed the raw engine (mypy, pylint, and pyright all caught this).
 - `etl/load.py`: Updated import from `engine` to `get_engine` and changed the `engine.raw_connection()` call to `get_engine().raw_connection()`.
