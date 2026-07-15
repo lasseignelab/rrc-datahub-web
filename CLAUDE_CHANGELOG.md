@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Add get_engine() and fix etl/load.py import after lazy refactor
+- `db/connection.py`: Added `get_engine()` public function that returns the lazily-created engine. The lazy refactor had removed the module-level `engine` name, breaking any caller that needed the raw engine (mypy, pylint, and pyright all caught this).
+- `etl/load.py`: Updated import from `engine` to `get_engine` and changed the `engine.raw_connection()` call to `get_engine().raw_connection()`.
+
 ### Make DB engine lazy to fix CI import crash
 - `db/connection.py`: Engine and session factory were built at module level, causing `KeyError: 'DB_HOST'` whenever the module was imported without database env vars present (CI, fresh checkouts). Deferred creation to the first `SessionLocal()` call so the module imports cleanly in all environments. Tests relying on the Dash app import now pass without a live database.
 
