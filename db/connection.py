@@ -34,3 +34,9 @@ def _get_factory():
 def SessionLocal():
     """Return a new SQLAlchemy session. Caller must close it."""
     return _get_factory()()
+
+
+def get_engine():
+    """Return the SQLAlchemy engine, creating it on first call."""
+    _get_factory()
+    return _engine
