@@ -4,7 +4,7 @@ import logging
 
 import dash
 import pandas as pd
-from dash import Input, Output, callback, dcc, html
+from dash import Input, Output, State, callback, dcc, html
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -13,6 +13,8 @@ from db.models import Dataset, Gene, Sample, SampleGene
 dash.register_page(__name__, path="/charts")
 
 log = logging.getLogger(__name__)
+
+_GENE_SEARCH_LIMIT = 50
 
 
 def _get_datasets() -> list[str]:
@@ -25,21 +27,22 @@ def _get_datasets() -> list[str]:
         session.close()
 
 
-def _get_genes(bioproject: str) -> list[str]:
-    """Return sorted list of gene names with TPM data for a dataset."""
+def _search_genes(search: str) -> list[str]:
+    """Return up to 50 gene names matching the search prefix.
+
+    All datasets share the same Ensembl annotation, so no dataset filter is
+    needed. Querying the gene table directly avoids an expensive join against
+    the 21M-row sample_gene table.
+    """
     session = SessionLocal()
     try:
-        rows = (
-            session.query(Gene.gene_name)
-            .join(SampleGene, SampleGene.gene_id == Gene.id)
-            .join(Sample, Sample.id == SampleGene.sample_id)
-            .join(Dataset, Dataset.id == Sample.dataset_id)
-            .filter(Dataset.bioproject == bioproject, Gene.gene_name.isnot(None))
-            .distinct()
-            .order_by(Gene.gene_name)
-            .all()
-        )
-        return [r[0] for r in rows]
+        query = session.query(Gene.gene_name).filter(Gene.gene_name.isnot(None))
+        if search:
+            query = query.filter(Gene.gene_name.ilike(f"{search}%"))
+        return [
+            r[0]
+            for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
+        ]
     finally:
         session.close()
 
@@ -83,7 +86,7 @@ def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Pre-load first dataset so dropdowns are populated on initial render
+# Pre-load initial state so dropdowns are populated on first render
 # ---------------------------------------------------------------------------
 
 try:
@@ -97,7 +100,7 @@ _initial_genotypes: list[str] = []
 
 if _datasets:
     try:
-        _initial_genes = _get_genes(_datasets[0])
+        _initial_genes = _search_genes("")
         _initial_genotypes = _get_genotypes(_datasets[0])
     except Exception as exc:
         log.warning("Could not load initial genes/genotypes: %s", exc)
@@ -171,27 +174,47 @@ layout = html.Div(
 
 
 # ---------------------------------------------------------------------------
-# Callback 1: dataset -> populate gene + group dropdowns
+# Callback 1: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
 
 @callback(
     Output("gene-select", "options"),
+    Input("gene-select", "search_value"),
+    State("gene-select", "value"),
+)
+def filter_gene_options(search, current_gene):
+    """Return up to 50 gene names matching the typed prefix.
+
+    Always includes the currently selected gene so it stays visible in the
+    dropdown even when it falls outside the search results.
+    """
+    genes = _search_genes(search or "")
+    if current_gene and current_gene not in genes:
+        genes = [current_gene] + genes
+    return [{"label": g, "value": g} for g in genes]
+
+
+# ---------------------------------------------------------------------------
+# Callback 2: dataset -> reset gene selection + repopulate group checklist
+# ---------------------------------------------------------------------------
+
+
+@callback(
     Output("gene-select", "value"),
     Output("group-select", "options"),
     Output("group-select", "value"),
     Input("dataset-select", "value"),
 )
 def update_selectors(bioproject):
-    """Repopulate gene and group dropdowns when the dataset changes."""
+    """Reset gene and group selections when the dataset changes."""
     if not bioproject:
-        return [], None, [], []
+        return None, [], []
 
-    genes = _get_genes(bioproject)
+    genes = _search_genes("")
     genotypes = _get_genotypes(bioproject)
 
     return (
-        [{"label": g, "value": g} for g in genes],
         genes[0] if genes else None,
         [{"label": g, "value": g} for g in genotypes],
         genotypes,
@@ -199,7 +222,7 @@ def update_selectors(bioproject):
 
 
 # ---------------------------------------------------------------------------
-# Callback 2: gene + groups + stat test -> render plot
+# Callback 3: gene + groups + stat test -> render plot
 # ---------------------------------------------------------------------------
 
 

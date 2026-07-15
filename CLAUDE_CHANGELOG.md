@@ -6,6 +6,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Server-side gene search in charts dropdown
+- `pages/charts.py`: Replaced full 78k-gene dropdown with server-side search. New `_search_genes(search)` queries the `gene` table directly (no sample_gene join) with an ILIKE prefix filter and a limit of 50 results. The gene dropdown now fires a callback on each keystroke and returns only matching genes, eliminating browser lag from rendering thousands of options. Split the previous single selector callback into two: one for gene options (search-driven) and one for group reset (dataset-driven).
+
+---
+
 ### Connect charts page to PostgreSQL; remove file-based data loading
 - `pages/charts.py`: Rewrote to query the database instead of reading CSV/TSV files. Dataset list, gene list, genotype list, and per-gene TPM values all come from the `dataset`, `sample`, `gene`, and `sample_gene` tables via SQLAlchemy ORM queries. Module-level startup queries are wrapped with logged fallbacks so the page degrades gracefully if the database is unavailable.
 - `config.py`: Deleted. Dataset discovery was the only consumer; that logic now lives inline in `pages/charts.py` as a DB query.
