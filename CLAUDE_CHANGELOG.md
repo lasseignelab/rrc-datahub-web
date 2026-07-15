@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Fix percy version conflict breaking CI
+- `requirements.txt`: Updated `percy==1.1.1` to `percy==2.0.2` — `dash[testing]==4.1.0` declares a `percy>=2.0.2` dependency, so the old pin made the combined install impossible.
+- `requirements-dev.txt`: Removed the redundant explicit `percy==1.1.1` pin; `dash[testing]` already pulls the correct version via its own dependency declaration.
+
 ### Pin dash[testing] version in requirements-dev.txt
 - `requirements-dev.txt`: Pinned `dash[testing]==4.1.0` to match `dash==4.1.0` in `requirements.txt`. Without a version pin, CI was upgrading dash to 4.4.0 when installing dev dependencies, pulling in new transitive requirements (`janus`, `pydantic`, `percy-python-selenium`) not present in `requirements.txt` and breaking the test environment.
 
