@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-15
 
+### Make DB engine lazy to fix CI import crash
+- `db/connection.py`: Engine and session factory were built at module level, causing `KeyError: 'DB_HOST'` whenever the module was imported without database env vars present (CI, fresh checkouts). Deferred creation to the first `SessionLocal()` call so the module imports cleanly in all environments. Tests relying on the Dash app import now pass without a live database.
+
 ### Fix percy version conflict breaking CI
 - `requirements.txt`: Updated `percy==1.1.1` to `percy==2.0.2` — `dash[testing]==4.1.0` declares a `percy>=2.0.2` dependency, so the old pin made the combined install impossible.
 - `requirements-dev.txt`: Removed the redundant explicit `percy==1.1.1` pin; `dash[testing]` already pulls the correct version via its own dependency declaration.
