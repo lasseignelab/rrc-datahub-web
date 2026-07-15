@@ -4,6 +4,16 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-15
+
+### Connect charts page to PostgreSQL; remove file-based data loading
+- `pages/charts.py`: Rewrote to query the database instead of reading CSV/TSV files. Dataset list, gene list, genotype list, and per-gene TPM values all come from the `dataset`, `sample`, `gene`, and `sample_gene` tables via SQLAlchemy ORM queries. Module-level startup queries are wrapped with logged fallbacks so the page degrades gracefully if the database is unavailable.
+- `config.py`: Deleted. Dataset discovery was the only consumer; that logic now lives inline in `pages/charts.py` as a DB query.
+- `components/data_utils.py`: Deleted. `melt_nfcore_tpm()` is no longer needed; the database returns data already in long format.
+- `db/PRJNA285844/`: Deleted. The CSV/TSV staging files (`salmon.merged.gene_tpm.tsv`, `samplesheet.csv`, `extended_metadata.csv`) are replaced by the PostgreSQL database.
+
+---
+
 ## 2026-07-14
 
 ### Move Testing before Running the app in Getting Started and section order
