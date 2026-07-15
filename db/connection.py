@@ -19,5 +19,18 @@ def _db_url() -> str:
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 
-engine = create_engine(_db_url())
-SessionLocal = sessionmaker(bind=engine)
+_engine = None
+_factory = None
+
+
+def _get_factory():
+    global _engine, _factory
+    if _factory is None:
+        _engine = create_engine(_db_url())
+        _factory = sessionmaker(bind=_engine)
+    return _factory
+
+
+def SessionLocal():
+    """Return a new SQLAlchemy session. Caller must close it."""
+    return _get_factory()()
