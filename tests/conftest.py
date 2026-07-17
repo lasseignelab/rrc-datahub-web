@@ -1,8 +1,7 @@
-# pylint: disable=import-error
 import os
 import shutil
 
-import pytest  # type: ignore[import-untyped]
+import pytest
 from selenium.webdriver.chrome.options import Options
 
 from app import app as dash_app
