@@ -4,6 +4,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-17
+
+### Pin Python version to 3.13
+- `.python-version`: Created with `3.13` so pyenv, uv, and other local tooling pin to Python 3.13 automatically.
+- `.github/workflows/tests.yml`, `.github/workflows/accessibility.yml`: Changed `python-version: "3.13"` to `python-version-file: .python-version` so CI reads from the single source of truth.
+
 ## 2026-07-15
 
 ### Fix pyright reportOptionalMemberAccess on get_engine()
