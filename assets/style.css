@@ -1,0 +1,17 @@
+/* Skip navigation link — visually hidden until focused (WCAG 2.4.1). */
+.skip-nav {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.skip-nav:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    padding: 0.5rem 1rem;
+}

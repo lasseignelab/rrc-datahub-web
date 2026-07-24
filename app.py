@@ -24,8 +24,9 @@ app.index_string = """<!DOCTYPE html>
 
 app.layout = html.Div(
     [
+        html.A("Skip to main content", href="#main-content", className="skip-nav"),
         navbar(),
-        page_container,
+        html.Main(page_container, id="main-content"),
     ]
 )
 
