@@ -168,7 +168,11 @@ layout = html.Div(
             ],
             style={"marginBottom": "16px"},
         ),
-        dcc.Graph(id="violin-plot"),
+        dcc.Graph(
+            id="violin-plot",
+            config={"responsive": True, "displayModeBar": False},
+            style={"width": "100%"},
+        ),
     ]
 )
 
