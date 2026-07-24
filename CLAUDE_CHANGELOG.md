@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Fix nested-interactive: replace role=listbox with role=group on checklist (WCAG 4.1.2)
+- `assets/accessibility.js`: Previous fix (`aria-hidden` + `tabindex=-1` on checkboxes) did not satisfy the axe nested-interactive rule, which tests DOM structure — any focusable element inside an interactive ARIA role fails regardless of those attributes. `fixChecklistARIA()` now replaces `role="listbox"` on `#group-select` with `role="group"` (correct grouping role for a set of related checkboxes) and removes `role="option"` / `aria-selected` from each label, restoring the native `<label>`+`<input>` pattern. `role="group"` is not an interactive role, so nested checkboxes are permitted.
+
 ### Fix nested-interactive violation in dcc.Checklist (WCAG 4.1.2)
 - `assets/accessibility.js`: Added `fixNestedInteractives()`. Dash 4 renders `dcc.Checklist` as `role="listbox"` with each option as `<label role="option">` wrapping `<input type="checkbox">`. The checkbox is a focusable descendant inside an interactive ARIA role, violating WCAG nested-interactive. The fix sets `aria-hidden="true"` and `tabindex="-1"` on each checkbox so the `role="option"` + `aria-selected` pair is the sole AT interface — the correct ARIA listbox pattern.
 
