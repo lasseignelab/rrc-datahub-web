@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Wrap navbar in html.Nav landmark (WCAG region)
+- `components/navbar.py`: Changed `html.Div` to `html.Nav` with `aria-label="Site navigation"`. The navbar content was outside any landmark, failing the axe region check. With this and the `<main>` added previously, all page content is now contained within landmarks.
+
 ### Add main landmark and skip navigation link (WCAG 2.4.1)
 - `app.py`: Wrapped `page_container` in `html.Main(id="main-content")` so the page has a `<main>` landmark. Added a visually-hidden skip-to-main-content `html.A` as the first focusable element so keyboard users can bypass the repeated navbar.
 - `assets/style.css`: Added `.skip-nav` CSS — off-screen when unfocused (`position:absolute; left:-9999px`), visible when focused (`position:static`).
