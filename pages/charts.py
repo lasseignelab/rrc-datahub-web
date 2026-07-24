@@ -139,7 +139,7 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.Label("Groups"),
+                html.Label("Groups", id="group-select-label"),
                 dcc.Checklist(
                     id="group-select",
                     options=[{"label": g, "value": g} for g in _initial_genotypes],
@@ -151,7 +151,7 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.Label("Statistical test"),
+                html.Label("Statistical test", id="stat-test-label"),
                 dcc.RadioItems(
                     id="stat-test",
                     options=[
