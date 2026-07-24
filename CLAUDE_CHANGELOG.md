@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Fix nested-interactive violation in dcc.Checklist (WCAG 4.1.2)
+- `assets/accessibility.js`: Added `fixNestedInteractives()`. Dash 4 renders `dcc.Checklist` as `role="listbox"` with each option as `<label role="option">` wrapping `<input type="checkbox">`. The checkbox is a focusable descendant inside an interactive ARIA role, violating WCAG nested-interactive. The fix sets `aria-hidden="true"` and `tabindex="-1"` on each checkbox so the `role="option"` + `aria-selected` pair is the sole AT interface — the correct ARIA listbox pattern.
+
 ### Fix missing ARIA accessible names on group-select and stat-test (WCAG 4.1.2)
 - `assets/accessibility.js`: Created. A `MutationObserver` watches the DOM and patches `aria-labelledby` onto `#group-select` (role=listbox) and `#stat-test` (role=radiogroup) after Dash renders them. Dash 4's `dcc.Checklist` and `dcc.RadioItems` do not expose ARIA props in their component API, so the attribute must be applied via JavaScript. The observer handles both initial page load and multi-page navigation.
 - `pages/charts.py`: Added `id="group-select-label"` to the "Groups" label and `id="stat-test-label"` to the "Statistical test" label so the observer has valid targets to reference.
