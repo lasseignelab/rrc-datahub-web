@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Extend nested-interactive fix to dcc.RadioItems (#stat-test)
+- `assets/accessibility.js`: `dcc.RadioItems` uses the same `role="listbox"` / `role="option"` rendering pattern as `dcc.Checklist`. Renamed and generalized `fixChecklistARIA()` to `fixOptionContainerARIA()`, which now iterates both `#group-select` and `#stat-test` and applies the same `role="group"` substitution and `role="option"` removal.
+
 ### Fix nested-interactive: replace role=listbox with role=group on checklist (WCAG 4.1.2)
 - `assets/accessibility.js`: Previous fix (`aria-hidden` + `tabindex=-1` on checkboxes) did not satisfy the axe nested-interactive rule, which tests DOM structure — any focusable element inside an interactive ARIA role fails regardless of those attributes. `fixChecklistARIA()` now replaces `role="listbox"` on `#group-select` with `role="group"` (correct grouping role for a set of related checkboxes) and removes `role="option"` / `aria-selected` from each label, restoring the native `<label>`+`<input>` pattern. `role="group"` is not an interactive role, so nested checkboxes are permitted.
 
