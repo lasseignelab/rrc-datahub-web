@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Add main landmark and skip navigation link (WCAG 2.4.1)
+- `app.py`: Wrapped `page_container` in `html.Main(id="main-content")` so the page has a `<main>` landmark. Added a visually-hidden skip-to-main-content `html.A` as the first focusable element so keyboard users can bypass the repeated navbar.
+- `assets/style.css`: Added `.skip-nav` CSS — off-screen when unfocused (`position:absolute; left:-9999px`), visible when focused (`position:static`).
+
 ### Extend nested-interactive fix to dcc.RadioItems (#stat-test)
 - `assets/accessibility.js`: `dcc.RadioItems` uses the same `role="listbox"` / `role="option"` rendering pattern as `dcc.Checklist`. Renamed and generalized `fixChecklistARIA()` to `fixOptionContainerARIA()`, which now iterates both `#group-select` and `#stat-test` and applies the same `role="group"` substitution and `role="option"` removal.
 
