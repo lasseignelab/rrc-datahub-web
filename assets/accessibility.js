@@ -21,26 +21,42 @@
         });
     }
 
-    // Fixes WCAG nested-interactive: dcc.Checklist renders role="option" labels
-    // that wrap <input type="checkbox">. The checkbox is a redundant focusable
-    // descendant — the role="option" + aria-selected pair already conveys
-    // selection state to AT. Hide the checkbox from AT and remove it from the
-    // tab order so the listbox/option keyboard pattern is the sole AT interface.
-    function fixNestedInteractives() {
-        var checkboxes = document.querySelectorAll(
-            "#group-select input[type=\"checkbox\"]"
-        );
-        checkboxes.forEach(function (cb) {
-            if (!cb.getAttribute("aria-hidden")) {
-                cb.setAttribute("aria-hidden", "true");
-                cb.setAttribute("tabindex", "-1");
-            }
+    // Fixes nested-interactive on dcc.Checklist (#group-select).
+    //
+    // Dash renders the checklist as role="listbox" with each option as
+    // <label role="option" aria-selected="..."> wrapping <input type="checkbox">.
+    // role="listbox" is an interactive ARIA role; the axe nested-interactive rule
+    // rejects focusable descendants inside interactive roles — aria-hidden +
+    // tabindex=-1 do not satisfy this check because the rule tests DOM structure.
+    //
+    // Fix: replace role="listbox" with role="group" (the correct ARIA grouping
+    // role for a set of related checkboxes) and remove role="option"/aria-selected
+    // from each label so the native <label>+<input> pattern takes over.
+    // role="group" is not an interactive role, so nested checkboxes are allowed.
+    function fixChecklistARIA() {
+        var container = document.getElementById("group-select");
+        if (!container) { return; }
+
+        if (container.getAttribute("role") === "listbox") {
+            container.setAttribute("role", "group");
+        }
+
+        container.querySelectorAll("[role=\"option\"]").forEach(function (opt) {
+            opt.removeAttribute("role");
+            opt.removeAttribute("aria-selected");
+        });
+
+        // Remove the aria-hidden/tabindex applied by the previous approach —
+        // checkboxes inside role="group" are not nested-interactive violations.
+        container.querySelectorAll("input[type=\"checkbox\"]").forEach(function (cb) {
+            if (cb.getAttribute("aria-hidden")) { cb.removeAttribute("aria-hidden"); }
+            if (cb.getAttribute("tabindex") === "-1") { cb.removeAttribute("tabindex"); }
         });
     }
 
     function applyAll() {
         applyLabels();
-        fixNestedInteractives();
+        fixChecklistARIA();
     }
 
     var observer = new MutationObserver(applyAll);
