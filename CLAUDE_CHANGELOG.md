@@ -4,6 +4,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-24
+
+### Fix missing ARIA accessible names on group-select and stat-test (WCAG 4.1.2)
+- `assets/accessibility.js`: Created. A `MutationObserver` watches the DOM and patches `aria-labelledby` onto `#group-select` (role=listbox) and `#stat-test` (role=radiogroup) after Dash renders them. Dash 4's `dcc.Checklist` and `dcc.RadioItems` do not expose ARIA props in their component API, so the attribute must be applied via JavaScript. The observer handles both initial page load and multi-page navigation.
+- `pages/charts.py`: Added `id="group-select-label"` to the "Groups" label and `id="stat-test-label"` to the "Statistical test" label so the observer has valid targets to reference.
+- `.pa11yci`: Added `http://localhost:8050/charts` to the URL list so CI catches accessibility violations on the charts page.
+
 ## 2026-07-17
 
 ### Pin Python version to 3.13
