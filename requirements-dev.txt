@@ -1,5 +1,4 @@
-dash[testing]
-percy==1.1.1
+dash[testing]==4.1.0
 pytest
 pytest-html
 webdriver-manager

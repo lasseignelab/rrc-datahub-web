@@ -4,6 +4,44 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-17
+
+### Pin Python version to 3.13
+- `.python-version`: Created with `3.13` so pyenv, uv, and other local tooling pin to Python 3.13 automatically.
+- `.github/workflows/tests.yml`, `.github/workflows/accessibility.yml`: Changed `python-version: "3.13"` to `python-version-file: .python-version` so CI reads from the single source of truth.
+
+## 2026-07-15
+
+### Fix pyright reportOptionalMemberAccess on get_engine()
+- `db/connection.py`: Pyright couldn't narrow the type of the global `_engine` after `_get_factory()` set it, so `get_engine()` appeared to return `Engine | None`. Switched to a local variable pattern with an explicit `-> Engine` return annotation so pyright can confirm the return is always non-None.
+
+### Add get_engine() and fix etl/load.py import after lazy refactor
+- `db/connection.py`: Added `get_engine()` public function that returns the lazily-created engine. The lazy refactor had removed the module-level `engine` name, breaking any caller that needed the raw engine (mypy, pylint, and pyright all caught this).
+- `etl/load.py`: Updated import from `engine` to `get_engine` and changed the `engine.raw_connection()` call to `get_engine().raw_connection()`.
+
+### Make DB engine lazy to fix CI import crash
+- `db/connection.py`: Engine and session factory were built at module level, causing `KeyError: 'DB_HOST'` whenever the module was imported without database env vars present (CI, fresh checkouts). Deferred creation to the first `SessionLocal()` call so the module imports cleanly in all environments. Tests relying on the Dash app import now pass without a live database.
+
+### Fix percy version conflict breaking CI
+- `requirements.txt`: Updated `percy==1.1.1` to `percy==2.0.2` — `dash[testing]==4.1.0` declares a `percy>=2.0.2` dependency, so the old pin made the combined install impossible.
+- `requirements-dev.txt`: Removed the redundant explicit `percy==1.1.1` pin; `dash[testing]` already pulls the correct version via its own dependency declaration.
+
+### Pin dash[testing] version in requirements-dev.txt
+- `requirements-dev.txt`: Pinned `dash[testing]==4.1.0` to match `dash==4.1.0` in `requirements.txt`. Without a version pin, CI was upgrading dash to 4.4.0 when installing dev dependencies, pulling in new transitive requirements (`janus`, `pydantic`, `percy-python-selenium`) not present in `requirements.txt` and breaking the test environment.
+
+### Server-side gene search in charts dropdown
+- `pages/charts.py`: Replaced full 78k-gene dropdown with server-side search. New `_search_genes(search)` queries the `gene` table directly (no sample_gene join) with an ILIKE prefix filter and a limit of 50 results. The gene dropdown now fires a callback on each keystroke and returns only matching genes, eliminating browser lag from rendering thousands of options. Split the previous single selector callback into two: one for gene options (search-driven) and one for group reset (dataset-driven).
+
+---
+
+### Connect charts page to PostgreSQL; remove file-based data loading
+- `pages/charts.py`: Rewrote to query the database instead of reading CSV/TSV files. Dataset list, gene list, genotype list, and per-gene TPM values all come from the `dataset`, `sample`, `gene`, and `sample_gene` tables via SQLAlchemy ORM queries. Module-level startup queries are wrapped with logged fallbacks so the page degrades gracefully if the database is unavailable.
+- `config.py`: Deleted. Dataset discovery was the only consumer; that logic now lives inline in `pages/charts.py` as a DB query.
+- `components/data_utils.py`: Deleted. `melt_nfcore_tpm()` is no longer needed; the database returns data already in long format.
+- `db/PRJNA285844/`: Deleted. The CSV/TSV staging files (`salmon.merged.gene_tpm.tsv`, `samplesheet.csv`, `extended_metadata.csv`) are replaced by the PostgreSQL database.
+
+---
+
 ## 2026-07-14
 
 ### Move Testing before Running the app in Getting Started and section order

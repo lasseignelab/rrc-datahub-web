@@ -4,6 +4,7 @@ import os
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
@@ -19,5 +20,30 @@ def _db_url() -> str:
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 
-engine = create_engine(_db_url())
-SessionLocal = sessionmaker(bind=engine)
+_engine: Engine | None = None
+_factory = None
+
+
+def get_engine() -> Engine:
+    """Return the SQLAlchemy engine, creating it on first call."""
+    global _engine, _factory
+    engine = _engine
+    if engine is None:
+        engine = create_engine(_db_url())
+        _engine = engine
+        _factory = sessionmaker(bind=engine)
+    return engine
+
+
+def _get_factory():
+    global _factory
+    factory = _factory
+    if factory is None:
+        factory = sessionmaker(bind=get_engine())
+        _factory = factory
+    return factory
+
+
+def SessionLocal():
+    """Return a new SQLAlchemy session. Caller must close it."""
+    return _get_factory()()

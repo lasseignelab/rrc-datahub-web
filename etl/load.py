@@ -11,7 +11,7 @@ from typing import Any
 from dotenv import load_dotenv
 from psycopg2.extras import NumericRange, execute_values
 
-from db.connection import SessionLocal, engine
+from db.connection import SessionLocal, get_engine
 from db.models import Dataset, Gene, Sample, SampleGene
 
 load_dotenv()
@@ -313,7 +313,7 @@ def load_tpm(staging: Path | None = None) -> int:
     finally:
         session.close()
 
-    conn = engine.raw_connection()
+    conn = get_engine().raw_connection()
     total_inserted = 0
     try:
         for tpm_file in tpm_files:
