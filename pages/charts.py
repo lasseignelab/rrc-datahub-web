@@ -280,7 +280,11 @@ def toggle_download_button(figure):
 
 
 # ---------------------------------------------------------------------------
-# Callback 5: download plot as PNG (clientside — calls Plotly.downloadImage)
+# Callback 5: download plot as PNG (clientside)
+#
+# Plotly.downloadImage is broken with responsive:true — it passes a zero
+# size hint to the renderer, producing a blank image. Plotly.toImage with
+# explicit dimensions bypasses that path and returns a correct data URL.
 # ---------------------------------------------------------------------------
 
 clientside_callback(
@@ -290,7 +294,14 @@ clientside_callback(
             var title = (figure.layout && figure.layout.title && figure.layout.title.text)
                 ? figure.layout.title.text.replace(/[^a-zA-Z0-9_-]/g, "_")
                 : "tpm_expression_plot";
-            Plotly.downloadImage("violin-plot", {format: "png", filename: title});
+            var el = document.getElementById("violin-plot");
+            Plotly.toImage(el, {format: "png", width: 1200, height: 700})
+                .then(function(dataUrl) {
+                    var link = document.createElement("a");
+                    link.download = title + ".png";
+                    link.href = dataUrl;
+                    link.click();
+                });
         }
         return "";
     }
