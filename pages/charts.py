@@ -4,7 +4,7 @@ import logging
 
 import dash
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, clientside_callback, dcc, html
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -173,6 +173,13 @@ layout = html.Div(
             config={"responsive": True, "displayModeBar": False},
             style={"width": "100%"},
         ),
+        html.Button(
+            "Download plot as PNG",
+            id="download-png-btn",
+            disabled=True,
+            style={"marginTop": "8px"},
+        ),
+        html.Div(id="download-trigger", style={"display": "none"}),
     ]
 )
 
@@ -256,3 +263,40 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
         stat_test=None if stat_test == "none" else stat_test,
         title=gene,
     )
+
+
+# ---------------------------------------------------------------------------
+# Callback 4: enable download button when a figure is ready
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("download-png-btn", "disabled"),
+    Input("violin-plot", "figure"),
+)
+def toggle_download_button(figure):
+    """Enable the download button only when a plot has been rendered."""
+    return not (figure and figure.get("data"))
+
+
+# ---------------------------------------------------------------------------
+# Callback 5: download plot as PNG (clientside — calls Plotly.downloadImage)
+# ---------------------------------------------------------------------------
+
+clientside_callback(
+    """
+    function(n_clicks, figure) {
+        if (n_clicks && figure && figure.data && figure.data.length > 0) {
+            var title = (figure.layout && figure.layout.title && figure.layout.title.text)
+                ? figure.layout.title.text.replace(/[^a-zA-Z0-9_-]/g, "_")
+                : "tpm_expression_plot";
+            Plotly.downloadImage("violin-plot", {format: "png", filename: title});
+        }
+        return "";
+    }
+    """,
+    Output("download-trigger", "children"),
+    Input("download-png-btn", "n_clicks"),
+    State("violin-plot", "figure"),
+    prevent_initial_call=True,
+)
