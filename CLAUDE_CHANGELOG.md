@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-24
 
+### Add accessible PNG download button for violin plot
+- `pages/charts.py`: Replaced the inaccessible Plotly mode bar download icon (hidden via `displayModeBar: False`) with an `html.Button("Download plot as PNG")`. The button is disabled until a figure is rendered (callback 4) and calls `Plotly.downloadImage` via a clientside callback (callback 5). The filename is derived from the figure title (the selected gene name).
+
 ### Fix chart layout at 400% zoom (WCAG 1.4.10 Reflow)
 - `pages/charts.py`: Added `config={"responsive": True}` and `style={"width": "100%"}` to `dcc.Graph` so Plotly resizes the SVG when the container width changes at high zoom levels. Also set `displayModeBar: False` (the mode bar has no accessible label).
 - `components/tpm_violin_plot_plotly.py`: Moved legend below the chart (`orientation="h"`, `y=-0.25`, `margin.b=160`). At narrow viewports the long genotype labels previously occupied most of the horizontal space, leaving almost no room for the plot area.
