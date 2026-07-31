@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-31
 
+### Reorder button bar: toggle button left, download button right
+- `pages/charts.py`: Moved `toggle-view-btn` ("Show table / Show plot") to the left of the download buttons. Added `marginRight: "8px"` to the toggle button for spacing. Removed `marginRight` from download buttons (now the last elements in the row).
+
 ### Add "Download table as CSV" button, sync download buttons with view toggle
 - `pages/charts.py`: Added `html.Button("Download table as CSV", id="download-csv-btn")` (initially hidden) alongside the existing PNG download button. Extended the view-toggle `clientside_callback` with two additional outputs — `download-png-btn.style` and `download-csv-btn.style` — so the correct download button is always visible for the active view: PNG download when the plot is shown, CSV download when the table is shown.
 - `assets/accessibility.js`: Added event-delegation click handler for `download-csv-btn`. Reads headers and rows directly from the rendered `tpm-data-table` DOM, builds a properly-escaped CSV string (double-quotes all fields, escapes internal quotes), derives the filename from the table caption, and triggers a client-side blob download — no server round-trip required.
