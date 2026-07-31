@@ -64,10 +64,10 @@
 
     applyAll();
 
-    // Download handler wired via event delegation rather than a Dash clientside
-    // callback. The button being a Dash callback Input causes Dash 4 to apply a
-    // loading-state lifecycle (unmount/remount) on every click, making the button
-    // visually flicker. Using a plain DOM listener bypasses that mechanism entirely.
+    // Download handlers wired via event delegation rather than Dash clientside
+    // callbacks. The buttons being Dash callback Inputs causes Dash 4 to apply a
+    // loading-state lifecycle (unmount/remount) on every click, making them
+    // visually flicker. Using plain DOM listeners bypasses that mechanism entirely.
     document.addEventListener("click", function (evt) {
         if (!evt.target || evt.target.id !== "download-png-btn") { return; }
         if (typeof window.Plotly === "undefined") { return; }
@@ -86,5 +86,37 @@
                 a.href = dataUrl;
                 a.click();
             });
+    });
+
+    document.addEventListener("click", function (evt) {
+        if (!evt.target || evt.target.id !== "download-csv-btn") { return; }
+        var table = document.getElementById("tpm-data-table");
+        if (!table) { return; }
+        var headerCells = table.querySelectorAll("thead th");
+        if (!headerCells.length) { return; }
+        var rows = [];
+        var headers = [];
+        headerCells.forEach(function (th) {
+            headers.push('"' + th.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        rows.push(headers.join(","));
+        table.querySelectorAll("tbody tr").forEach(function (tr) {
+            var cells = [];
+            tr.querySelectorAll("td").forEach(function (td) {
+                cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+            });
+            rows.push(cells.join(","));
+        });
+        var captionEl = table.querySelector("caption");
+        var filename = captionEl
+            ? captionEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_")
+            : "tpm_expression_data";
+        var blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.download = filename + ".csv";
+        a.href = url;
+        a.click();
+        URL.revokeObjectURL(url);
     });
 }());

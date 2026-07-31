@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-31
 
+### Add "Download table as CSV" button, sync download buttons with view toggle
+- `pages/charts.py`: Added `html.Button("Download table as CSV", id="download-csv-btn")` (initially hidden) alongside the existing PNG download button. Extended the view-toggle `clientside_callback` with two additional outputs — `download-png-btn.style` and `download-csv-btn.style` — so the correct download button is always visible for the active view: PNG download when the plot is shown, CSV download when the table is shown.
+- `assets/accessibility.js`: Added event-delegation click handler for `download-csv-btn`. Reads headers and rows directly from the rendered `tpm-data-table` DOM, builds a properly-escaped CSV string (double-quotes all fields, escapes internal quotes), derives the filename from the table caption, and triggers a client-side blob download — no server round-trip required.
+
 ### Fix table toggle: replace DOM event delegation with clientside_callback
 - `pages/charts.py`: Replaced the `toggle-view-btn` click handler in `accessibility.js` with a Dash `clientside_callback`. The previous handler used direct DOM manipulation (`el.style.display = "none"`), which React's reconciler overwrites whenever any sibling callback (e.g., `update_table`) fires and re-renders part of the component tree. The `clientside_callback` updates `plot-container.style` and `table-container.style` through React's component prop system, so the toggle state persists across server callback re-renders. Button text and `aria-expanded` are still set via DOM manipulation inside the callback function — safe because `toggle-view-btn` is not a callback output and React does not reconcile it. Added `clientside_callback` to the Dash import.
 - `assets/accessibility.js`: Removed the `toggle-view-btn` click event listener (now handled by the clientside callback). Download handler is unchanged.

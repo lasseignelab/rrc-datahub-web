@@ -176,6 +176,11 @@ layout = html.Div(
                     style={"marginRight": "8px"},
                 ),
                 html.Button(
+                    "Download table as CSV",
+                    id="download-csv-btn",
+                    style={"marginRight": "8px", "display": "none"},
+                ),
+                html.Button(
                     "Show table",
                     id="toggle-view-btn",
                     **{"aria-expanded": "false"},
@@ -232,12 +237,16 @@ clientside_callback(
         }
         return [
             {"display": showTable ? "none" : ""},
-            {"display": showTable ? "" : "none"}
+            {"display": showTable ? "" : "none"},
+            {"display": showTable ? "none" : "", "marginRight": "8px"},
+            {"display": showTable ? "" : "none", "marginRight": "8px"}
         ];
     }
     """,
     Output("plot-container", "style"),
     Output("table-container", "style"),
+    Output("download-png-btn", "style"),
+    Output("download-csv-btn", "style"),
     Input("toggle-view-btn", "n_clicks"),
     prevent_initial_call=True,
 )
