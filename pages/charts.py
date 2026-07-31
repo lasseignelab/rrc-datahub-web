@@ -373,7 +373,7 @@ def update_table(bioproject, gene, selected_groups):
                 [
                     html.Th("Genotype", scope="col"),
                     html.Th("TPM", scope="col"),
-                    html.Th("log₁₀(TPM + 1)", scope="col"),
+                    html.Th("log10(TPM + 1)", scope="col"),
                 ]
             )
         ),

@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-31
 
+### Remove subscript Unicode from table column header
+- `pages/charts.py`: Changed `log₁₀(TPM + 1)` → `log10(TPM + 1)` in the table `<th>`. The subscript Unicode characters rendered inconsistently and also appeared verbatim in the CSV export.
+
 ### Reorder button bar: toggle button left, download button right
 - `pages/charts.py`: Moved `toggle-view-btn` ("Show table / Show plot") to the left of the download buttons. Added `marginRight: "8px"` to the toggle button for spacing. Removed `marginRight` from download buttons (now the last elements in the row).
 
