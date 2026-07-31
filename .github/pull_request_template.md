@@ -35,6 +35,7 @@
 **Content**
 - [ ] All images have meaningful `alt` text (decorative images use `alt=""`)
 - [ ] All Plotly charts have a text description or caption explaining the data
+- [ ] All Plotly charts have an accessible table of the plotted data that can be toggled to
 - [ ] Text contrast meets WCAG AA (4.5:1 normal, 3:1 large text)
 - [ ] Information is not conveyed by color alone
 
