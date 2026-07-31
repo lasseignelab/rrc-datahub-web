@@ -5,7 +5,7 @@ import math
 
 import dash
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, clientside_callback, dcc, html
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -205,6 +205,41 @@ layout = html.Div(
             style={"display": "none"},
         ),
     ]
+)
+
+
+# ---------------------------------------------------------------------------
+# Clientside callback: toggle button -> switch plot / table view
+# ---------------------------------------------------------------------------
+# Updating style props via React (not direct DOM manipulation) is required so
+# that subsequent server callbacks don't cause React's reconciler to reset the
+# display back to the layout default.  Button text and aria-expanded are set
+# via DOM manipulation inside the function — safe because toggle-view-btn is
+# not a callback output and React will not reconcile it.
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (!n_clicks) { return window.dash_clientside.no_update; }
+        var showTable = n_clicks % 2 === 1;
+        var btn = document.getElementById("toggle-view-btn");
+        if (btn) {
+            btn.setAttribute("aria-expanded", showTable ? "true" : "false");
+            btn.textContent = showTable ? "Show plot" : "Show table";
+        }
+        var statusEl = document.getElementById("view-status");
+        if (statusEl) {
+            statusEl.textContent = showTable ? "Table view shown." : "Plot view shown.";
+        }
+        return [
+            {"display": showTable ? "none" : ""},
+            {"display": showTable ? "" : "none"}
+        ];
+    }
+    """,
+    Output("plot-container", "style"),
+    Output("table-container", "style"),
+    Input("toggle-view-btn", "n_clicks"),
+    prevent_initial_call=True,
 )
 
 

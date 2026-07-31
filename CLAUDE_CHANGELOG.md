@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-31
 
+### Fix table toggle: replace DOM event delegation with clientside_callback
+- `pages/charts.py`: Replaced the `toggle-view-btn` click handler in `accessibility.js` with a Dash `clientside_callback`. The previous handler used direct DOM manipulation (`el.style.display = "none"`), which React's reconciler overwrites whenever any sibling callback (e.g., `update_table`) fires and re-renders part of the component tree. The `clientside_callback` updates `plot-container.style` and `table-container.style` through React's component prop system, so the toggle state persists across server callback re-renders. Button text and `aria-expanded` are still set via DOM manipulation inside the callback function — safe because `toggle-view-btn` is not a callback output and React does not reconcile it. Added `clientside_callback` to the Dash import.
+- `assets/accessibility.js`: Removed the `toggle-view-btn` click event listener (now handled by the clientside callback). Download handler is unchanged.
+
 ### Add accessible toggleable table view for TPM expression data
 - `pages/charts.py`: Added a "Show table / Show plot" toggle button (`id="toggle-view-btn"`, `aria-expanded`) alongside the download button. Added `id="plot-container"` wrapper around the graph and `id="table-container"` div (initially hidden) containing `html.Table(id="tpm-data-table")`. Added `id="view-status"` polite ARIA live region for screen-reader announcements. Added callback 4 (`update_table`) which builds an accessible HTML table of per-sample raw TPM and log₁₀(TPM+1) values for the current gene/group selection; the table is always populated in the background so toggling the view requires no server round-trip. Added `import math` for the log10 calculation.
 - `assets/accessibility.js`: Added click event listener for `toggle-view-btn` that switches `display` on the two containers, updates `aria-expanded`, updates the button label, and writes a polite status message to the live region.

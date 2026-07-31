@@ -64,35 +64,6 @@
 
     applyAll();
 
-    // Plot / table view toggle. Switches display:none on the two containers,
-    // updates aria-expanded on the button, and announces the change to screen
-    // readers via the polite live region (#view-status).
-    document.addEventListener("click", function (evt) {
-        if (!evt.target || evt.target.id !== "toggle-view-btn") { return; }
-        var btn = evt.target;
-        var plotContainer = document.getElementById("plot-container");
-        var tableContainer = document.getElementById("table-container");
-        var statusEl = document.getElementById("view-status");
-        if (!plotContainer || !tableContainer) { return; }
-
-        var showingPlot = btn.getAttribute("aria-expanded") !== "true";
-        if (showingPlot) {
-            // Switch to table view
-            plotContainer.style.display = "none";
-            tableContainer.style.display = "";
-            btn.setAttribute("aria-expanded", "true");
-            btn.textContent = "Show plot";
-            if (statusEl) { statusEl.textContent = "Table view shown."; }
-        } else {
-            // Switch back to plot view
-            plotContainer.style.display = "";
-            tableContainer.style.display = "none";
-            btn.setAttribute("aria-expanded", "false");
-            btn.textContent = "Show table";
-            if (statusEl) { statusEl.textContent = "Plot view shown."; }
-        }
-    });
-
     // Download handler wired via event delegation rather than a Dash clientside
     // callback. The button being a Dash callback Input causes Dash 4 to apply a
     // loading-state lifecycle (unmount/remount) on every click, making the button
