@@ -202,10 +202,13 @@ layout = html.Div(
             id="plot-container",
         ),
         html.Div(
-            html.Table(
-                id="tpm-data-table",
-                **{"aria-label": "TPM expression data"},
-            ),
+            [
+                html.P(id="table-status"),
+                html.Table(
+                    id="tpm-data-table",
+                    **{"aria-label": "TPM expression data"},
+                ),
+            ],
             id="table-container",
             style={"display": "none"},
         ),
@@ -339,6 +342,7 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
 
 
 @callback(
+    Output("table-status", "children"),
     Output("tpm-data-table", "children"),
     Input("dataset-select", "value"),
     Input("gene-select", "value"),
@@ -350,13 +354,18 @@ def update_table(bioproject, gene, selected_groups):
     The table is always populated in the background; visibility is toggled
     client-side by the 'Show table / Show plot' button so there is no
     server round-trip when switching views.
+
+    No-data states are reported via the sibling #table-status paragraph rather
+    than an html.Caption inside the table.  A table that contains only a
+    caption (no <th> elements) is misidentified as a layout table by axe-core,
+    which then flags the caption as a WCAG violation.
     """
     if not bioproject or not gene or not selected_groups:
-        return [html.Caption("No data to display. Select a dataset, gene, and groups.")]
+        return "No data to display. Select a dataset, gene, and groups.", []
 
     df = _get_tpm_data(bioproject, gene)
     if df.empty:
-        return [html.Caption("No expression data found for the current selection.")]
+        return "No expression data found for the current selection.", []
 
     df = df[df["genotype"].isin(selected_groups)]
     df = df.sort_values(["genotype", "TPM"]).reset_index(drop=True)
@@ -364,7 +373,7 @@ def update_table(bioproject, gene, selected_groups):
     n_samples = len(df)
     n_genotypes = df["genotype"].nunique()
 
-    return [
+    return "", [
         html.Caption(
             f"{gene} expression — {n_samples} samples, " f"{n_genotypes} genotype(s)"
         ),

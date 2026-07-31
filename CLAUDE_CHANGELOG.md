@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-07-31
 
+### Fix pa11y CI failure: move no-data message out of table caption
+- `pages/charts.py`: axe-core's "layout-table-caption" rule fired in CI because when no DB is available, `update_table` returned `[html.Caption("No data...")]` — a table containing only a caption and no `<th>` elements, which axe classifies as a layout table (layout tables must not have captions). Fix: added `html.P(id="table-status")` as a sibling above the table in `table-container`. The callback now outputs both `table-status.children` (the message string) and `tpm-data-table.children` (the table rows). No-data states write the message to the paragraph and return `[]` for the table, leaving the table empty rather than caption-only. When data is present the message is cleared and the table gets its normal caption + thead + tbody.
+
 ### Remove subscript Unicode from table column header
 - `pages/charts.py`: Changed `log₁₀(TPM + 1)` → `log10(TPM + 1)` in the table `<th>`. The subscript Unicode characters rendered inconsistently and also appeared verbatim in the CSV export.
 
