@@ -63,4 +63,28 @@
     });
 
     applyAll();
+
+    // Download handler wired via event delegation rather than a Dash clientside
+    // callback. The button being a Dash callback Input causes Dash 4 to apply a
+    // loading-state lifecycle (unmount/remount) on every click, making the button
+    // visually flicker. Using a plain DOM listener bypasses that mechanism entirely.
+    document.addEventListener("click", function (evt) {
+        if (!evt.target || evt.target.id !== "download-png-btn") { return; }
+        if (typeof window.Plotly === "undefined") { return; }
+        var wrapper = document.getElementById("violin-plot");
+        if (!wrapper) { return; }
+        var plotEl = wrapper.querySelector(".js-plotly-plot") || wrapper;
+        if (!plotEl._fullData || plotEl._fullData.length === 0) { return; }
+        var titleText = plotEl.layout && plotEl.layout.title && plotEl.layout.title.text;
+        var filename = titleText
+            ? titleText.replace(/[^a-zA-Z0-9_-]/g, "_")
+            : "tpm_expression_plot";
+        window.Plotly.toImage(plotEl, { format: "png", width: 1200, height: 700 })
+            .then(function (dataUrl) {
+                var a = document.createElement("a");
+                a.download = filename + ".png";
+                a.href = dataUrl;
+                a.click();
+            });
+    });
 }());

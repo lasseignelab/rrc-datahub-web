@@ -4,6 +4,19 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-29
+
+### Fix download button appearing/disappearing due to graph layout reflow
+- `pages/charts.py`: `dcc.Graph` with `responsive=True` (which unsets `figure.layout.height`) collapses its container to near-zero height when `figure={}` during a callback update, then re-expands to ~450 px when the figure loads. The button was positioned below the graph, so it shifted by ~450 px on every figure update — going off-screen and back, which the user saw as appearing/disappearing on every other interaction (open dropdown = one interaction, select value = next). Fix: moved the button above the graph so it is always in the upper viewport regardless of graph height, and added `minHeight: 450px` to the graph container to prevent the collapse reflow.
+
+### Fix download button flicker by moving handler out of Dash callback system
+- `assets/accessibility.js`: Added a document-level click event listener (event delegation) that handles the PNG download directly. The button was flickering because being a Dash `Input` causes Dash 4 to apply a loading-state lifecycle (unmount/remount) on every click. Wiring the handler in plain JavaScript bypasses that mechanism entirely.
+- `pages/charts.py`: Removed the `clientside_callback` and the `html.Div(id="download-trigger")` that were no longer needed. The button (`id="download-png-btn"`) is now a plain HTML element with no Dash callback wiring.
+
+### Fix blank PNG export and initial button-disappear attempt
+- `pages/charts.py`: Removed the server-side `toggle_download_button` callback (callback 4) that controlled `download-png-btn.disabled`. That callback fired on every figure update, including transient `{}` states during dataset/gene selection changes, causing Dash to remount the button and making it visually disappear. The button is now always enabled; the clientside callback already guards against empty figures.
+- `pages/charts.py`: Fixed blank PNG download. `dcc.Graph` renders a wrapper `<div id="violin-plot">` containing the actual Plotly element `<div class="js-plotly-plot">`. `Plotly.toImage` requires the inner element (which carries `_fullData`), not the wrapper. Updated clientside callback to `querySelector(".js-plotly-plot")` and check `_fullData.length` for data presence. Removed `State("violin-plot", "figure")` from the clientside callback — figure presence is now determined from the DOM element directly, avoiding the server round-trip.
+
 ## 2026-07-24
 
 ### Add accessible PNG download button for violin plot

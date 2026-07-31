@@ -4,7 +4,7 @@ import logging
 
 import dash
 import pandas as pd
-from dash import Input, Output, State, callback, clientside_callback, dcc, html
+from dash import Input, Output, State, callback, dcc, html
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -40,8 +40,7 @@ def _search_genes(search: str) -> list[str]:
         if search:
             query = query.filter(Gene.gene_name.ilike(f"{search}%"))
         return [
-            r[0]
-            for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
+            r[0] for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
         ]
     finally:
         session.close()
@@ -168,18 +167,19 @@ layout = html.Div(
             ],
             style={"marginBottom": "16px"},
         ),
-        dcc.Graph(
-            id="violin-plot",
-            config={"responsive": True, "displayModeBar": False},
-            style={"width": "100%"},
-        ),
         html.Button(
             "Download plot as PNG",
             id="download-png-btn",
-            disabled=True,
-            style={"marginTop": "8px"},
+            style={"marginBottom": "8px"},
         ),
-        html.Div(id="download-trigger", style={"display": "none"}),
+        dcc.Graph(
+            id="violin-plot",
+            config={"responsive": True, "displayModeBar": False},
+            # minHeight prevents the container from collapsing to ~0 px when
+            # figure={} during a callback update, which would cause the page
+            # to reflow and push nearby elements in and out of the viewport.
+            style={"width": "100%", "minHeight": "450px"},
+        ),
     ]
 )
 
@@ -263,51 +263,3 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
         stat_test=None if stat_test == "none" else stat_test,
         title=gene,
     )
-
-
-# ---------------------------------------------------------------------------
-# Callback 4: enable download button when a figure is ready
-# ---------------------------------------------------------------------------
-
-
-@callback(
-    Output("download-png-btn", "disabled"),
-    Input("violin-plot", "figure"),
-)
-def toggle_download_button(figure):
-    """Enable the download button only when a plot has been rendered."""
-    return not (figure and figure.get("data"))
-
-
-# ---------------------------------------------------------------------------
-# Callback 5: download plot as PNG (clientside)
-#
-# Plotly.downloadImage is broken with responsive:true — it passes a zero
-# size hint to the renderer, producing a blank image. Plotly.toImage with
-# explicit dimensions bypasses that path and returns a correct data URL.
-# ---------------------------------------------------------------------------
-
-clientside_callback(
-    """
-    function(n_clicks, figure) {
-        if (n_clicks && figure && figure.data && figure.data.length > 0) {
-            var title = (figure.layout && figure.layout.title && figure.layout.title.text)
-                ? figure.layout.title.text.replace(/[^a-zA-Z0-9_-]/g, "_")
-                : "tpm_expression_plot";
-            var el = document.getElementById("violin-plot");
-            Plotly.toImage(el, {format: "png", width: 1200, height: 700})
-                .then(function(dataUrl) {
-                    var link = document.createElement("a");
-                    link.download = title + ".png";
-                    link.href = dataUrl;
-                    link.click();
-                });
-        }
-        return "";
-    }
-    """,
-    Output("download-trigger", "children"),
-    Input("download-png-btn", "n_clicks"),
-    State("violin-plot", "figure"),
-    prevent_initial_call=True,
-)
