@@ -4,6 +4,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-07-31
+
+### Add accessible toggleable table view for TPM expression data
+- `pages/charts.py`: Added a "Show table / Show plot" toggle button (`id="toggle-view-btn"`, `aria-expanded`) alongside the download button. Added `id="plot-container"` wrapper around the graph and `id="table-container"` div (initially hidden) containing `html.Table(id="tpm-data-table")`. Added `id="view-status"` polite ARIA live region for screen-reader announcements. Added callback 4 (`update_table`) which builds an accessible HTML table of per-sample raw TPM and log₁₀(TPM+1) values for the current gene/group selection; the table is always populated in the background so toggling the view requires no server round-trip. Added `import math` for the log10 calculation.
+- `assets/accessibility.js`: Added click event listener for `toggle-view-btn` that switches `display` on the two containers, updates `aria-expanded`, updates the button label, and writes a polite status message to the live region.
+- `assets/style.css`: Added `.visually-hidden` CSS class (clip + position: absolute) for the live region. Added table styles: border-collapse, padding, header background, zebra-stripe rows, and `:focus-within` outline for keyboard navigation.
+
 ## 2026-07-29
 
 ### Fix download button appearing/disappearing due to graph layout reflow

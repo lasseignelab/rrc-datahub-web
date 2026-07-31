@@ -1,6 +1,7 @@
 # Charts page: TPM violin plot driven by the PostgreSQL database.
 
 import logging
+import math
 
 import dash
 import pandas as pd
@@ -167,18 +168,41 @@ layout = html.Div(
             ],
             style={"marginBottom": "16px"},
         ),
-        html.Button(
-            "Download plot as PNG",
-            id="download-png-btn",
+        html.Div(
+            [
+                html.Button(
+                    "Download plot as PNG",
+                    id="download-png-btn",
+                    style={"marginRight": "8px"},
+                ),
+                html.Button(
+                    "Show table",
+                    id="toggle-view-btn",
+                    **{"aria-expanded": "false"},
+                ),
+            ],
             style={"marginBottom": "8px"},
         ),
-        dcc.Graph(
-            id="violin-plot",
-            config={"responsive": True, "displayModeBar": False},
-            # minHeight prevents the container from collapsing to ~0 px when
-            # figure={} during a callback update, which would cause the page
-            # to reflow and push nearby elements in and out of the viewport.
-            style={"width": "100%", "minHeight": "450px"},
+        # Polite live region — announces view switches to screen readers.
+        html.Div(id="view-status", role="status", className="visually-hidden"),
+        html.Div(
+            dcc.Graph(
+                id="violin-plot",
+                config={"responsive": True, "displayModeBar": False},
+                # minHeight prevents the container from collapsing to ~0 px when
+                # figure={} during a callback update, which would cause the page
+                # to reflow and push nearby elements in and out of the viewport.
+                style={"width": "100%", "minHeight": "450px"},
+            ),
+            id="plot-container",
+        ),
+        html.Div(
+            html.Table(
+                id="tpm-data-table",
+                **{"aria-label": "TPM expression data"},
+            ),
+            id="table-container",
+            style={"display": "none"},
         ),
     ]
 )
@@ -263,3 +287,62 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
         stat_test=None if stat_test == "none" else stat_test,
         title=gene,
     )
+
+
+# ---------------------------------------------------------------------------
+# Callback 4: gene + groups -> populate accessible data table
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("tpm-data-table", "children"),
+    Input("dataset-select", "value"),
+    Input("gene-select", "value"),
+    Input("group-select", "value"),
+)
+def update_table(bioproject, gene, selected_groups):
+    """Build an accessible HTML table of per-sample TPM values.
+
+    The table is always populated in the background; visibility is toggled
+    client-side by the 'Show table / Show plot' button so there is no
+    server round-trip when switching views.
+    """
+    if not bioproject or not gene or not selected_groups:
+        return [html.Caption("No data to display. Select a dataset, gene, and groups.")]
+
+    df = _get_tpm_data(bioproject, gene)
+    if df.empty:
+        return [html.Caption("No expression data found for the current selection.")]
+
+    df = df[df["genotype"].isin(selected_groups)]
+    df = df.sort_values(["genotype", "TPM"]).reset_index(drop=True)
+
+    n_samples = len(df)
+    n_genotypes = df["genotype"].nunique()
+
+    return [
+        html.Caption(
+            f"{gene} expression — {n_samples} samples, " f"{n_genotypes} genotype(s)"
+        ),
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th("Genotype", scope="col"),
+                    html.Th("TPM", scope="col"),
+                    html.Th("log₁₀(TPM + 1)", scope="col"),
+                ]
+            )
+        ),
+        html.Tbody(
+            [
+                html.Tr(
+                    [
+                        html.Td(row["genotype"]),
+                        html.Td(f"{row['TPM']:.4g}"),
+                        html.Td(f"{math.log10(row['TPM'] + 1):.4f}"),
+                    ]
+                )
+                for _, row in df.iterrows()
+            ]
+        ),
+    ]
