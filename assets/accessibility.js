@@ -9,6 +9,7 @@
     // Fixes WCAG 4.1.2: role=listbox and role=radiogroup require accessible names.
     var LABEL_MAP = {
         "group-select": "group-select-label",
+        "sample-type-select": "sample-type-label",
         "stat-test": "stat-test-label",
     };
 
@@ -33,7 +34,7 @@
     // for a set of related inputs) and remove role="option"/aria-selected from
     // labels, restoring the native <label>+<input> pattern which is fully
     // accessible and contains no nested-interactive violation.
-    var OPTION_CONTAINERS = ["group-select", "stat-test"];
+    var OPTION_CONTAINERS = ["group-select", "sample-type-select", "stat-test"];
 
     function fixOptionContainerARIA() {
         OPTION_CONTAINERS.forEach(function (id) {

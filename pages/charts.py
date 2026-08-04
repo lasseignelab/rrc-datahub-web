@@ -18,6 +18,43 @@ log = logging.getLogger(__name__)
 _GENE_SEARCH_LIMIT = 50
 
 
+def _get_all_sample_types() -> list[str]:
+    """Return sorted list of distinct non-null sample_type values across all datasets.
+
+    Queries the entire sample table so the checklist reflects every sample type
+    present in the database, regardless of which dataset is selected.
+    """
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.sample_type)
+            .filter(Sample.sample_type.isnot(None))
+            .distinct()
+            .order_by(Sample.sample_type)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
+def _get_datasets_by_sample_types(sample_types: list[str]) -> list[str]:
+    """Return sorted bioproject accessions that have samples of the given types."""
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Dataset.bioproject)
+            .join(Sample, Sample.dataset_id == Dataset.id)
+            .filter(Sample.sample_type.in_(sample_types))
+            .distinct()
+            .order_by(Dataset.bioproject)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
 def _get_datasets() -> list[str]:
     """Return sorted list of bioproject accessions from the database."""
     session = SessionLocal()
@@ -64,11 +101,26 @@ def _get_genotypes(bioproject: str) -> list[str]:
         session.close()
 
 
+# Override title-casing for values where automatic conversion would be wrong.
+# Extend this dict as new sample_type values are added to the database.
+_SAMPLE_TYPE_LABELS: dict[str, str] = {
+    "iPSC": "iPSC",
+    "hiPSC": "hiPSC",
+}
+
+
+def _readable_sample_type(raw: str) -> str:
+    """Return a human-readable label for a raw sample_type database value."""
+    if raw in _SAMPLE_TYPE_LABELS:
+        return _SAMPLE_TYPE_LABELS[raw]
+    return raw.replace("_", " ").replace("-", " ").title()
+
+
 def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
     """Return DataFrame of (genotype, TPM) rows for a dataset and gene."""
     session = SessionLocal()
     try:
-        rows = (
+        query = (
             session.query(Sample.genotype, SampleGene.tpm)
             .join(SampleGene, SampleGene.sample_id == Sample.id)
             .join(Gene, Gene.id == SampleGene.gene_id)
@@ -78,9 +130,8 @@ def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
                 Gene.gene_name == gene_name,
                 Sample.genotype.isnot(None),
             )
-            .all()
         )
-        return pd.DataFrame(rows, columns=["genotype", "TPM"])
+        return pd.DataFrame(query.all(), columns=["genotype", "TPM"])
     finally:
         session.close()
 
@@ -88,6 +139,12 @@ def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Pre-load initial state so dropdowns are populated on first render
 # ---------------------------------------------------------------------------
+
+try:
+    _all_sample_types = _get_all_sample_types()
+except Exception as exc:
+    log.warning("Could not load sample types from database: %s", exc)
+    _all_sample_types = []
 
 try:
     _datasets = _get_datasets()
@@ -113,6 +170,21 @@ if _datasets:
 layout = html.Div(
     [
         html.H1("TPM Expression"),
+        html.Div(
+            [
+                html.Label("Sample type", id="sample-type-label"),
+                dcc.Checklist(
+                    id="sample-type-select",
+                    options=[
+                        {"label": _readable_sample_type(st), "value": st}
+                        for st in _all_sample_types
+                    ],
+                    value=_all_sample_types,
+                    inline=True,
+                ),
+            ],
+            style={"marginBottom": "16px"},
+        ),
         html.Div(
             [
                 html.Label("Dataset", htmlFor="dataset-select"),
@@ -256,7 +328,33 @@ clientside_callback(
 
 
 # ---------------------------------------------------------------------------
-# Callback 1: search value -> gene options (server-side filtered)
+# Callback 1: sample type selection -> filter dataset list
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("dataset-select", "options"),
+    Output("dataset-select", "value"),
+    Input("sample-type-select", "value"),
+    State("dataset-select", "value"),
+)
+def filter_datasets_by_sample_type(selected_sample_types, current_dataset):
+    """Narrow the dataset dropdown to projects with the selected sample types."""
+    if not selected_sample_types:
+        return [], None
+
+    datasets = _get_datasets_by_sample_types(selected_sample_types)
+    options = [{"label": d, "value": d} for d in datasets]
+    value = (
+        current_dataset
+        if current_dataset in datasets
+        else (datasets[0] if datasets else None)
+    )
+    return options, value
+
+
+# ---------------------------------------------------------------------------
+# Callback 2: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
 
@@ -278,7 +376,7 @@ def filter_gene_options(search, current_gene):
 
 
 # ---------------------------------------------------------------------------
-# Callback 2: dataset -> reset gene selection + repopulate group checklist
+# Callback 3: dataset -> reset gene selection + repopulate group checklist
 # ---------------------------------------------------------------------------
 
 
@@ -304,7 +402,7 @@ def update_selectors(bioproject):
 
 
 # ---------------------------------------------------------------------------
-# Callback 3: gene + groups + stat test -> render plot
+# Callback 4: gene + groups + stat test -> render plot
 # ---------------------------------------------------------------------------
 
 
@@ -337,7 +435,7 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
 
 
 # ---------------------------------------------------------------------------
-# Callback 4: gene + groups -> populate accessible data table
+# Callback 5: gene + groups -> populate accessible data table
 # ---------------------------------------------------------------------------
 
 

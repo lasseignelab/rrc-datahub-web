@@ -4,6 +4,14 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-04
+
+### Add sample type filter that narrows the dataset dropdown
+- `pages/charts.py`: Added `_get_all_sample_types()` to query all distinct non-null `sample_type` values across the entire database. Added `_get_datasets_by_sample_types(sample_types)` to return only bioproject accessions that contain at least one sample matching the selected types. Added `_SAMPLE_TYPE_LABELS` dict and `_readable_sample_type()` to convert raw database values to human-readable labels (underscores/hyphens → spaces, title-cased; with an override dict for values like "iPSC" that must not be title-cased). Layout: added `sample-type-select` `dcc.Checklist` above the dataset dropdown, showing all available sample types from the database with all selected by default. Added callback 1 (`filter_datasets_by_sample_type`) that takes the checklist value as input and updates `dataset-select.options` and `dataset-select.value`, preserving the current dataset if it is still in the filtered list.
+- `assets/accessibility.js`: Added `"sample-type-select": "sample-type-label"` to `LABEL_MAP` and `"sample-type-select"` to `OPTION_CONTAINERS` so the checklist gets the same ARIA role fix as the groups checklist.
+
+---
+
 ## 2026-07-31
 
 ### Fix pa11y CI failure: move no-data message out of table caption
