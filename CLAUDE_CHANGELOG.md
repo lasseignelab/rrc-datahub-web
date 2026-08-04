@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-04
 
+### Organize Charts page into "Dataset filters" and "Plot parameters" sections
+- `pages/charts.py`: Wrapped the scientific name, sample type, and dataset controls in an `html.Section` with heading "Dataset filters" (`id="dataset-filters-heading"`, `aria-labelledby="dataset-filters-heading"`). Wrapped the gene, groups, statistical test, buttons, and output area in a second `html.Section` with heading "Plot parameters" (`id="plot-parameters-heading"`, `aria-labelledby="plot-parameters-heading"`). Sections use `aria-labelledby` pointing to their H2 headings so screen readers can identify each landmark.
+
 ### Add scientific name filter above sample type; both filters narrow the dataset dropdown
 - `pages/charts.py`: Added `_get_all_scientific_names()` to query all distinct non-null `scientific_name` values from the sample table. Added `_get_sample_types_by_scientific_names(scientific_names)` to return only the sample types present in samples of the selected organisms. Replaced `_get_datasets_by_sample_types()` with `_get_datasets_by_filters(scientific_names, sample_types)` which requires samples to match both filters simultaneously. Layout: added `scientific-name-select` `dcc.Checklist` above the existing `sample-type-select`, with all names selected by default. Added callback 1 (`filter_sample_types_by_scientific_name`) wired `scientific-name-select.value → sample-type-select.options + value`; updated callback 2 (`filter_datasets`) to take both `scientific-name-select.value` and `sample-type-select.value` as inputs so datasets reflect both active filters.
 - `assets/accessibility.js`: Added `"scientific-name-select": "scientific-name-label"` to `LABEL_MAP` and `"scientific-name-select"` to `OPTION_CONTAINERS`.

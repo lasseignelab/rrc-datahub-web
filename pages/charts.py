@@ -227,133 +227,153 @@ if _datasets:
 layout = html.Div(
     [
         html.H1("TPM Expression"),
-        html.Div(
+        html.Section(
             [
-                html.Label("Scientific name", id="scientific-name-label"),
-                dcc.Checklist(
-                    id="scientific-name-select",
-                    options=[
-                        {"label": name, "value": name} for name in _all_scientific_names
+                html.H2("Dataset filters", id="dataset-filters-heading"),
+                html.Div(
+                    [
+                        html.Label("Scientific name", id="scientific-name-label"),
+                        dcc.Checklist(
+                            id="scientific-name-select",
+                            options=[
+                                {"label": name, "value": name}
+                                for name in _all_scientific_names
+                            ],
+                            value=_all_scientific_names,
+                            inline=True,
+                        ),
                     ],
-                    value=_all_scientific_names,
-                    inline=True,
+                    style={"marginBottom": "16px"},
                 ),
-            ],
-            style={"marginBottom": "16px"},
-        ),
-        html.Div(
-            [
-                html.Label("Sample type", id="sample-type-label"),
-                dcc.Checklist(
-                    id="sample-type-select",
-                    options=[
-                        {"label": _readable_sample_type(st), "value": st}
-                        for st in _all_sample_types
+                html.Div(
+                    [
+                        html.Label("Sample type", id="sample-type-label"),
+                        dcc.Checklist(
+                            id="sample-type-select",
+                            options=[
+                                {"label": _readable_sample_type(st), "value": st}
+                                for st in _all_sample_types
+                            ],
+                            value=_all_sample_types,
+                            inline=True,
+                        ),
                     ],
-                    value=_all_sample_types,
-                    inline=True,
+                    style={"marginBottom": "16px"},
                 ),
-            ],
-            style={"marginBottom": "16px"},
-        ),
-        html.Div(
-            [
-                html.Label("Dataset", htmlFor="dataset-select"),
-                dcc.Dropdown(
-                    id="dataset-select",
-                    options=[{"label": d, "value": d} for d in _datasets],
-                    value=_datasets[0] if _datasets else None,
-                    clearable=False,
-                ),
-            ],
-            style={"width": "300px", "marginBottom": "16px"},
-        ),
-        html.Div(
-            [
-                html.Label("Gene", htmlFor="gene-select"),
-                dcc.Dropdown(
-                    id="gene-select",
-                    options=[{"label": g, "value": g} for g in _initial_genes],
-                    value=_initial_genes[0] if _initial_genes else None,
-                    clearable=False,
-                ),
-            ],
-            style={"width": "300px", "marginBottom": "16px"},
-        ),
-        html.Div(
-            [
-                html.Label("Groups", id="group-select-label"),
-                dcc.Checklist(
-                    id="group-select",
-                    options=[{"label": g, "value": g} for g in _initial_genotypes],
-                    value=_initial_genotypes,
-                    inline=True,
-                ),
-            ],
-            style={"marginBottom": "16px"},
-        ),
-        html.Div(
-            [
-                html.Label("Statistical test", id="stat-test-label"),
-                dcc.RadioItems(
-                    id="stat-test",
-                    options=[
-                        {"label": "None", "value": "none"},
-                        {"label": "Mann-Whitney (2 groups)", "value": "mannwhitney"},
-                        {
-                            "label": "Kruskal-Wallis (3 or more groups)",
-                            "value": "kruskal",
-                        },
+                html.Div(
+                    [
+                        html.Label("Dataset", htmlFor="dataset-select"),
+                        dcc.Dropdown(
+                            id="dataset-select",
+                            options=[{"label": d, "value": d} for d in _datasets],
+                            value=_datasets[0] if _datasets else None,
+                            clearable=False,
+                        ),
                     ],
-                    value="none",
-                    inline=True,
+                    style={"width": "300px", "marginBottom": "16px"},
                 ),
             ],
-            style={"marginBottom": "16px"},
+            **{"aria-labelledby": "dataset-filters-heading"},
+            style={"marginBottom": "32px"},
         ),
-        html.Div(
+        html.Section(
             [
-                html.Button(
-                    "Show table",
-                    id="toggle-view-btn",
-                    style={"marginRight": "8px"},
-                    **{"aria-expanded": "false"},
+                html.H2("Plot parameters", id="plot-parameters-heading"),
+                html.Div(
+                    [
+                        html.Label("Gene", htmlFor="gene-select"),
+                        dcc.Dropdown(
+                            id="gene-select",
+                            options=[{"label": g, "value": g} for g in _initial_genes],
+                            value=_initial_genes[0] if _initial_genes else None,
+                            clearable=False,
+                        ),
+                    ],
+                    style={"width": "300px", "marginBottom": "16px"},
                 ),
-                html.Button(
-                    "Download plot as PNG",
-                    id="download-png-btn",
+                html.Div(
+                    [
+                        html.Label("Groups", id="group-select-label"),
+                        dcc.Checklist(
+                            id="group-select",
+                            options=[
+                                {"label": g, "value": g} for g in _initial_genotypes
+                            ],
+                            value=_initial_genotypes,
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
                 ),
-                html.Button(
-                    "Download table as CSV",
-                    id="download-csv-btn",
+                html.Div(
+                    [
+                        html.Label("Statistical test", id="stat-test-label"),
+                        dcc.RadioItems(
+                            id="stat-test",
+                            options=[
+                                {"label": "None", "value": "none"},
+                                {
+                                    "label": "Mann-Whitney (2 groups)",
+                                    "value": "mannwhitney",
+                                },
+                                {
+                                    "label": "Kruskal-Wallis (3 or more groups)",
+                                    "value": "kruskal",
+                                },
+                            ],
+                            value="none",
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
+                        html.Button(
+                            "Show table",
+                            id="toggle-view-btn",
+                            style={"marginRight": "8px"},
+                            **{"aria-expanded": "false"},
+                        ),
+                        html.Button(
+                            "Download plot as PNG",
+                            id="download-png-btn",
+                        ),
+                        html.Button(
+                            "Download table as CSV",
+                            id="download-csv-btn",
+                            style={"display": "none"},
+                        ),
+                    ],
+                    style={"marginBottom": "8px"},
+                ),
+                # Polite live region — announces view switches to screen readers.
+                html.Div(id="view-status", role="status", className="visually-hidden"),
+                html.Div(
+                    dcc.Graph(
+                        id="violin-plot",
+                        config={"responsive": True, "displayModeBar": False},
+                        # minHeight prevents the container from collapsing to ~0 px
+                        # when figure={} during a callback update, which would cause
+                        # the page to reflow and push nearby elements in and out of
+                        # the viewport.
+                        style={"width": "100%", "minHeight": "450px"},
+                    ),
+                    id="plot-container",
+                ),
+                html.Div(
+                    [
+                        html.P(id="table-status"),
+                        html.Table(
+                            id="tpm-data-table",
+                            **{"aria-label": "TPM expression data"},
+                        ),
+                    ],
+                    id="table-container",
                     style={"display": "none"},
                 ),
             ],
-            style={"marginBottom": "8px"},
-        ),
-        # Polite live region — announces view switches to screen readers.
-        html.Div(id="view-status", role="status", className="visually-hidden"),
-        html.Div(
-            dcc.Graph(
-                id="violin-plot",
-                config={"responsive": True, "displayModeBar": False},
-                # minHeight prevents the container from collapsing to ~0 px when
-                # figure={} during a callback update, which would cause the page
-                # to reflow and push nearby elements in and out of the viewport.
-                style={"width": "100%", "minHeight": "450px"},
-            ),
-            id="plot-container",
-        ),
-        html.Div(
-            [
-                html.P(id="table-status"),
-                html.Table(
-                    id="tpm-data-table",
-                    **{"aria-label": "TPM expression data"},
-                ),
-            ],
-            id="table-container",
-            style={"display": "none"},
+            **{"aria-labelledby": "plot-parameters-heading"},
         ),
     ]
 )
