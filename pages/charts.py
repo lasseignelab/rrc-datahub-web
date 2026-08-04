@@ -18,11 +18,48 @@ log = logging.getLogger(__name__)
 _GENE_SEARCH_LIMIT = 50
 
 
+def _get_all_scientific_names() -> list[str]:
+    """Return sorted list of distinct non-null scientific_name values in the database.
+
+    Queries the entire sample table so the checklist reflects all organisms.
+    """
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.scientific_name)
+            .filter(Sample.scientific_name.isnot(None))
+            .distinct()
+            .order_by(Sample.scientific_name)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
+def _get_sample_types_by_scientific_names(scientific_names: list[str]) -> list[str]:
+    """Return sorted sample_type values present in samples of the given organisms."""
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.sample_type)
+            .filter(
+                Sample.scientific_name.in_(scientific_names),
+                Sample.sample_type.isnot(None),
+            )
+            .distinct()
+            .order_by(Sample.sample_type)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
 def _get_all_sample_types() -> list[str]:
     """Return sorted list of distinct non-null sample_type values across all datasets.
 
-    Queries the entire sample table so the checklist reflects every sample type
-    present in the database, regardless of which dataset is selected.
+    Used only during pre-load; subsequent narrowing is done via callbacks.
     """
     session = SessionLocal()
     try:
@@ -38,14 +75,28 @@ def _get_all_sample_types() -> list[str]:
         session.close()
 
 
-def _get_datasets_by_sample_types(sample_types: list[str]) -> list[str]:
-    """Return sorted bioproject accessions that have samples of the given types."""
+def _get_datasets_by_filters(
+    scientific_names: list[str],
+    sample_types: list[str],
+) -> list[str]:
+    """Return sorted bioproject accessions matching both filters.
+
+    A dataset qualifies when it contains at least one sample whose scientific_name
+    and sample_type are both in the selected sets.
+
+
+    A dataset qualifies if it contains at least one sample whose scientific_name
+    is in scientific_names AND whose sample_type is in sample_types.
+    """
     session = SessionLocal()
     try:
         rows = (
             session.query(Dataset.bioproject)
             .join(Sample, Sample.dataset_id == Dataset.id)
-            .filter(Sample.sample_type.in_(sample_types))
+            .filter(
+                Sample.scientific_name.in_(scientific_names),
+                Sample.sample_type.in_(sample_types),
+            )
             .distinct()
             .order_by(Dataset.bioproject)
             .all()
@@ -141,6 +192,12 @@ def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 try:
+    _all_scientific_names = _get_all_scientific_names()
+except Exception as exc:
+    log.warning("Could not load scientific names from database: %s", exc)
+    _all_scientific_names = []
+
+try:
     _all_sample_types = _get_all_sample_types()
 except Exception as exc:
     log.warning("Could not load sample types from database: %s", exc)
@@ -170,6 +227,20 @@ if _datasets:
 layout = html.Div(
     [
         html.H1("TPM Expression"),
+        html.Div(
+            [
+                html.Label("Scientific name", id="scientific-name-label"),
+                dcc.Checklist(
+                    id="scientific-name-select",
+                    options=[
+                        {"label": name, "value": name} for name in _all_scientific_names
+                    ],
+                    value=_all_scientific_names,
+                    inline=True,
+                ),
+            ],
+            style={"marginBottom": "16px"},
+        ),
         html.Div(
             [
                 html.Label("Sample type", id="sample-type-label"),
@@ -328,22 +399,46 @@ clientside_callback(
 
 
 # ---------------------------------------------------------------------------
-# Callback 1: sample type selection -> filter dataset list
+# Callback 1: scientific name selection -> filter sample type list
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("sample-type-select", "options"),
+    Output("sample-type-select", "value"),
+    Input("scientific-name-select", "value"),
+    State("sample-type-select", "value"),
+)
+def filter_sample_types_by_scientific_name(selected_names, current_types):
+    """Narrow the sample type checklist to types present for the selected organisms."""
+    if not selected_names:
+        return [], []
+
+    available = _get_sample_types_by_scientific_names(selected_names)
+    options = [{"label": _readable_sample_type(st), "value": st} for st in available]
+    # Keep only the currently selected types that still appear in the new list.
+    value = [t for t in (current_types or []) if t in available] or available
+    return options, value
+
+
+# ---------------------------------------------------------------------------
+# Callback 2: scientific name + sample type selections -> filter dataset list
 # ---------------------------------------------------------------------------
 
 
 @callback(
     Output("dataset-select", "options"),
     Output("dataset-select", "value"),
+    Input("scientific-name-select", "value"),
     Input("sample-type-select", "value"),
     State("dataset-select", "value"),
 )
-def filter_datasets_by_sample_type(selected_sample_types, current_dataset):
-    """Narrow the dataset dropdown to projects with the selected sample types."""
-    if not selected_sample_types:
+def filter_datasets(selected_names, selected_types, current_dataset):
+    """Narrow the dataset dropdown to projects matching both filters."""
+    if not selected_names or not selected_types:
         return [], None
 
-    datasets = _get_datasets_by_sample_types(selected_sample_types)
+    datasets = _get_datasets_by_filters(selected_names, selected_types)
     options = [{"label": d, "value": d} for d in datasets]
     value = (
         current_dataset
@@ -354,7 +449,7 @@ def filter_datasets_by_sample_type(selected_sample_types, current_dataset):
 
 
 # ---------------------------------------------------------------------------
-# Callback 2: search value -> gene options (server-side filtered)
+# Callback 3: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
 
@@ -376,7 +471,7 @@ def filter_gene_options(search, current_gene):
 
 
 # ---------------------------------------------------------------------------
-# Callback 3: dataset -> reset gene selection + repopulate group checklist
+# Callback 4: dataset -> reset gene selection + repopulate group checklist
 # ---------------------------------------------------------------------------
 
 
@@ -402,7 +497,7 @@ def update_selectors(bioproject):
 
 
 # ---------------------------------------------------------------------------
-# Callback 4: gene + groups + stat test -> render plot
+# Callback 5: gene + groups + stat test -> render plot
 # ---------------------------------------------------------------------------
 
 
@@ -435,7 +530,7 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
 
 
 # ---------------------------------------------------------------------------
-# Callback 5: gene + groups -> populate accessible data table
+# Callback 6: gene + groups -> populate accessible data table
 # ---------------------------------------------------------------------------
 
 

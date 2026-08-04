@@ -10,6 +10,7 @@
     var LABEL_MAP = {
         "group-select": "group-select-label",
         "sample-type-select": "sample-type-label",
+        "scientific-name-select": "scientific-name-label",
         "stat-test": "stat-test-label",
     };
 
@@ -34,7 +35,12 @@
     // for a set of related inputs) and remove role="option"/aria-selected from
     // labels, restoring the native <label>+<input> pattern which is fully
     // accessible and contains no nested-interactive violation.
-    var OPTION_CONTAINERS = ["group-select", "sample-type-select", "stat-test"];
+    var OPTION_CONTAINERS = [
+        "group-select",
+        "sample-type-select",
+        "scientific-name-select",
+        "stat-test",
+    ];
 
     function fixOptionContainerARIA() {
         OPTION_CONTAINERS.forEach(function (id) {
