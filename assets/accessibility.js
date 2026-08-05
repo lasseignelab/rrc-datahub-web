@@ -9,7 +9,6 @@
     // Fixes WCAG 4.1.2: role=listbox and role=radiogroup require accessible names.
     var LABEL_MAP = {
         "group-select": "group-select-label",
-        "model-select": "model-select-label",
         "sample-type-select": "sample-type-label",
         "scientific-name-select": "scientific-name-label",
         "sex-select": "sex-select-label",
@@ -41,7 +40,6 @@
     var OPTION_CONTAINERS = [
         "group-select",
         "include-unknown-age",
-        "model-select",
         "sample-type-select",
         "scientific-name-select",
         "sex-select",

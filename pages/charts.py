@@ -92,22 +92,6 @@ def _get_all_sexes() -> list[str]:
         session.close()
 
 
-def _get_all_models() -> list[str]:
-    """Return sorted list of distinct non-null model values in the database."""
-    session = SessionLocal()
-    try:
-        rows = (
-            session.query(Sample.model)
-            .filter(Sample.model.isnot(None))
-            .distinct()
-            .order_by(Sample.model)
-            .all()
-        )
-        return [r[0] for r in rows]
-    finally:
-        session.close()
-
-
 def _get_age_range_bounds() -> tuple[int, int]:
     """Return the (min, max) age in days from all non-null age_range values.
 
@@ -140,15 +124,14 @@ def _get_datasets_by_filters(
     sexes: list[str],
     age_range: tuple[int, int],
     include_unknown_age: bool,
-    models: list[str],
 ) -> list[str]:
     """Return sorted bioproject accessions matching all active filters.
 
     A dataset qualifies when it contains at least one sample whose
-    scientific_name, underlying_variant, sample_type, sex, and model are
-    all in the respective selected sets AND whose age satisfies the age
-    condition. When include_unknown_age is True, samples with a null
-    age_range pass the age condition unconditionally.
+    scientific_name, underlying_variant, sample_type, and sex are all in
+    the respective selected sets AND whose age satisfies the age condition.
+    When include_unknown_age is True, samples with a null age_range pass
+    the age condition unconditionally.
     """
     min_age, max_age = age_range
     overlap = and_(
@@ -170,7 +153,6 @@ def _get_datasets_by_filters(
                 Sample.sample_type.in_(sample_types),
                 Sample.sex.in_(sexes),
                 age_cond,
-                Sample.model.in_(models),
             )
             .distinct()
             .order_by(Dataset.bioproject)
@@ -297,12 +279,6 @@ except Exception as exc:
     _age_min, _age_max = 0, 365
 
 try:
-    _all_models = _get_all_models()
-except Exception as exc:
-    log.warning("Could not load model values from database: %s", exc)
-    _all_models = []
-
-try:
     _datasets = _get_datasets()
 except Exception as exc:
     log.warning("Could not load datasets from database: %s", exc)
@@ -419,18 +395,6 @@ layout = html.Div(
                     # Extra bottom padding so the tooltip doesn't overlap
                     # the checkbox below it.
                     style={"marginBottom": "40px"},
-                ),
-                html.Div(
-                    [
-                        html.Label("Model", id="model-select-label"),
-                        dcc.Checklist(
-                            id="model-select",
-                            options=[{"label": m, "value": m} for m in _all_models],
-                            value=_all_models,
-                            inline=True,
-                        ),
-                    ],
-                    style={"marginBottom": "16px"},
                 ),
                 html.Div(
                     [
@@ -604,7 +568,6 @@ clientside_callback(
     Input("sex-select", "value"),
     Input("age-range-slider", "value"),
     Input("include-unknown-age", "value"),
-    Input("model-select", "value"),
     State("dataset-select", "value"),
 )
 def filter_datasets(
@@ -614,7 +577,6 @@ def filter_datasets(
     selected_sexes,
     age_range,
     include_unknown_age,
-    selected_models,
     current_dataset,
 ):
     """Narrow the dataset dropdown to projects matching all active filters."""
@@ -629,7 +591,6 @@ def filter_datasets(
         selected_sexes or [],
         effective_age,
         bool(include_unknown_age),
-        selected_models or [],
     )
     options = [{"label": d, "value": d} for d in datasets]
     value = (

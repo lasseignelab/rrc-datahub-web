@@ -6,10 +6,6 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
-### Add model filter after age range filters
-- `pages/charts.py`: Added `_get_all_models()` to query all distinct non-null `model` values. Pre-loads `_all_models`. Added `model-select` `dcc.Checklist` to the layout after the age range / include-unknown-age block and before the dataset dropdown. Extended `_get_datasets_by_filters()` with a `models` parameter filtered via `Sample.model.in_(models)`. Updated `filter_datasets` callback with the new `Input("model-select", "value")`.
-- `assets/accessibility.js`: Added `"model-select": "model-select-label"` to `LABEL_MAP` and `"model-select"` to `OPTION_CONTAINERS`.
-
 ### Add sex filter between sample type and age range
 - `pages/charts.py`: Added `_get_all_sexes()` to query all distinct non-null `sex` values. Pre-loads `_all_sexes`. Added `sex-select` `dcc.Checklist` to the layout between Sample type and Age range. Extended `_get_datasets_by_filters()` with a `sexes` parameter filtered via `Sample.sex.in_(sexes)`. Updated `filter_datasets` callback with the new `Input("sex-select", "value")`.
 - `assets/accessibility.js`: Added `"sex-select": "sex-select-label"` to `LABEL_MAP` and `"sex-select"` to `OPTION_CONTAINERS`.
