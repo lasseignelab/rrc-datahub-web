@@ -4,6 +4,13 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-05
+
+### Remove cascade from scientific name to sample type
+- `pages/charts.py`: Removed `filter_sample_types_by_scientific_name` callback and the `_get_sample_types_by_scientific_names` query function. Sample type options are now fixed (all types always visible). Scientific name and sample type still both feed into `filter_datasets` to narrow the dataset dropdown.
+
+---
+
 ## 2026-08-04
 
 ### Organize Charts page into "Dataset filters" and "Plot parameters" sections

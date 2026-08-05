@@ -37,25 +37,6 @@ def _get_all_scientific_names() -> list[str]:
         session.close()
 
 
-def _get_sample_types_by_scientific_names(scientific_names: list[str]) -> list[str]:
-    """Return sorted sample_type values present in samples of the given organisms."""
-    session = SessionLocal()
-    try:
-        rows = (
-            session.query(Sample.sample_type)
-            .filter(
-                Sample.scientific_name.in_(scientific_names),
-                Sample.sample_type.isnot(None),
-            )
-            .distinct()
-            .order_by(Sample.sample_type)
-            .all()
-        )
-        return [r[0] for r in rows]
-    finally:
-        session.close()
-
-
 def _get_all_sample_types() -> list[str]:
     """Return sorted list of distinct non-null sample_type values across all datasets.
 
@@ -419,30 +400,7 @@ clientside_callback(
 
 
 # ---------------------------------------------------------------------------
-# Callback 1: scientific name selection -> filter sample type list
-# ---------------------------------------------------------------------------
-
-
-@callback(
-    Output("sample-type-select", "options"),
-    Output("sample-type-select", "value"),
-    Input("scientific-name-select", "value"),
-    State("sample-type-select", "value"),
-)
-def filter_sample_types_by_scientific_name(selected_names, current_types):
-    """Narrow the sample type checklist to types present for the selected organisms."""
-    if not selected_names:
-        return [], []
-
-    available = _get_sample_types_by_scientific_names(selected_names)
-    options = [{"label": _readable_sample_type(st), "value": st} for st in available]
-    # Keep only the currently selected types that still appear in the new list.
-    value = [t for t in (current_types or []) if t in available] or available
-    return options, value
-
-
-# ---------------------------------------------------------------------------
-# Callback 2: scientific name + sample type selections -> filter dataset list
+# Callback 1: scientific name + sample type selections -> filter dataset list
 # ---------------------------------------------------------------------------
 
 
