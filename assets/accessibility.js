@@ -60,9 +60,25 @@
         });
     }
 
+    // dcc.RangeSlider renders two bare <input type="number"> elements with no
+    // accessible name, violating WCAG 4.1.2.  Add aria-label to each.
+    function labelRangeSliderInputs() {
+        var slider = document.getElementById("age-range-slider");
+        if (!slider) { return; }
+        var minInput = slider.querySelector(".dash-range-slider-min-input");
+        var maxInput = slider.querySelector(".dash-range-slider-max-input");
+        if (minInput && !minInput.getAttribute("aria-label")) {
+            minInput.setAttribute("aria-label", "Age range minimum (days)");
+        }
+        if (maxInput && !maxInput.getAttribute("aria-label")) {
+            maxInput.setAttribute("aria-label", "Age range maximum (days)");
+        }
+    }
+
     function applyAll() {
         applyLabels();
         fixOptionContainerARIA();
+        labelRangeSliderInputs();
     }
 
     var observer = new MutationObserver(applyAll);

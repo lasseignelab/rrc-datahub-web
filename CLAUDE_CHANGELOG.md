@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
+### Add age range (days) filter to dataset filters section
+- `pages/charts.py`: Added `from sqlalchemy import and_, func, or_`. Added `_get_age_range_bounds()` which uses PostgreSQL `lower()`/`upper()` on the NUMRANGE column to find the global min/max age in days (falls back to 0–365 if no data). Pre-loads `_age_min` and `_age_max` at startup. Extended `_get_datasets_by_filters()` with an `age_range` parameter; the filter includes samples where `age_range` is null (unknown age always passes) OR the sample's age_range overlaps the selected range. Added `dcc.RangeSlider(id="age-range-slider")` to the layout after Sample type with tooltips always visible. Updated `filter_datasets` callback with the new `Input("age-range-slider", "value")`.
+- `assets/accessibility.js`: Added `labelRangeSliderInputs()` which uses `MutationObserver` (via `applyAll`) to set `aria-label` on the slider's two bare `<input type="number">` elements, fixing the WCAG 4.1.2 violation that pa11y detected.
+
 ### Add underlying variant filter to dataset filters section
 - `pages/charts.py`: Added `_get_all_underlying_variants()` to query all distinct non-null `underlying_variant` values from the sample table. Added `underlying-variant-select` `dcc.Checklist` to the layout between scientific name and sample type. Extended `_get_datasets_by_filters()` to accept a third `underlying_variants` parameter and filter the dataset query against it. Updated `filter_datasets` callback with the new `Input("underlying-variant-select", "value")`.
 - `assets/accessibility.js`: Added `"underlying-variant-select": "underlying-variant-label"` to `LABEL_MAP` and `"underlying-variant-select"` to `OPTION_CONTAINERS`.

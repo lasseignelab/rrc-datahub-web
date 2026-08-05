@@ -6,6 +6,7 @@ import math
 import dash
 import pandas as pd
 from dash import Input, Output, State, callback, clientside_callback, dcc, html
+from sqlalchemy import and_, func, or_
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -75,17 +76,52 @@ def _get_all_sample_types() -> list[str]:
         session.close()
 
 
+def _get_age_range_bounds() -> tuple[int, int]:
+    """Return the (min, max) age in days from all non-null age_range values.
+
+    Uses PostgreSQL lower() and upper() to extract the bounds of the NUMRANGE
+    column. Falls back to (0, 365) if no age data exists.
+    """
+    session = SessionLocal()
+    try:
+        min_val = (
+            session.query(func.min(func.lower(Sample.age_range)))
+            .filter(Sample.age_range.isnot(None))
+            .scalar()
+        )
+        max_val = (
+            session.query(func.max(func.upper(Sample.age_range)))
+            .filter(Sample.age_range.isnot(None))
+            .scalar()
+        )
+        if min_val is None or max_val is None:
+            return 0, 365
+        return int(min_val), int(max_val)
+    finally:
+        session.close()
+
+
 def _get_datasets_by_filters(
     scientific_names: list[str],
     underlying_variants: list[str],
     sample_types: list[str],
+    age_range: tuple[int, int],
 ) -> list[str]:
-    """Return sorted bioproject accessions matching all three filters.
+    """Return sorted bioproject accessions matching all four filters.
 
     A dataset qualifies when it contains at least one sample whose
     scientific_name, underlying_variant, and sample_type are all in the
-    respective selected sets.
+    respective selected sets AND whose age_range either is unknown (null)
+    or overlaps the selected age range.
     """
+    min_age, max_age = age_range
+    age_cond = or_(
+        Sample.age_range.is_(None),
+        and_(
+            func.lower(Sample.age_range) <= max_age,
+            func.upper(Sample.age_range) >= min_age,
+        ),
+    )
     session = SessionLocal()
     try:
         rows = (
@@ -95,6 +131,7 @@ def _get_datasets_by_filters(
                 Sample.scientific_name.in_(scientific_names),
                 Sample.underlying_variant.in_(underlying_variants),
                 Sample.sample_type.in_(sample_types),
+                age_cond,
             )
             .distinct()
             .order_by(Dataset.bioproject)
@@ -209,6 +246,12 @@ except Exception as exc:
     _all_sample_types = []
 
 try:
+    _age_min, _age_max = _get_age_range_bounds()
+except Exception as exc:
+    log.warning("Could not load age range bounds from database: %s", exc)
+    _age_min, _age_max = 0, 365
+
+try:
     _datasets = _get_datasets()
 except Exception as exc:
     log.warning("Could not load datasets from database: %s", exc)
@@ -279,6 +322,29 @@ layout = html.Div(
                         ),
                     ],
                     style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
+                        html.Label("Age range (days)", htmlFor="age-range-slider"),
+                        dcc.RangeSlider(
+                            id="age-range-slider",
+                            min=_age_min,
+                            max=_age_max,
+                            step=1,
+                            value=[_age_min, _age_max],
+                            marks={
+                                _age_min: str(_age_min),
+                                _age_max: str(_age_max),
+                            },
+                            tooltip={
+                                "placement": "bottom",
+                                "always_visible": True,
+                            },
+                        ),
+                    ],
+                    # Extra bottom padding so the tooltip doesn't overlap
+                    # the next element.
+                    style={"marginBottom": "40px"},
                 ),
                 html.Div(
                     [
@@ -449,15 +515,19 @@ clientside_callback(
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
+    Input("age-range-slider", "value"),
     State("dataset-select", "value"),
 )
-def filter_datasets(selected_names, selected_variants, selected_types, current_dataset):
-    """Narrow the dataset dropdown to projects matching all three filters."""
+def filter_datasets(
+    selected_names, selected_variants, selected_types, age_range, current_dataset
+):
+    """Narrow the dataset dropdown to projects matching all four filters."""
     if not selected_names or not selected_variants or not selected_types:
         return [], None
 
+    effective_age = tuple(age_range) if age_range else (_age_min, _age_max)
     datasets = _get_datasets_by_filters(
-        selected_names, selected_variants, selected_types
+        selected_names, selected_variants, selected_types, effective_age
     )
     options = [{"label": d, "value": d} for d in datasets]
     value = (
