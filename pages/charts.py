@@ -37,6 +37,25 @@ def _get_all_scientific_names() -> list[str]:
         session.close()
 
 
+def _get_all_underlying_variants() -> list[str]:
+    """Return sorted list of distinct non-null underlying_variant values.
+
+    Queries the entire sample table so the checklist reflects all variants.
+    """
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.underlying_variant)
+            .filter(Sample.underlying_variant.isnot(None))
+            .distinct()
+            .order_by(Sample.underlying_variant)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
 def _get_all_sample_types() -> list[str]:
     """Return sorted list of distinct non-null sample_type values across all datasets.
 
@@ -58,16 +77,14 @@ def _get_all_sample_types() -> list[str]:
 
 def _get_datasets_by_filters(
     scientific_names: list[str],
+    underlying_variants: list[str],
     sample_types: list[str],
 ) -> list[str]:
-    """Return sorted bioproject accessions matching both filters.
+    """Return sorted bioproject accessions matching all three filters.
 
-    A dataset qualifies when it contains at least one sample whose scientific_name
-    and sample_type are both in the selected sets.
-
-
-    A dataset qualifies if it contains at least one sample whose scientific_name
-    is in scientific_names AND whose sample_type is in sample_types.
+    A dataset qualifies when it contains at least one sample whose
+    scientific_name, underlying_variant, and sample_type are all in the
+    respective selected sets.
     """
     session = SessionLocal()
     try:
@@ -76,6 +93,7 @@ def _get_datasets_by_filters(
             .join(Sample, Sample.dataset_id == Dataset.id)
             .filter(
                 Sample.scientific_name.in_(scientific_names),
+                Sample.underlying_variant.in_(underlying_variants),
                 Sample.sample_type.in_(sample_types),
             )
             .distinct()
@@ -179,6 +197,12 @@ except Exception as exc:
     _all_scientific_names = []
 
 try:
+    _all_underlying_variants = _get_all_underlying_variants()
+except Exception as exc:
+    log.warning("Could not load underlying variants from database: %s", exc)
+    _all_underlying_variants = []
+
+try:
     _all_sample_types = _get_all_sample_types()
 except Exception as exc:
     log.warning("Could not load sample types from database: %s", exc)
@@ -221,6 +245,21 @@ layout = html.Div(
                                 for name in _all_scientific_names
                             ],
                             value=_all_scientific_names,
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
+                        html.Label("Underlying variant", id="underlying-variant-label"),
+                        dcc.Checklist(
+                            id="underlying-variant-select",
+                            options=[
+                                {"label": v, "value": v}
+                                for v in _all_underlying_variants
+                            ],
+                            value=_all_underlying_variants,
                             inline=True,
                         ),
                     ],
@@ -408,15 +447,18 @@ clientside_callback(
     Output("dataset-select", "options"),
     Output("dataset-select", "value"),
     Input("scientific-name-select", "value"),
+    Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
     State("dataset-select", "value"),
 )
-def filter_datasets(selected_names, selected_types, current_dataset):
-    """Narrow the dataset dropdown to projects matching both filters."""
-    if not selected_names or not selected_types:
+def filter_datasets(selected_names, selected_variants, selected_types, current_dataset):
+    """Narrow the dataset dropdown to projects matching all three filters."""
+    if not selected_names or not selected_variants or not selected_types:
         return [], None
 
-    datasets = _get_datasets_by_filters(selected_names, selected_types)
+    datasets = _get_datasets_by_filters(
+        selected_names, selected_variants, selected_types
+    )
     options = [{"label": d, "value": d} for d in datasets]
     value = (
         current_dataset

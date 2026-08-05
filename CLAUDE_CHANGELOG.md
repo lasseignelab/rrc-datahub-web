@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
+### Add underlying variant filter to dataset filters section
+- `pages/charts.py`: Added `_get_all_underlying_variants()` to query all distinct non-null `underlying_variant` values from the sample table. Added `underlying-variant-select` `dcc.Checklist` to the layout between scientific name and sample type. Extended `_get_datasets_by_filters()` to accept a third `underlying_variants` parameter and filter the dataset query against it. Updated `filter_datasets` callback with the new `Input("underlying-variant-select", "value")`.
+- `assets/accessibility.js`: Added `"underlying-variant-select": "underlying-variant-label"` to `LABEL_MAP` and `"underlying-variant-select"` to `OPTION_CONTAINERS`.
+
 ### Remove cascade from scientific name to sample type
 - `pages/charts.py`: Removed `filter_sample_types_by_scientific_name` callback and the `_get_sample_types_by_scientific_names` query function. Sample type options are now fixed (all types always visible). Scientific name and sample type still both feed into `filter_datasets` to narrow the dataset dropdown.
 
