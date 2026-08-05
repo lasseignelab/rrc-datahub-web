@@ -888,11 +888,7 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
     Input("group-select", "value"),
 )
 def update_table(bioproject, gene, selected_groups):
-    """Build an accessible HTML table of per-sample TPM values.
-
-    The table is always populated in the background; visibility is toggled
-    client-side by the 'Show table / Show plot' button so there is no
-    server round-trip when switching views.
+    """Build a per-genotype summary table of log10(TPM+1) statistics.
 
     No-data states are reported via the sibling #table-status paragraph rather
     than an html.Caption inside the table.  A table that contains only a
@@ -907,21 +903,35 @@ def update_table(bioproject, gene, selected_groups):
         return "No expression data found for the current selection.", []
 
     df = df[df["genotype"].isin(selected_groups)]
-    df = df.sort_values(["genotype", "TPM"]).reset_index(drop=True)
-
     n_samples = len(df)
     n_genotypes = df["genotype"].nunique()
 
+    df["log_tpm"] = df["TPM"].apply(lambda x: math.log10(x + 1))
+    summary = (
+        df.groupby("genotype")
+        .agg(
+            Max=("log_tpm", "max"),
+            Q3=("log_tpm", lambda x: x.quantile(0.75)),
+            Median=("log_tpm", "median"),
+            Q1=("log_tpm", lambda x: x.quantile(0.25)),
+            Min=("log_tpm", "min"),
+        )
+        .reset_index()
+    )
+
     return "", [
         html.Caption(
-            f"{gene} expression — {n_samples} samples, " f"{n_genotypes} genotype(s)"
+            f"{gene} expression — {n_samples} samples, {n_genotypes} genotype(s)"
         ),
         html.Thead(
             html.Tr(
                 [
                     html.Th("Genotype", scope="col"),
-                    html.Th("TPM", scope="col"),
-                    html.Th("log10(TPM + 1)", scope="col"),
+                    html.Th("Max log10(TPM+1)", scope="col"),
+                    html.Th("Q3 log10(TPM+1)", scope="col"),
+                    html.Th("Median log10(TPM+1)", scope="col"),
+                    html.Th("Q1 log10(TPM+1)", scope="col"),
+                    html.Th("Min log10(TPM+1)", scope="col"),
                 ]
             )
         ),
@@ -930,11 +940,14 @@ def update_table(bioproject, gene, selected_groups):
                 html.Tr(
                     [
                         html.Td(row["genotype"]),
-                        html.Td(f"{row['TPM']:.4g}"),
-                        html.Td(f"{math.log10(row['TPM'] + 1):.4f}"),
+                        html.Td(f"{row['Max']:.4f}"),
+                        html.Td(f"{row['Q3']:.4f}"),
+                        html.Td(f"{row['Median']:.4f}"),
+                        html.Td(f"{row['Q1']:.4f}"),
+                        html.Td(f"{row['Min']:.4f}"),
                     ]
                 )
-                for _, row in df.iterrows()
+                for _, row in summary.iterrows()
             ]
         ),
     ]

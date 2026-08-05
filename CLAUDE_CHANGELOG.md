@@ -9,6 +9,9 @@ A log of changes made by Claude Code in this project, newest first.
 ### Add dataset count below the Dataset label
 - `pages/charts.py`: Added `html.Span(id="dataset-count")` inline with the Dataset label. Added `Output("dataset-count", "children")` to `filter_datasets`; returns `"N dataset(s)"` (pluralised) on each filter change, or `"0 datasets"` on the early-exit path.
 
+### Replace per-sample TPM table with per-genotype log10(TPM+1) summary
+- `pages/charts.py`: Rewrote `update_table` to group by genotype and show Max, Q3, Median, Q1, Min of log10(TPM+1) — matching the five-number summary displayed by the violin plot. Removed the raw TPM column. Computes `log_tpm` via `df["TPM"].apply(lambda x: math.log10(x + 1))` then uses pandas named aggregation with `quantile(0.75)` and `quantile(0.25)` for Q3/Q1. Caption still reports total sample count and number of genotypes.
+
 ### Tighten Age column header and collapse equal-bound ranges
 - `pages/charts.py`: Renamed table header from `"Age Range (days)"` to `"Age (days)"`. In `_fmt`, when both bounds are present and equal, returns just the single value as a string instead of `"lo–lo"`.
 
