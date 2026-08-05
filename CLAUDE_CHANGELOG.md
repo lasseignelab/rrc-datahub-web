@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
+### Add checkbox to control whether unknown-age samples are included in dataset filter
+- `pages/charts.py`: Added `dcc.Checklist(id="include-unknown-age")` with a single option "Include samples with unknown age", checked by default, placed below the age range slider. Extended `_get_datasets_by_filters()` with `include_unknown_age: bool`; when True the age condition is `age_range IS NULL OR overlaps`; when False it is `age_range IS NOT NULL AND overlaps`. Updated `filter_datasets` callback with the new input, passing `bool(include_unknown_age)` (converts empty list to False).
+- `assets/accessibility.js`: Added `"include-unknown-age"` to `OPTION_CONTAINERS` to apply the same role=group fix as other checklists.
+
 ### Add age range (days) filter to dataset filters section
 - `pages/charts.py`: Added `from sqlalchemy import and_, func, or_`. Added `_get_age_range_bounds()` which uses PostgreSQL `lower()`/`upper()` on the NUMRANGE column to find the global min/max age in days (falls back to 0–365 if no data). Pre-loads `_age_min` and `_age_max` at startup. Extended `_get_datasets_by_filters()` with an `age_range` parameter; the filter includes samples where `age_range` is null (unknown age always passes) OR the sample's age_range overlaps the selected range. Added `dcc.RangeSlider(id="age-range-slider")` to the layout after Sample type with tooltips always visible. Updated `filter_datasets` callback with the new `Input("age-range-slider", "value")`.
 - `assets/accessibility.js`: Added `labelRangeSliderInputs()` which uses `MutationObserver` (via `applyAll`) to set `aria-label` on the slider's two bare `<input type="number">` elements, fixing the WCAG 4.1.2 violation that pa11y detected.

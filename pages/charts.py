@@ -106,22 +106,25 @@ def _get_datasets_by_filters(
     underlying_variants: list[str],
     sample_types: list[str],
     age_range: tuple[int, int],
+    include_unknown_age: bool,
 ) -> list[str]:
-    """Return sorted bioproject accessions matching all four filters.
+    """Return sorted bioproject accessions matching all active filters.
 
     A dataset qualifies when it contains at least one sample whose
     scientific_name, underlying_variant, and sample_type are all in the
-    respective selected sets AND whose age_range either is unknown (null)
-    or overlaps the selected age range.
+    respective selected sets AND whose age satisfies the age condition.
+    When include_unknown_age is True, samples with a null age_range pass
+    the age condition unconditionally.
     """
     min_age, max_age = age_range
-    age_cond = or_(
-        Sample.age_range.is_(None),
-        and_(
-            func.lower(Sample.age_range) <= max_age,
-            func.upper(Sample.age_range) >= min_age,
-        ),
+    overlap = and_(
+        func.lower(Sample.age_range) <= max_age,
+        func.upper(Sample.age_range) >= min_age,
     )
+    if include_unknown_age:
+        age_cond = or_(Sample.age_range.is_(None), overlap)
+    else:
+        age_cond = and_(Sample.age_range.isnot(None), overlap)
     session = SessionLocal()
     try:
         rows = (
@@ -341,9 +344,20 @@ layout = html.Div(
                                 "always_visible": True,
                             },
                         ),
+                        dcc.Checklist(
+                            id="include-unknown-age",
+                            options=[
+                                {
+                                    "label": "Include samples with unknown age",
+                                    "value": "include",
+                                }
+                            ],
+                            value=["include"],
+                            style={"marginTop": "8px"},
+                        ),
                     ],
                     # Extra bottom padding so the tooltip doesn't overlap
-                    # the next element.
+                    # the checkbox below it.
                     style={"marginBottom": "40px"},
                 ),
                 html.Div(
@@ -516,18 +530,28 @@ clientside_callback(
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
     Input("age-range-slider", "value"),
+    Input("include-unknown-age", "value"),
     State("dataset-select", "value"),
 )
 def filter_datasets(
-    selected_names, selected_variants, selected_types, age_range, current_dataset
+    selected_names,
+    selected_variants,
+    selected_types,
+    age_range,
+    include_unknown_age,
+    current_dataset,
 ):
-    """Narrow the dataset dropdown to projects matching all four filters."""
+    """Narrow the dataset dropdown to projects matching all active filters."""
     if not selected_names or not selected_variants or not selected_types:
         return [], None
 
     effective_age = tuple(age_range) if age_range else (_age_min, _age_max)
     datasets = _get_datasets_by_filters(
-        selected_names, selected_variants, selected_types, effective_age
+        selected_names,
+        selected_variants,
+        selected_types,
+        effective_age,
+        bool(include_unknown_age),
     )
     options = [{"label": d, "value": d} for d in datasets]
     value = (

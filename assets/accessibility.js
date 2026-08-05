@@ -38,6 +38,7 @@
     // accessible and contains no nested-interactive violation.
     var OPTION_CONTAINERS = [
         "group-select",
+        "include-unknown-age",
         "sample-type-select",
         "scientific-name-select",
         "underlying-variant-select",
