@@ -76,6 +76,22 @@ def _get_all_sample_types() -> list[str]:
         session.close()
 
 
+def _get_all_sexes() -> list[str]:
+    """Return sorted list of distinct non-null sex values in the database."""
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.sex)
+            .filter(Sample.sex.isnot(None))
+            .distinct()
+            .order_by(Sample.sex)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
 def _get_age_range_bounds() -> tuple[int, int]:
     """Return the (min, max) age in days from all non-null age_range values.
 
@@ -105,14 +121,15 @@ def _get_datasets_by_filters(
     scientific_names: list[str],
     underlying_variants: list[str],
     sample_types: list[str],
+    sexes: list[str],
     age_range: tuple[int, int],
     include_unknown_age: bool,
 ) -> list[str]:
     """Return sorted bioproject accessions matching all active filters.
 
     A dataset qualifies when it contains at least one sample whose
-    scientific_name, underlying_variant, and sample_type are all in the
-    respective selected sets AND whose age satisfies the age condition.
+    scientific_name, underlying_variant, sample_type, and sex are all in
+    the respective selected sets AND whose age satisfies the age condition.
     When include_unknown_age is True, samples with a null age_range pass
     the age condition unconditionally.
     """
@@ -134,6 +151,7 @@ def _get_datasets_by_filters(
                 Sample.scientific_name.in_(scientific_names),
                 Sample.underlying_variant.in_(underlying_variants),
                 Sample.sample_type.in_(sample_types),
+                Sample.sex.in_(sexes),
                 age_cond,
             )
             .distinct()
@@ -249,6 +267,12 @@ except Exception as exc:
     _all_sample_types = []
 
 try:
+    _all_sexes = _get_all_sexes()
+except Exception as exc:
+    log.warning("Could not load sex values from database: %s", exc)
+    _all_sexes = []
+
+try:
     _age_min, _age_max = _get_age_range_bounds()
 except Exception as exc:
     log.warning("Could not load age range bounds from database: %s", exc)
@@ -321,6 +345,18 @@ layout = html.Div(
                                 for st in _all_sample_types
                             ],
                             value=_all_sample_types,
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
+                        html.Label("Sex", id="sex-select-label"),
+                        dcc.Checklist(
+                            id="sex-select",
+                            options=[{"label": s, "value": s} for s in _all_sexes],
+                            value=_all_sexes,
                             inline=True,
                         ),
                     ],
@@ -529,6 +565,7 @@ clientside_callback(
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
+    Input("sex-select", "value"),
     Input("age-range-slider", "value"),
     Input("include-unknown-age", "value"),
     State("dataset-select", "value"),
@@ -537,6 +574,7 @@ def filter_datasets(
     selected_names,
     selected_variants,
     selected_types,
+    selected_sexes,
     age_range,
     include_unknown_age,
     current_dataset,
@@ -550,6 +588,7 @@ def filter_datasets(
         selected_names,
         selected_variants,
         selected_types,
+        selected_sexes or [],
         effective_age,
         bool(include_unknown_age),
     )

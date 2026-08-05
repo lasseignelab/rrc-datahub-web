@@ -11,6 +11,7 @@
         "group-select": "group-select-label",
         "sample-type-select": "sample-type-label",
         "scientific-name-select": "scientific-name-label",
+        "sex-select": "sex-select-label",
         "underlying-variant-select": "underlying-variant-label",
         "stat-test": "stat-test-label",
     };
@@ -41,6 +42,7 @@
         "include-unknown-age",
         "sample-type-select",
         "scientific-name-select",
+        "sex-select",
         "underlying-variant-select",
         "stat-test",
     ];

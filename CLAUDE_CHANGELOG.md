@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
+### Add sex filter between sample type and age range
+- `pages/charts.py`: Added `_get_all_sexes()` to query all distinct non-null `sex` values. Pre-loads `_all_sexes`. Added `sex-select` `dcc.Checklist` to the layout between Sample type and Age range. Extended `_get_datasets_by_filters()` with a `sexes` parameter filtered via `Sample.sex.in_(sexes)`. Updated `filter_datasets` callback with the new `Input("sex-select", "value")`.
+- `assets/accessibility.js`: Added `"sex-select": "sex-select-label"` to `LABEL_MAP` and `"sex-select"` to `OPTION_CONTAINERS`.
+
 ### Add checkbox to control whether unknown-age samples are included in dataset filter
 - `pages/charts.py`: Added `dcc.Checklist(id="include-unknown-age")` with a single option "Include samples with unknown age", checked by default, placed below the age range slider. Extended `_get_datasets_by_filters()` with `include_unknown_age: bool`; when True the age condition is `age_range IS NULL OR overlaps`; when False it is `age_range IS NOT NULL AND overlaps`. Updated `filter_datasets` callback with the new input, passing `bool(include_unknown_age)` (converts empty list to False).
 - `assets/accessibility.js`: Added `"include-unknown-age"` to `OPTION_CONTAINERS` to apply the same role=group fix as other checklists.
