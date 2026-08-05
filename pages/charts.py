@@ -163,6 +163,156 @@ def _get_datasets_by_filters(
         session.close()
 
 
+def _get_dataset_table(
+    scientific_names: list[str],
+    underlying_variants: list[str],
+    sample_types: list[str],
+    sexes: list[str],
+    age_range: tuple[int, int],
+    include_unknown_age: bool,
+) -> list[dict]:
+    """Return one summary row per matching bioproject for the dataset table.
+
+    Applies the same filter logic as _get_datasets_by_filters then aggregates
+    distinct scientific_name, underlying_variant, sample_type, and sex values
+    across all samples in each qualifying bioproject.
+    """
+    min_age, max_age = age_range
+    overlap = and_(
+        func.lower(Sample.age_range) <= max_age,
+        func.upper(Sample.age_range) >= min_age,
+    )
+    if include_unknown_age:
+        age_cond = or_(Sample.age_range.is_(None), overlap)
+    else:
+        age_cond = and_(Sample.age_range.isnot(None), overlap)
+    session = SessionLocal()
+    try:
+        matching = [
+            r[0]
+            for r in (
+                session.query(Dataset.bioproject)
+                .join(Sample, Sample.dataset_id == Dataset.id)
+                .filter(
+                    Sample.scientific_name.in_(scientific_names),
+                    Sample.underlying_variant.in_(underlying_variants),
+                    Sample.sample_type.in_(sample_types),
+                    Sample.sex.in_(sexes),
+                    age_cond,
+                )
+                .distinct()
+                .order_by(Dataset.bioproject)
+                .all()
+            )
+        ]
+        if not matching:
+            return []
+        samples = (
+            session.query(
+                Dataset.bioproject,
+                Sample.scientific_name,
+                Sample.underlying_variant,
+                Sample.sample_type,
+                Sample.sex,
+                func.lower(Sample.age_range),
+                func.upper(Sample.age_range),
+            )
+            .join(Sample, Sample.dataset_id == Dataset.id)
+            .filter(Dataset.bioproject.in_(matching))
+            .all()
+        )
+        agg: dict[str, dict] = {
+            bp: {
+                "scientific_names": set(),
+                "underlying_variants": set(),
+                "sample_types": set(),
+                "sexes": set(),
+                "age_ranges": set(),
+            }
+            for bp in matching
+        }
+        for bp, sci, var, stype, sex, age_lo, age_hi in samples:
+            if sci:
+                agg[bp]["scientific_names"].add(sci)
+            if var:
+                agg[bp]["underlying_variants"].add(var)
+            if stype:
+                agg[bp]["sample_types"].add(stype)
+            if sex:
+                agg[bp]["sexes"].add(sex)
+            if age_lo is not None or age_hi is not None:
+                agg[bp]["age_ranges"].add(
+                    (
+                        int(age_lo) if age_lo is not None else None,
+                        int(age_hi) if age_hi is not None else None,
+                    )
+                )
+
+        def _fmt(lo: int | None, hi: int | None) -> str:
+            if lo is not None and hi is not None:
+                return str(lo) if lo == hi else f"{lo}–{hi}"
+            if lo is not None:
+                return f"{lo}+"
+            return f"–{hi}"
+
+        def _sort_key(pair: tuple) -> tuple:
+            lo, hi = pair
+            return (
+                lo if lo is not None else float("inf"),
+                hi if hi is not None else float("inf"),
+            )
+
+        return [
+            {
+                "bioproject": bp,
+                "scientific_names": sorted(agg[bp]["scientific_names"]),
+                "underlying_variants": sorted(agg[bp]["underlying_variants"]),
+                "sample_types": sorted(agg[bp]["sample_types"]),
+                "sexes": sorted(agg[bp]["sexes"]),
+                "age_ranges": [
+                    _fmt(lo, hi)
+                    for lo, hi in sorted(agg[bp]["age_ranges"], key=_sort_key)
+                ]
+                or ["Unknown"],
+            }
+            for bp in matching
+        ]
+    finally:
+        session.close()
+
+
+def _build_table_rows(rows: list[dict], selected: str | None) -> list:
+    """Build html.Tr list for the dataset selection table."""
+    return [
+        html.Tr(
+            [
+                html.Td(
+                    html.Button(
+                        "",
+                        **{
+                            "aria-pressed": (
+                                "true" if row["bioproject"] == selected else "false"
+                            ),
+                            "aria-label": f"Select dataset {row['bioproject']}",
+                            "data-bp": row["bioproject"],
+                        },
+                    )
+                ),
+                html.Td(row["bioproject"]),
+                html.Td(", ".join(row["scientific_names"])),
+                html.Td(", ".join(row["underlying_variants"])),
+                html.Td(
+                    ", ".join(_readable_sample_type(st) for st in row["sample_types"])
+                ),
+                html.Td(", ".join(row["sexes"])),
+                html.Td(", ".join(row["age_ranges"])),
+            ],
+            className=("dataset-row-selected" if row["bioproject"] == selected else ""),
+        )
+        for row in rows
+    ]
+
+
 def _get_datasets() -> list[str]:
     """Return sorted list of bioproject accessions from the database."""
     session = SessionLocal()
@@ -398,15 +548,55 @@ layout = html.Div(
                 ),
                 html.Div(
                     [
-                        html.Label("Dataset", htmlFor="dataset-select"),
-                        dcc.Dropdown(
-                            id="dataset-select",
-                            options=[{"label": d, "value": d} for d in _datasets],
-                            value=_datasets[0] if _datasets else None,
-                            clearable=False,
+                        html.Div(
+                            [
+                                html.Label("Dataset", id="dataset-table-label"),
+                                html.Span(
+                                    id="dataset-count",
+                                    style={
+                                        "marginLeft": "8px",
+                                        "color": "#555",
+                                        "fontSize": "0.9em",
+                                    },
+                                ),
+                            ],
+                            style={"marginBottom": "4px"},
+                        ),
+                        html.Div(
+                            html.Table(
+                                [
+                                    html.Thead(
+                                        html.Tr(
+                                            [
+                                                html.Th("Select", scope="col"),
+                                                html.Th("BioProject ID", scope="col"),
+                                                html.Th("Scientific Name", scope="col"),
+                                                html.Th(
+                                                    "Underlying Variant",
+                                                    scope="col",
+                                                ),
+                                                html.Th("Sample Type", scope="col"),
+                                                html.Th("Sex", scope="col"),
+                                                html.Th("Age (days)", scope="col"),
+                                            ]
+                                        )
+                                    ),
+                                    html.Tbody(id="dataset-table-body"),
+                                ],
+                                id="dataset-table",
+                                **{"aria-labelledby": "dataset-table-label"},
+                            ),
+                            style={"height": "280px", "overflowY": "auto"},
+                            role="region",
+                            tabIndex=0,
+                            **{"aria-label": "Dataset selection table"},
+                        ),
+                        dcc.Store(
+                            id="dataset-selected",
+                            data=_datasets[0] if _datasets else None,
                         ),
                     ],
-                    style={"width": "300px", "marginBottom": "16px"},
+                    style={"marginBottom": "16px"},
                 ),
             ],
             **{"aria-labelledby": "dataset-filters-heading"},
@@ -555,20 +745,21 @@ clientside_callback(
 
 
 # ---------------------------------------------------------------------------
-# Callback 1: scientific name + sample type selections -> filter dataset list
+# Callback 1: filter inputs -> rebuild dataset table + update selected dataset
 # ---------------------------------------------------------------------------
 
 
 @callback(
-    Output("dataset-select", "options"),
-    Output("dataset-select", "value"),
+    Output("dataset-table-body", "children"),
+    Output("dataset-selected", "data"),
+    Output("dataset-count", "children"),
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
     Input("sex-select", "value"),
     Input("age-range-slider", "value"),
     Input("include-unknown-age", "value"),
-    State("dataset-select", "value"),
+    State("dataset-selected", "data"),
 )
 def filter_datasets(
     selected_names,
@@ -579,12 +770,12 @@ def filter_datasets(
     include_unknown_age,
     current_dataset,
 ):
-    """Narrow the dataset dropdown to projects matching all active filters."""
+    """Rebuild the dataset table to show only projects matching all active filters."""
     if not selected_names or not selected_variants or not selected_types:
-        return [], None
+        return [], None, "0 datasets"
 
     effective_age = tuple(age_range) if age_range else (_age_min, _age_max)
-    datasets = _get_datasets_by_filters(
+    rows = _get_dataset_table(
         selected_names,
         selected_variants,
         selected_types,
@@ -592,17 +783,19 @@ def filter_datasets(
         effective_age,
         bool(include_unknown_age),
     )
-    options = [{"label": d, "value": d} for d in datasets]
-    value = (
+    bioprojects = [r["bioproject"] for r in rows]
+    selected = (
         current_dataset
-        if current_dataset in datasets
-        else (datasets[0] if datasets else None)
+        if current_dataset in bioprojects
+        else (bioprojects[0] if bioprojects else None)
     )
-    return options, value
+    n = len(rows)
+    count = f"{n} dataset{'s' if n != 1 else ''}"
+    return _build_table_rows(rows, selected), selected, count
 
 
 # ---------------------------------------------------------------------------
-# Callback 3: search value -> gene options (server-side filtered)
+# Callback 2: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
 
@@ -632,7 +825,7 @@ def filter_gene_options(search, current_gene):
     Output("gene-select", "value"),
     Output("group-select", "options"),
     Output("group-select", "value"),
-    Input("dataset-select", "value"),
+    Input("dataset-selected", "data"),
 )
 def update_selectors(bioproject):
     """Reset gene and group selections when the dataset changes."""
@@ -656,7 +849,7 @@ def update_selectors(bioproject):
 
 @callback(
     Output("violin-plot", "figure"),
-    Input("dataset-select", "value"),
+    Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
     Input("stat-test", "value"),
@@ -690,7 +883,7 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
 @callback(
     Output("table-status", "children"),
     Output("tpm-data-table", "children"),
-    Input("dataset-select", "value"),
+    Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
 )

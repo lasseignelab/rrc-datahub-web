@@ -6,6 +6,30 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-05
 
+### Add dataset count below the Dataset label
+- `pages/charts.py`: Added `html.Span(id="dataset-count")` inline with the Dataset label. Added `Output("dataset-count", "children")` to `filter_datasets`; returns `"N dataset(s)"` (pluralised) on each filter change, or `"0 datasets"` on the early-exit path.
+
+### Tighten Age column header and collapse equal-bound ranges
+- `pages/charts.py`: Renamed table header from `"Age Range (days)"` to `"Age (days)"`. In `_fmt`, when both bounds are present and equal, returns just the single value as a string instead of `"lo–lo"`.
+
+### Show distinct age ranges in dataset table column
+- `pages/charts.py`: Changed `_get_dataset_table()` to accumulate distinct `(lower, upper)` integer pairs per bioproject into `age_ranges` (a set of tuples) instead of tracking a single min/max span. Added nested helpers `_fmt(lo, hi)` and `_sort_key(pair)` to format each pair as `"lo–hi"`, `"lo+"`, or `"–hi"`, and to sort by lower bound then upper bound. The returned dict key is now `"age_ranges"` (list of formatted strings, `["Unknown"]` when empty). Updated `_build_table_rows` to join the list with `", "`.
+
+### Add Age Range (days) column to dataset table
+- `pages/charts.py`: Extended `_get_dataset_table()` to also select `func.lower(Sample.age_range)` and `func.upper(Sample.age_range)` for each sample. The aggregation loop now tracks `age_min` and `age_max` per bioproject (min of all lower bounds, max of all upper bounds). The returned dict includes `"age_range"` formatted as `"X–Y"` (en-dash), or `"Unknown"` when all samples have a null age. Added `html.Th("Age Range (days)")` to the table header and `html.Td(row["age_range"])` to `_build_table_rows`.
+
+### Apply human-readable sample type labels in dataset table
+- `pages/charts.py`: In `_build_table_rows`, the Sample Type column now passes each raw value through `_readable_sample_type()` before joining, matching the labels shown in the filter checklist.
+
+### Style dataset table selector buttons as radio buttons
+- `pages/charts.py`: Changed the Select button label from `"Select"` to `""` (empty); visual content is now provided entirely by CSS.
+- `assets/style.css`: Added radio-button CSS for `#dataset-table td:first-child button` — circular border, `::before` filled dot when `aria-pressed="true"`, and a visible `:focus-visible` ring. The button is 18 × 18 px with a 50% border-radius so it appears as a circle.
+
+### Replace dataset dropdown with scrollable selection table
+- `pages/charts.py`: Added `_get_dataset_table()` which applies the same filter logic as `_get_datasets_by_filters()` then aggregates distinct `scientific_name`, `underlying_variant`, `sample_type`, and `sex` values per bioproject. Added `_build_table_rows()` to render `html.Tr` elements with a Select button, BioProject ID, and the four aggregated columns. Replaced `dcc.Dropdown(id="dataset-select")` with a fixed-height (280 px) scrollable `html.Div` containing `html.Table(id="dataset-table")` with a sticky header and `html.Tbody(id="dataset-table-body")` populated by callbacks. Added `dcc.Store(id="dataset-selected")` to hold the selected bioproject. Replaced the old `filter_datasets` callback (which output dropdown options/value) with one that outputs `dataset-table-body.children` and `dataset-selected.data`. Added a new `select_dataset` pattern-matching callback (using `ALL`) that fires when any row Select button is clicked and updates `dataset-selected.data` with `allow_duplicate=True`. Updated `update_selectors`, `update_plot`, and `update_table` callbacks to use `Input("dataset-selected", "data")` instead of `Input("dataset-select", "value")`. Added `ALL`, `ctx` and `PreventUpdate` imports.
+- `assets/style.css`: Added `#dataset-table` styles (border-collapse, sticky `th`, even-row stripe, `.dataset-row-selected` highlight in `#cce5ff`, hover state).
+- `assets/accessibility.js`: Added event delegation listener on `[data-bp]` buttons to immediately apply `aria-pressed="true"` and `dataset-row-selected` class to the clicked row, giving instant visual feedback before the Dash callback round-trip completes.
+
 ### Add sex filter between sample type and age range
 - `pages/charts.py`: Added `_get_all_sexes()` to query all distinct non-null `sex` values. Pre-loads `_all_sexes`. Added `sex-select` `dcc.Checklist` to the layout between Sample type and Age range. Extended `_get_datasets_by_filters()` with a `sexes` parameter filtered via `Sample.sex.in_(sexes)`. Updated `filter_datasets` callback with the new `Input("sex-select", "value")`.
 - `assets/accessibility.js`: Added `"sex-select": "sex-select-label"` to `LABEL_MAP` and `"sex-select"` to `OPTION_CONTAINERS`.

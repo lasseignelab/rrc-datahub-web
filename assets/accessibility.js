@@ -92,6 +92,31 @@
 
     applyAll();
 
+    // Dataset row selection: apply highlight and aria-pressed immediately on
+    // click for instant visual feedback while the Dash callback propagates.
+    document.addEventListener("click", function (evt) {
+        var btn = evt.target && evt.target.closest
+            ? evt.target.closest("[data-bp]")
+            : null;
+        if (!btn) { return; }
+        var table = document.getElementById("dataset-table");
+        if (!table) { return; }
+        table.querySelectorAll("[data-bp]").forEach(function (b) {
+            b.setAttribute("aria-pressed", "false");
+            var row = b.closest("tr");
+            if (row) { row.classList.remove("dataset-row-selected"); }
+        });
+        btn.setAttribute("aria-pressed", "true");
+        var selectedRow = btn.closest("tr");
+        if (selectedRow) { selectedRow.classList.add("dataset-row-selected"); }
+        // Notify Dash so downstream callbacks (plot, table, groups) update.
+        if (window.dash_clientside && window.dash_clientside.set_props) {
+            window.dash_clientside.set_props(
+                "dataset-selected", { data: btn.getAttribute("data-bp") }
+            );
+        }
+    });
+
     // Download handlers wired via event delegation rather than Dash clientside
     // callbacks. The buttons being Dash callback Inputs causes Dash 4 to apply a
     // loading-state lifecycle (unmount/remount) on every click, making them
