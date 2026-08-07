@@ -6,6 +6,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-07
 
+### Replace age RangeSlider with unit-aware min/max inputs
+- `pages/charts.py`: Removed `dcc.RangeSlider(id="age-range-slider")`. Added `html.Fieldset` containing two `dcc.Input` fields (min/max, id `age-min-input`/`age-max-input`) and a `dcc.Dropdown` unit selector (id `age-unit`, options: days/weeks/months/years). A `dcc.Store(id="age-range-days")` holds the current range in days. Two new callbacks handle the round-trip: `_convert_age_inputs_on_unit_change` re-expresses the stored days in the new unit when the dropdown changes; `_update_age_days_store` converts displayed values back to days when inputs change. `filter_datasets` updated to read from `age-range-days` store instead of the slider. Added `_DAYS_PER_UNIT` constant, `_to_days()`, and `_from_days()` module-level helpers.
+- `assets/accessibility.js`: Added `"age-unit": "age-unit-label"` to LABEL_MAP. Removed `labelRangeSliderInputs()` function (slider no longer present).
+
+## 2026-08-07
+
 ### Format age column values as human-readable time units
 - `pages/charts.py`: Added module-level `_days_to_readable(n)` converting integer day counts to `(value, unit_singular)` in the most appropriate unit: <14 days→days, <84 days→weeks, <730 days→months, else years. Updated `_fmt` inside `_get_dataset_table` to use it: same-unit ranges collapse to `"2–3 weeks"`, cross-unit ranges label each side `"9 weeks–6 months"`. `humanize.naturaldelta` was evaluated but not used — it misclassifies 21 days as "a month". Column header changed from `"Age (days) (n)"` to `"Age (n)"` since the unit now appears inline with each value.
 
