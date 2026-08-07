@@ -164,6 +164,20 @@ def _get_datasets_by_filters(
         session.close()
 
 
+def _days_to_readable(n: int) -> tuple[int, str]:
+    """Convert a day count to (value, unit_singular) in the most appropriate unit.
+
+    Thresholds: <14 days → days, <84 days → weeks, <730 days → months, else years.
+    """
+    if n < 14:
+        return n, "day"
+    if n < 84:
+        return round(n / 7), "week"
+    if n < 730:
+        return round(n / 30.44), "month"
+    return round(n / 365.25), "year"
+
+
 def _get_dataset_table(
     scientific_names: list[str],
     underlying_variants: list[str],
@@ -248,12 +262,25 @@ def _get_dataset_table(
                 )
                 agg[bp]["age_ranges"][pair] += 1
 
+        def _plural(n: int, unit: str) -> str:
+            return f"{n} {unit if n == 1 else unit + 's'}"
+
         def _fmt(lo: int | None, hi: int | None) -> str:
             if lo is not None and hi is not None:
-                return str(lo) if lo == hi else f"{lo}–{hi}"
+                if lo == hi:
+                    return _plural(*_days_to_readable(lo))
+                lo_n, lo_u = _days_to_readable(lo)
+                hi_n, hi_u = _days_to_readable(hi)
+                if lo_u == hi_u:
+                    return f"{lo_n}–{hi_n} {hi_u if hi_n == 1 else hi_u + 's'}"
+                return f"{_plural(lo_n, lo_u)}–{_plural(hi_n, hi_u)}"
             if lo is not None:
-                return f"{lo}+"
-            return f"–{hi}"
+                n, u = _days_to_readable(lo)
+                return f"{_plural(n, u)}+"
+            if hi is not None:
+                n, u = _days_to_readable(hi)
+                return f"–{_plural(n, u)}"
+            return "Unknown"
 
         def _sort_key(pair: tuple) -> tuple:
             lo, hi = pair
@@ -591,7 +618,7 @@ layout = html.Div(
                                                 ),
                                                 html.Th("Sample Type (n)", scope="col"),
                                                 html.Th("Sex (n)", scope="col"),
-                                                html.Th("Age (days) (n)", scope="col"),
+                                                html.Th("Age (n)", scope="col"),
                                             ]
                                         )
                                     ),
