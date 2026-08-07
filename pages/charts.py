@@ -298,7 +298,7 @@ def _get_dataset_table(
             if hi is not None:
                 n, u = _days_to_readable(hi)
                 return f"–{_plural(n, u)}"
-            return "Unknown"
+            return "Not provided"
 
         def _sort_key(pair: tuple) -> tuple:
             lo, hi = pair
@@ -311,11 +311,11 @@ def _get_dataset_table(
             {
                 "bioproject": bp,
                 "scientific_names": [
-                    f"{name} ({cnt})"
+                    f"{_display_value(name)} ({cnt})"
                     for name, cnt in sorted(agg[bp]["scientific_names"].items())
                 ],
                 "underlying_variants": [
-                    f"{var} ({cnt})"
+                    f"{_display_value(var)} ({cnt})"
                     for var, cnt in sorted(agg[bp]["underlying_variants"].items())
                 ],
                 "sample_types": [
@@ -323,7 +323,8 @@ def _get_dataset_table(
                     for st, cnt in sorted(agg[bp]["sample_types"].items())
                 ],
                 "sexes": [
-                    f"{sex} ({cnt})" for sex, cnt in sorted(agg[bp]["sexes"].items())
+                    f"{_display_value(sex)} ({cnt})"
+                    for sex, cnt in sorted(agg[bp]["sexes"].items())
                 ],
                 "age_ranges": [
                     f"{_fmt(lo, hi)} ({cnt})"
@@ -331,7 +332,7 @@ def _get_dataset_table(
                         agg[bp]["age_ranges"].items(), key=lambda x: _sort_key(x[0])
                     )
                 ]
-                or ["Unknown"],
+                or ["Not provided"],
             }
             for bp in matching
         ]
@@ -423,8 +424,15 @@ _SAMPLE_TYPE_LABELS: dict[str, str] = {
 }
 
 
+def _display_value(raw: str) -> str:
+    """Return 'Not provided' for the NP database sentinel, else the value as-is."""
+    return "Not provided" if raw == "NP" else raw
+
+
 def _readable_sample_type(raw: str) -> str:
     """Return a human-readable label for a raw sample_type database value."""
+    if raw == "NP":
+        return "Not provided"
     if raw in _SAMPLE_TYPE_LABELS:
         return _SAMPLE_TYPE_LABELS[raw]
     return raw.replace("_", " ").replace("-", " ").title()
@@ -517,7 +525,7 @@ layout = html.Div(
                         dcc.Checklist(
                             id="scientific-name-select",
                             options=[
-                                {"label": name, "value": name}
+                                {"label": _display_value(name), "value": name}
                                 for name in _all_scientific_names
                             ],
                             value=_all_scientific_names,
@@ -532,7 +540,7 @@ layout = html.Div(
                         dcc.Checklist(
                             id="underlying-variant-select",
                             options=[
-                                {"label": v, "value": v}
+                                {"label": _display_value(v), "value": v}
                                 for v in _all_underlying_variants
                             ],
                             value=_all_underlying_variants,
@@ -561,7 +569,10 @@ layout = html.Div(
                         html.Label("Sex", id="sex-select-label"),
                         dcc.Checklist(
                             id="sex-select",
-                            options=[{"label": s, "value": s} for s in _all_sexes],
+                            options=[
+                                {"label": _display_value(s), "value": s}
+                                for s in _all_sexes
+                            ],
                             value=_all_sexes,
                             inline=True,
                         ),
@@ -634,7 +645,7 @@ layout = html.Div(
                             id="include-unknown-age",
                             options=[
                                 {
-                                    "label": "Include samples with unknown age",
+                                    "label": "Include samples with age not provided",
                                     "value": "include",
                                 }
                             ],
