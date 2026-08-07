@@ -4,6 +4,17 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-07
+
+### Add per-value sample counts to dataset table columns
+- `pages/charts.py`: Changed `_get_dataset_table()` to count samples per distinct value using `Counter` instead of `set`. Each grouped column (Scientific Name, Underlying Variant, Sample Type, Sex, Age) now returns strings like `"Pkd1 (6)"` rather than just `"Pkd1"`. `_readable_sample_type()` is applied inside `_get_dataset_table()` for sample types so `_build_table_rows()` just joins pre-formatted strings. Column headers updated to include `(n)` suffix (e.g. `"Scientific Name (n)"`).
+
+### Enable SQL query logging in development
+- `db/connection.py`: Added `_is_debug()` helper that reads the `DEBUG` env var (truthy values: `"1"`, `"true"`, `"yes"`). Passes `echo=_is_debug()` to `create_engine()` so SQLAlchemy logs all queries in development and stays silent in production.
+- `.env.example`: Added `DEBUG=true` with a comment explaining it should be omitted or set to false in production.
+
+---
+
 ## 2026-08-05
 
 ### Add dataset count below the Dataset label
