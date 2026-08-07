@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-07
 
+### Display NP sentinel as "Not provided" in filters and dataset table
+- `pages/charts.py`: Added `_display_value(raw)` helper that maps the raw DB value `"NP"` to `"Not provided"` and passes all other values through unchanged. Applied to scientific name, underlying variant, and sex checklist labels and the corresponding dataset table columns. Updated `_readable_sample_type` with an early `"NP"` guard. Also changed the age column fallback and the "include unknown age" checkbox label from "Unknown"/"unknown age" to "Not provided"/"age not provided". The raw `"NP"` value is preserved as the checklist `value` prop so filter callbacks continue to query the database correctly.
+
 ### Replace age RangeSlider with unit-aware min/max inputs
 - `pages/charts.py`: Removed `dcc.RangeSlider(id="age-range-slider")`. Added `html.Fieldset` containing two `dcc.Input` fields (min/max, id `age-min-input`/`age-max-input`) and a `dcc.Dropdown` unit selector (id `age-unit`, options: days/weeks/months/years). A `dcc.Store(id="age-range-days")` holds the current range in days. Two new callbacks handle the round-trip: `_convert_age_inputs_on_unit_change` re-expresses the stored days in the new unit when the dropdown changes; `_update_age_days_store` converts displayed values back to days when inputs change. `filter_datasets` updated to read from `age-range-days` store instead of the slider. Added `_DAYS_PER_UNIT` constant, `_to_days()`, and `_from_days()` module-level helpers.
 - `assets/accessibility.js`: Added `"age-unit": "age-unit-label"` to LABEL_MAP. Removed `labelRangeSliderInputs()` function (slider no longer present).
