@@ -24,12 +24,17 @@ _engine: Engine | None = None
 _factory = None
 
 
+def _is_debug() -> bool:
+    """Return True when DEBUG env var is set to a truthy value."""
+    return os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
+
+
 def get_engine() -> Engine:
     """Return the SQLAlchemy engine, creating it on first call."""
     global _engine, _factory
     engine = _engine
     if engine is None:
-        engine = create_engine(_db_url())
+        engine = create_engine(_db_url(), echo=_is_debug())
         _engine = engine
         _factory = sessionmaker(bind=engine)
     return engine

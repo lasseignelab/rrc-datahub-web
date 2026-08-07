@@ -2,6 +2,7 @@
 
 import logging
 import math
+from collections import Counter
 
 import dash
 import pandas as pd
@@ -223,30 +224,29 @@ def _get_dataset_table(
         )
         agg: dict[str, dict] = {
             bp: {
-                "scientific_names": set(),
-                "underlying_variants": set(),
-                "sample_types": set(),
-                "sexes": set(),
-                "age_ranges": set(),
+                "scientific_names": Counter(),
+                "underlying_variants": Counter(),
+                "sample_types": Counter(),
+                "sexes": Counter(),
+                "age_ranges": Counter(),
             }
             for bp in matching
         }
         for bp, sci, var, stype, sex, age_lo, age_hi in samples:
             if sci:
-                agg[bp]["scientific_names"].add(sci)
+                agg[bp]["scientific_names"][sci] += 1
             if var:
-                agg[bp]["underlying_variants"].add(var)
+                agg[bp]["underlying_variants"][var] += 1
             if stype:
-                agg[bp]["sample_types"].add(stype)
+                agg[bp]["sample_types"][stype] += 1
             if sex:
-                agg[bp]["sexes"].add(sex)
+                agg[bp]["sexes"][sex] += 1
             if age_lo is not None or age_hi is not None:
-                agg[bp]["age_ranges"].add(
-                    (
-                        int(age_lo) if age_lo is not None else None,
-                        int(age_hi) if age_hi is not None else None,
-                    )
+                pair = (
+                    int(age_lo) if age_lo is not None else None,
+                    int(age_hi) if age_hi is not None else None,
                 )
+                agg[bp]["age_ranges"][pair] += 1
 
         def _fmt(lo: int | None, hi: int | None) -> str:
             if lo is not None and hi is not None:
@@ -265,13 +265,26 @@ def _get_dataset_table(
         return [
             {
                 "bioproject": bp,
-                "scientific_names": sorted(agg[bp]["scientific_names"]),
-                "underlying_variants": sorted(agg[bp]["underlying_variants"]),
-                "sample_types": sorted(agg[bp]["sample_types"]),
-                "sexes": sorted(agg[bp]["sexes"]),
+                "scientific_names": [
+                    f"{name} ({cnt})"
+                    for name, cnt in sorted(agg[bp]["scientific_names"].items())
+                ],
+                "underlying_variants": [
+                    f"{var} ({cnt})"
+                    for var, cnt in sorted(agg[bp]["underlying_variants"].items())
+                ],
+                "sample_types": [
+                    f"{_readable_sample_type(st)} ({cnt})"
+                    for st, cnt in sorted(agg[bp]["sample_types"].items())
+                ],
+                "sexes": [
+                    f"{sex} ({cnt})" for sex, cnt in sorted(agg[bp]["sexes"].items())
+                ],
                 "age_ranges": [
-                    _fmt(lo, hi)
-                    for lo, hi in sorted(agg[bp]["age_ranges"], key=_sort_key)
+                    f"{_fmt(lo, hi)} ({cnt})"
+                    for (lo, hi), cnt in sorted(
+                        agg[bp]["age_ranges"].items(), key=lambda x: _sort_key(x[0])
+                    )
                 ]
                 or ["Unknown"],
             }
@@ -301,9 +314,7 @@ def _build_table_rows(rows: list[dict], selected: str | None) -> list:
                 html.Td(row["bioproject"]),
                 html.Td(", ".join(row["scientific_names"])),
                 html.Td(", ".join(row["underlying_variants"])),
-                html.Td(
-                    ", ".join(_readable_sample_type(st) for st in row["sample_types"])
-                ),
+                html.Td(", ".join(row["sample_types"])),
                 html.Td(", ".join(row["sexes"])),
                 html.Td(", ".join(row["age_ranges"])),
             ],
@@ -570,14 +581,17 @@ layout = html.Div(
                                             [
                                                 html.Th("Select", scope="col"),
                                                 html.Th("BioProject ID", scope="col"),
-                                                html.Th("Scientific Name", scope="col"),
                                                 html.Th(
-                                                    "Underlying Variant",
+                                                    "Scientific Name (n)",
                                                     scope="col",
                                                 ),
-                                                html.Th("Sample Type", scope="col"),
-                                                html.Th("Sex", scope="col"),
-                                                html.Th("Age (days)", scope="col"),
+                                                html.Th(
+                                                    "Underlying Variant (n)",
+                                                    scope="col",
+                                                ),
+                                                html.Th("Sample Type (n)", scope="col"),
+                                                html.Th("Sex (n)", scope="col"),
+                                                html.Th("Age (days) (n)", scope="col"),
                                             ]
                                         )
                                     ),
