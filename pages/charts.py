@@ -164,6 +164,24 @@ def _get_datasets_by_filters(
         session.close()
 
 
+_DAYS_PER_UNIT: dict[str, float] = {
+    "days": 1.0,
+    "weeks": 7.0,
+    "months": 30.44,
+    "years": 365.25,
+}
+
+
+def _to_days(value: float, unit: str) -> int:
+    """Convert value in the given unit to whole days (rounded)."""
+    return round(value * _DAYS_PER_UNIT.get(unit, 1.0))
+
+
+def _from_days(days: int, unit: str) -> float:
+    """Convert days to the given unit, rounded to 1 decimal place."""
+    return round(days / _DAYS_PER_UNIT.get(unit, 1.0), 1)
+
+
 def _days_to_readable(n: int) -> tuple[int, str]:
     """Convert a day count to (value, unit_singular) in the most appropriate unit.
 
@@ -550,24 +568,68 @@ layout = html.Div(
                     ],
                     style={"marginBottom": "16px"},
                 ),
-                html.Div(
+                html.Fieldset(
                     [
-                        html.Label("Age range (days)", htmlFor="age-range-slider"),
-                        dcc.RangeSlider(
-                            id="age-range-slider",
-                            min=_age_min,
-                            max=_age_max,
-                            step=1,
-                            value=[_age_min, _age_max],
-                            marks={
-                                _age_min: str(_age_min),
-                                _age_max: str(_age_max),
-                            },
-                            tooltip={
-                                "placement": "bottom",
-                                "always_visible": True,
+                        html.Legend(
+                            "Age range",
+                            style={"fontWeight": "bold"},
+                        ),
+                        html.Div(
+                            [
+                                html.Label(
+                                    "Minimum",
+                                    htmlFor="age-min-input",
+                                    className="visually-hidden",
+                                ),
+                                dcc.Input(
+                                    id="age-min-input",
+                                    type="number",
+                                    min=0,
+                                    debounce=True,
+                                    value=_age_min,
+                                    style={"width": "80px"},
+                                ),
+                                html.Span("–", style={"margin": "0 4px"}),
+                                html.Label(
+                                    "Maximum",
+                                    htmlFor="age-max-input",
+                                    className="visually-hidden",
+                                ),
+                                dcc.Input(
+                                    id="age-max-input",
+                                    type="number",
+                                    min=0,
+                                    debounce=True,
+                                    value=_age_max,
+                                    style={"width": "80px"},
+                                ),
+                                html.Label(
+                                    "Unit",
+                                    id="age-unit-label",
+                                    style={"marginLeft": "8px"},
+                                ),
+                                dcc.Dropdown(
+                                    id="age-unit",
+                                    options=[
+                                        {"label": "days", "value": "days"},
+                                        {"label": "weeks", "value": "weeks"},
+                                        {"label": "months", "value": "months"},
+                                        {"label": "years", "value": "years"},
+                                    ],
+                                    value="days",
+                                    clearable=False,
+                                    style={"width": "110px"},
+                                ),
+                            ],
+                            style={
+                                "display": "flex",
+                                "alignItems": "center",
+                                "flexWrap": "wrap",
+                                "gap": "4px",
+                                "marginTop": "4px",
                             },
                         ),
+                        dcc.Store(id="age-range-days", data=[_age_min, _age_max]),
                         dcc.Checklist(
                             id="include-unknown-age",
                             options=[
@@ -580,9 +642,11 @@ layout = html.Div(
                             style={"marginTop": "8px"},
                         ),
                     ],
-                    # Extra bottom padding so the tooltip doesn't overlap
-                    # the checkbox below it.
-                    style={"marginBottom": "40px"},
+                    style={
+                        "border": "none",
+                        "padding": "0",
+                        "margin": "0 0 16px 0",
+                    },
                 ),
                 html.Div(
                     [
@@ -798,7 +862,7 @@ clientside_callback(
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
     Input("sex-select", "value"),
-    Input("age-range-slider", "value"),
+    Input("age-range-days", "data"),
     Input("include-unknown-age", "value"),
     State("dataset-selected", "data"),
 )
@@ -807,7 +871,7 @@ def filter_datasets(
     selected_variants,
     selected_types,
     selected_sexes,
-    age_range,
+    age_days,
     include_unknown_age,
     current_dataset,
 ):
@@ -815,7 +879,9 @@ def filter_datasets(
     if not selected_names or not selected_variants or not selected_types:
         return [], None, "0 datasets"
 
-    effective_age = tuple(age_range) if age_range else (_age_min, _age_max)
+    effective_age = (
+        (int(age_days[0]), int(age_days[1])) if age_days else (_age_min, _age_max)
+    )
     rows = _get_dataset_table(
         selected_names,
         selected_variants,
@@ -833,6 +899,39 @@ def filter_datasets(
     n = len(rows)
     count = f"{n} dataset{'s' if n != 1 else ''}"
     return _build_table_rows(rows, selected), selected, count
+
+
+# ---------------------------------------------------------------------------
+# Callbacks 2a-b: age unit / inputs <-> age-range-days store
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("age-min-input", "value"),
+    Output("age-max-input", "value"),
+    Input("age-unit", "value"),
+    State("age-range-days", "data"),
+    prevent_initial_call=True,
+)
+def _convert_age_inputs_on_unit_change(unit, age_days):
+    """Re-express the stored day range in the newly selected unit."""
+    min_days, max_days = age_days if age_days else [_age_min, _age_max]
+    return _from_days(int(min_days), unit), _from_days(int(max_days), unit)
+
+
+@callback(
+    Output("age-range-days", "data"),
+    Input("age-min-input", "value"),
+    Input("age-max-input", "value"),
+    State("age-unit", "value"),
+    prevent_initial_call=True,
+)
+def _update_age_days_store(min_val, max_val, unit):
+    """Convert the entered min/max to days and persist in the Store."""
+    effective_unit = unit or "days"
+    lo = _to_days(min_val if min_val is not None else 0, effective_unit)
+    hi = _to_days(max_val if max_val is not None else _age_max, effective_unit)
+    return [min(lo, hi), max(lo, hi)]
 
 
 # ---------------------------------------------------------------------------
