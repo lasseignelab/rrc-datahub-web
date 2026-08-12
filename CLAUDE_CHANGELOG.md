@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-12
+
+### Add page description below Charts heading
+- `pages/charts.py`: Added `html.P` immediately after `html.H1("TPM Expression")` describing how to use the page. Gives screen reader users orientation before they reach any interactive controls.
+
 ## 2026-07-31
 
 ### Fix pa11y CI failure: move no-data message out of table caption
