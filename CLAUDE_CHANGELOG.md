@@ -4,6 +4,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-12
+
+### Improve screen reader announcement of decimal table values
+- `pages/charts.py`: Added `_aria_decimal(value)` helper that formats a 4-decimal float for screen readers by reading post-decimal digits individually (e.g. `"1 point 5 6 8 3"`). Each of the five numeric cells in the summary table (`Max`, `Q3`, `Median`, `Q1`, `Min`) now contains two `html.Span` elements: the visible value with `aria-hidden="true"` and a `visually-hidden` span with the spoken form, replacing the earlier `aria-label` on the `<td>` which caused double-reading.
+- `assets/style.css`: Added `user-select: none` to `.visually-hidden` so the hidden spoken text is excluded from clipboard copies when a user selects and pastes table content.
+
 ## 2026-08-07
 
 ### Display NP sentinel as "Not provided" in filters and dataset table
