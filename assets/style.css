@@ -5,6 +5,7 @@
     height: 1px;
     overflow: hidden;
     position: absolute;
+    user-select: none;
     white-space: nowrap;
     width: 1px;
 }

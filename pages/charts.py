@@ -429,6 +429,16 @@ def _display_value(raw: str) -> str:
     return "Not provided" if raw == "NP" else raw
 
 
+def _aria_decimal(value: float) -> str:
+    """Return a screen-reader-friendly label for a 4-decimal-place float.
+
+    Reads post-decimal digits individually so "1.5683" is announced as
+    "1 point 5 6 8 3" rather than "1 point five thousand six hundred...".
+    """
+    integer_part, decimal_part = f"{value:.4f}".split(".")
+    return f"{integer_part} point {' '.join(decimal_part)}"
+
+
 def _readable_sample_type(raw: str) -> str:
     """Return a human-readable label for a raw sample_type database value."""
     if raw == "NP":
@@ -1091,11 +1101,66 @@ def update_table(bioproject, gene, selected_groups):
                 html.Tr(
                     [
                         html.Td(row["genotype"]),
-                        html.Td(f"{row['Max']:.4f}"),
-                        html.Td(f"{row['Q3']:.4f}"),
-                        html.Td(f"{row['Median']:.4f}"),
-                        html.Td(f"{row['Q1']:.4f}"),
-                        html.Td(f"{row['Min']:.4f}"),
+                        html.Td(
+                            [
+                                html.Span(
+                                    f"{row['Max']:.4f}",
+                                    **{"aria-hidden": "true"},
+                                ),
+                                html.Span(
+                                    _aria_decimal(row["Max"]),
+                                    className="visually-hidden",
+                                ),
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                html.Span(
+                                    f"{row['Q3']:.4f}",
+                                    **{"aria-hidden": "true"},
+                                ),
+                                html.Span(
+                                    _aria_decimal(row["Q3"]),
+                                    className="visually-hidden",
+                                ),
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                html.Span(
+                                    f"{row['Median']:.4f}",
+                                    **{"aria-hidden": "true"},
+                                ),
+                                html.Span(
+                                    _aria_decimal(row["Median"]),
+                                    className="visually-hidden",
+                                ),
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                html.Span(
+                                    f"{row['Q1']:.4f}",
+                                    **{"aria-hidden": "true"},
+                                ),
+                                html.Span(
+                                    _aria_decimal(row["Q1"]),
+                                    className="visually-hidden",
+                                ),
+                            ]
+                        ),
+                        html.Td(
+                            [
+                                html.Span(
+                                    f"{row['Min']:.4f}",
+                                    **{"aria-hidden": "true"},
+                                ),
+                                html.Span(
+                                    _aria_decimal(row["Min"]),
+                                    className="visually-hidden",
+                                ),
+                            ]
+                        ),
                     ]
                 )
                 for _, row in summary.iterrows()
