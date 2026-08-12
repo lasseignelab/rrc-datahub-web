@@ -801,6 +801,8 @@ layout = html.Div(
                 ),
                 # Polite live region — announces view switches to screen readers.
                 html.Div(id="view-status", role="status", className="visually-hidden"),
+                # Filename prefix for downloads — written by update_plot, read by JS.
+                html.Div(id="download-meta", style={"display": "none"}),
                 html.Div(
                     dcc.Graph(
                         id="violin-plot",
@@ -1010,6 +1012,7 @@ def update_selectors(bioproject):
 
 @callback(
     Output("violin-plot", "figure"),
+    Output("download-meta", "children"),
     Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
@@ -1017,22 +1020,26 @@ def update_selectors(bioproject):
 )
 def update_plot(bioproject, gene, selected_groups, stat_test):
     """Query TPM values for the selected gene and render the violin plot."""
+    meta = f"{bioproject}_{gene}" if bioproject and gene else ""
     if not bioproject or not gene or not selected_groups:
-        return {}
+        return {}, meta
 
     df = _get_tpm_data(bioproject, gene)
     if df.empty:
-        return {}
+        return {}, meta
 
     all_genotypes = sorted(df["genotype"].unique())
     df = df[df["genotype"].isin(selected_groups)]
 
-    return plot_tpm_violin_plotly(
-        df,
-        group_col="genotype",
-        group_order=[g for g in all_genotypes if g in selected_groups],
-        stat_test=None if stat_test == "none" else stat_test,
-        title=gene,
+    return (
+        plot_tpm_violin_plotly(
+            df,
+            group_col="genotype",
+            group_order=[g for g in all_genotypes if g in selected_groups],
+            stat_test=None if stat_test == "none" else stat_test,
+            title=gene,
+        ),
+        meta,
     )
 
 

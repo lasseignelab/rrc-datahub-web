@@ -113,10 +113,9 @@
         if (!wrapper) { return; }
         var plotEl = wrapper.querySelector(".js-plotly-plot") || wrapper;
         if (!plotEl._fullData || plotEl._fullData.length === 0) { return; }
-        var titleText = plotEl.layout && plotEl.layout.title && plotEl.layout.title.text;
-        var filename = titleText
-            ? titleText.replace(/[^a-zA-Z0-9_-]/g, "_")
-            : "tpm_expression_plot";
+        var metaEl = document.getElementById("download-meta");
+        var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
+        var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_plot";
         window.Plotly.toImage(plotEl, { format: "png", width: 1200, height: 700 })
             .then(function (dataUrl) {
                 var a = document.createElement("a");
@@ -145,10 +144,9 @@
             });
             rows.push(cells.join(","));
         });
-        var captionEl = table.querySelector("caption");
-        var filename = captionEl
-            ? captionEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_")
-            : "tpm_expression_data";
+        var metaEl = document.getElementById("download-meta");
+        var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
+        var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_data";
         var blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
