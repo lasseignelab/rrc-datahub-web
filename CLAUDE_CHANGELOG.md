@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-12
 
+### Name download files `<dataset>_<gene>_tpm_expression.*`
+- `pages/charts.py`: Added `html.Div(id="download-meta")` (hidden) to the layout. Added `Output("download-meta", "children")` to `update_plot`; writes `"{bioproject}_{gene}"` on every selection change.
+- `assets/accessibility.js`: Both PNG and CSV download handlers now read `download-meta.textContent` as the filename prefix, producing e.g. `PRJNA285844_Pkd1_tpm_expression.png` / `.csv`. Falls back to `tpm_expression_plot` / `tpm_expression_data` when the div is empty.
+
 ### Improve screen reader announcement of decimal table values
 - `pages/charts.py`: Added `_aria_decimal(value)` helper that formats a 4-decimal float for screen readers by reading post-decimal digits individually (e.g. `"1 point 5 6 8 3"`). Each of the five numeric cells in the summary table (`Max`, `Q3`, `Median`, `Q1`, `Min`) now contains two `html.Span` elements: the visible value with `aria-hidden="true"` and a `visually-hidden` span with the spoken form, replacing the earlier `aria-label` on the `<td>` which caused double-reading.
 - `assets/style.css`: Added `user-select: none` to `.visually-hidden` so the hidden spoken text is excluded from clipboard copies when a user selects and pastes table content.
