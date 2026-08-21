@@ -645,6 +645,36 @@ def _get_tpm_data(
         session.close()
 
 
+def _get_tpm_range(bioproject: str, gene_name: str) -> tuple[float, float]:
+    """Return the global (min, max) of log10(TPM+1) across all samples
+    in a dataset for a gene, ignoring plot-parameter filters.
+
+    Used to pin the y-axis so the scale stays fixed while plot filters change.
+    Returns (0.0, 1.0) as a safe fallback when no data exists.
+    """
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(SampleGene.tpm)
+            .join(Gene, Gene.id == SampleGene.gene_id)
+            .join(Sample, Sample.id == SampleGene.sample_id)
+            .join(Dataset, Dataset.id == Sample.dataset_id)
+            .filter(
+                Dataset.bioproject == bioproject,
+                Gene.gene_name == gene_name,
+                Sample.genotype.isnot(None),
+                SampleGene.tpm.isnot(None),
+            )
+            .all()
+        )
+    finally:
+        session.close()
+    if not rows:
+        return 0.0, 1.0
+    values = [math.log10(r[0] + 1) for r in rows]
+    return min(values), max(values)
+
+
 # ---------------------------------------------------------------------------
 # Pre-load initial state so dropdowns are populated on first render
 # ---------------------------------------------------------------------------
@@ -1346,17 +1376,20 @@ def update_plot(
     all_genotypes = sorted(df["genotype"].unique())
     df = df[df["genotype"].isin(selected_groups)]
 
-    return (
-        plot_tpm_violin_plotly(
-            df,
-            group_col="genotype",
-            group_label="Group",
-            group_order=[g for g in all_genotypes if g in selected_groups],
-            stat_test=None if stat_test == "none" else stat_test,
-            title=gene,
-        ),
-        meta,
+    fig = plot_tpm_violin_plotly(
+        df,
+        group_col="genotype",
+        group_label="Group",
+        group_order=[g for g in all_genotypes if g in selected_groups],
+        stat_test=None if stat_test == "none" else stat_test,
+        title=gene,
     )
+
+    y_min, y_max = _get_tpm_range(bioproject, gene)
+    pad = (y_max - y_min) * 0.05 if y_max > y_min else 0.5
+    fig.update_layout(yaxis=dict(range=[y_min - pad, y_max + pad]))
+
+    return fig, meta
 
 
 # ---------------------------------------------------------------------------

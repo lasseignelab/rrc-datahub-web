@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Fix y-axis range to unfiltered dataset extent for consistent plot comparison
+- `pages/charts.py`: Added `_get_tpm_range(bioproject, gene_name)` which queries the global min/max of log10(TPM+1) for all samples in a dataset for a given gene, with no plot-parameter filters applied. In `update_plot`, after building the figure, calls `_get_tpm_range` and pins the y-axis with 5% padding via `fig.update_layout(yaxis=dict(range=[...]))`. The scale now stays fixed while Group, Sample type, Sex, and Age filters change.
+
 ### Fix: accessible name missing on single-option checklist containers
 - `assets/accessibility.js`: Added `include-unknown-sex`, `include-unknown-variant`, and `require-wildtype` to `OPTION_CONTAINERS` so they receive the `role="listbox"` → `role="group"` fix. Added `SINGLE_OPTION_CONTAINERS` list and `fixSingleOptionContainerLabels()` function, which reads each container's first option label text and sets it as `aria-label` on the container — giving screen readers an accessible name without adding extra DOM elements to the layout.
 
