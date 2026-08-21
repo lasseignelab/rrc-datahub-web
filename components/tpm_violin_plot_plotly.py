@@ -40,6 +40,7 @@ def plot_tpm_violin_plotly(
     title: Optional[str] = None,
     show_n: bool = True,
     stat_test: Optional[str] = None,
+    group_label: Optional[str] = None,
 ) -> go.Figure:
     data = data.dropna(subset=[group_col, value_col]).copy()
 
@@ -117,9 +118,10 @@ def plot_tpm_violin_plotly(
         if pval is not None:
             full_title = f"{full_title}  (p={pval:.3g})".strip()
 
+    axis_label = group_label if group_label is not None else group_col
     fig.update_layout(
         title=full_title,
-        xaxis_title=group_col,
+        xaxis_title=axis_label,
         yaxis_title=ylabel,
         xaxis=dict(
             tickmode="array",
@@ -132,7 +134,7 @@ def plot_tpm_violin_plotly(
         plot_bgcolor="white",
         paper_bgcolor="white",
         legend=dict(
-            title_text=group_col,
+            title_text=axis_label,
             orientation="h",
             yanchor="top",
             y=-0.25,

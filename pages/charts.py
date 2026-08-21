@@ -1350,6 +1350,7 @@ def update_plot(
         plot_tpm_violin_plotly(
             df,
             group_col="genotype",
+            group_label="Group",
             group_order=[g for g in all_genotypes if g in selected_groups],
             stat_test=None if stat_test == "none" else stat_test,
             title=gene,
@@ -1412,6 +1413,7 @@ def update_table(
     summary = (
         df.groupby("genotype")
         .agg(
+            n=("log_tpm", "count"),
             Max=("log_tpm", "max"),
             Q3=("log_tpm", lambda x: x.quantile(0.75)),
             Median=("log_tpm", "median"),
@@ -1423,12 +1425,12 @@ def update_table(
 
     return "", [
         html.Caption(
-            f"{gene} expression — {n_samples} samples, {n_genotypes} genotype(s)"
+            f"{gene} expression — {n_samples} samples, {n_genotypes} group(s)"
         ),
         html.Thead(
             html.Tr(
                 [
-                    html.Th("Genotype", scope="col"),
+                    html.Th("Group (n)", scope="col"),
                     html.Th("Max log10(TPM+1)", scope="col"),
                     html.Th("Q3 log10(TPM+1)", scope="col"),
                     html.Th("Median log10(TPM+1)", scope="col"),
@@ -1441,7 +1443,7 @@ def update_table(
             [
                 html.Tr(
                     [
-                        html.Td(row["genotype"]),
+                        html.Td(f"{row['genotype']} ({row['n']})"),
                         html.Td(
                             [
                                 html.Span(
