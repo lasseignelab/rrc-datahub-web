@@ -979,7 +979,8 @@ def filter_datasets(
     current_dataset,
 ):
     """Rebuild the dataset table to show only projects matching all active filters."""
-    if not selected_names or not selected_variants or not selected_types:
+    variants_exhausted = not selected_variants and not bool(include_unknown_variant)
+    if not selected_names or variants_exhausted or not selected_types:
         return [], None, "0 datasets"
 
     effective_age = (
