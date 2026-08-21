@@ -739,6 +739,12 @@ if _datasets:
 layout = html.Div(
     [
         html.H1("TPM Expression"),
+        html.P(
+            "Explore gene expression across datasets. Use the filters to select a "
+            "dataset, then choose a gene and one or more genotype groups to generate "
+            "a violin plot and summary statistics table of log₁₀(TPM + 1) values.",
+            style={"marginBottom": "16px"},
+        ),
         html.Section(
             [
                 html.H2("Dataset filters", id="dataset-filters-heading"),

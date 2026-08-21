@@ -61,6 +61,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-12
 
+### Add page description below Charts heading
+- `pages/charts.py`: Added `html.P` immediately after `html.H1("TPM Expression")` describing how to use the page. Gives screen reader users orientation before they reach any interactive controls.
+
 ### Name download files `<dataset>_<gene>_tpm_expression.*`
 - `pages/charts.py`: Added `html.Div(id="download-meta")` (hidden) to the layout. Added `Output("download-meta", "children")` to `update_plot`; writes `"{bioproject}_{gene}"` on every selection change.
 - `assets/accessibility.js`: Both PNG and CSV download handlers now read `download-meta.textContent` as the filename prefix, producing e.g. `PRJNA285844_Pkd1_tpm_expression.png` / `.csv`. Falls back to `tpm_expression_plot` / `tpm_expression_data` when the div is empty.
@@ -154,8 +157,6 @@ A log of changes made by Claude Code in this project, newest first.
 ### Add sample type filter that narrows the dataset dropdown
 - `pages/charts.py`: Added `_get_all_sample_types()` to query all distinct non-null `sample_type` values across the entire database. Added `_get_datasets_by_sample_types(sample_types)` to return only bioproject accessions that contain at least one sample matching the selected types. Added `_SAMPLE_TYPE_LABELS` dict and `_readable_sample_type()` to convert raw database values to human-readable labels (underscores/hyphens → spaces, title-cased; with an override dict for values like "iPSC" that must not be title-cased). Layout: added `sample-type-select` `dcc.Checklist` above the dataset dropdown, showing all available sample types from the database with all selected by default. Added callback 1 (`filter_datasets_by_sample_type`) that takes the checklist value as input and updates `dataset-select.options` and `dataset-select.value`, preserving the current dataset if it is still in the filtered list.
 - `assets/accessibility.js`: Added `"sample-type-select": "sample-type-label"` to `LABEL_MAP` and `"sample-type-select"` to `OPTION_CONTAINERS` so the checklist gets the same ARIA role fix as the groups checklist.
-
----
 
 ## 2026-07-31
 
