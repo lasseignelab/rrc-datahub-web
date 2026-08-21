@@ -4,6 +4,78 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-12
+
+### Add page description below Charts heading
+- `pages/charts.py`: Added `html.P` immediately after `html.H1("TPM Expression")` describing how to use the page. Gives screen reader users orientation before they reach any interactive controls.
+
+## 2026-07-31
+
+### Fix pa11y CI failure: move no-data message out of table caption
+- `pages/charts.py`: axe-core's "layout-table-caption" rule fired in CI because when no DB is available, `update_table` returned `[html.Caption("No data...")]` — a table containing only a caption and no `<th>` elements, which axe classifies as a layout table (layout tables must not have captions). Fix: added `html.P(id="table-status")` as a sibling above the table in `table-container`. The callback now outputs both `table-status.children` (the message string) and `tpm-data-table.children` (the table rows). No-data states write the message to the paragraph and return `[]` for the table, leaving the table empty rather than caption-only. When data is present the message is cleared and the table gets its normal caption + thead + tbody.
+
+### Remove subscript Unicode from table column header
+- `pages/charts.py`: Changed `log₁₀(TPM + 1)` → `log10(TPM + 1)` in the table `<th>`. The subscript Unicode characters rendered inconsistently and also appeared verbatim in the CSV export.
+
+### Reorder button bar: toggle button left, download button right
+- `pages/charts.py`: Moved `toggle-view-btn` ("Show table / Show plot") to the left of the download buttons. Added `marginRight: "8px"` to the toggle button for spacing. Removed `marginRight` from download buttons (now the last elements in the row).
+
+### Add "Download table as CSV" button, sync download buttons with view toggle
+- `pages/charts.py`: Added `html.Button("Download table as CSV", id="download-csv-btn")` (initially hidden) alongside the existing PNG download button. Extended the view-toggle `clientside_callback` with two additional outputs — `download-png-btn.style` and `download-csv-btn.style` — so the correct download button is always visible for the active view: PNG download when the plot is shown, CSV download when the table is shown.
+- `assets/accessibility.js`: Added event-delegation click handler for `download-csv-btn`. Reads headers and rows directly from the rendered `tpm-data-table` DOM, builds a properly-escaped CSV string (double-quotes all fields, escapes internal quotes), derives the filename from the table caption, and triggers a client-side blob download — no server round-trip required.
+
+### Fix table toggle: replace DOM event delegation with clientside_callback
+- `pages/charts.py`: Replaced the `toggle-view-btn` click handler in `accessibility.js` with a Dash `clientside_callback`. The previous handler used direct DOM manipulation (`el.style.display = "none"`), which React's reconciler overwrites whenever any sibling callback (e.g., `update_table`) fires and re-renders part of the component tree. The `clientside_callback` updates `plot-container.style` and `table-container.style` through React's component prop system, so the toggle state persists across server callback re-renders. Button text and `aria-expanded` are still set via DOM manipulation inside the callback function — safe because `toggle-view-btn` is not a callback output and React does not reconcile it. Added `clientside_callback` to the Dash import.
+- `assets/accessibility.js`: Removed the `toggle-view-btn` click event listener (now handled by the clientside callback). Download handler is unchanged.
+
+### Add accessible toggleable table view for TPM expression data
+- `pages/charts.py`: Added a "Show table / Show plot" toggle button (`id="toggle-view-btn"`, `aria-expanded`) alongside the download button. Added `id="plot-container"` wrapper around the graph and `id="table-container"` div (initially hidden) containing `html.Table(id="tpm-data-table")`. Added `id="view-status"` polite ARIA live region for screen-reader announcements. Added callback 4 (`update_table`) which builds an accessible HTML table of per-sample raw TPM and log₁₀(TPM+1) values for the current gene/group selection; the table is always populated in the background so toggling the view requires no server round-trip. Added `import math` for the log10 calculation.
+- `assets/accessibility.js`: Added click event listener for `toggle-view-btn` that switches `display` on the two containers, updates `aria-expanded`, updates the button label, and writes a polite status message to the live region.
+- `assets/style.css`: Added `.visually-hidden` CSS class (clip + position: absolute) for the live region. Added table styles: border-collapse, padding, header background, zebra-stripe rows, and `:focus-within` outline for keyboard navigation.
+
+## 2026-07-29
+
+### Fix download button appearing/disappearing due to graph layout reflow
+- `pages/charts.py`: `dcc.Graph` with `responsive=True` (which unsets `figure.layout.height`) collapses its container to near-zero height when `figure={}` during a callback update, then re-expands to ~450 px when the figure loads. The button was positioned below the graph, so it shifted by ~450 px on every figure update — going off-screen and back, which the user saw as appearing/disappearing on every other interaction (open dropdown = one interaction, select value = next). Fix: moved the button above the graph so it is always in the upper viewport regardless of graph height, and added `minHeight: 450px` to the graph container to prevent the collapse reflow.
+
+### Fix download button flicker by moving handler out of Dash callback system
+- `assets/accessibility.js`: Added a document-level click event listener (event delegation) that handles the PNG download directly. The button was flickering because being a Dash `Input` causes Dash 4 to apply a loading-state lifecycle (unmount/remount) on every click. Wiring the handler in plain JavaScript bypasses that mechanism entirely.
+- `pages/charts.py`: Removed the `clientside_callback` and the `html.Div(id="download-trigger")` that were no longer needed. The button (`id="download-png-btn"`) is now a plain HTML element with no Dash callback wiring.
+
+### Fix blank PNG export and initial button-disappear attempt
+- `pages/charts.py`: Removed the server-side `toggle_download_button` callback (callback 4) that controlled `download-png-btn.disabled`. That callback fired on every figure update, including transient `{}` states during dataset/gene selection changes, causing Dash to remount the button and making it visually disappear. The button is now always enabled; the clientside callback already guards against empty figures.
+- `pages/charts.py`: Fixed blank PNG download. `dcc.Graph` renders a wrapper `<div id="violin-plot">` containing the actual Plotly element `<div class="js-plotly-plot">`. `Plotly.toImage` requires the inner element (which carries `_fullData`), not the wrapper. Updated clientside callback to `querySelector(".js-plotly-plot")` and check `_fullData.length` for data presence. Removed `State("violin-plot", "figure")` from the clientside callback — figure presence is now determined from the DOM element directly, avoiding the server round-trip.
+
+## 2026-07-24
+
+### Add accessible PNG download button for violin plot
+- `pages/charts.py`: Replaced the inaccessible Plotly mode bar download icon (hidden via `displayModeBar: False`) with an `html.Button("Download plot as PNG")`. The button is disabled until a figure is rendered (callback 4) and calls `Plotly.downloadImage` via a clientside callback (callback 5). The filename is derived from the figure title (the selected gene name).
+
+### Fix chart layout at 400% zoom (WCAG 1.4.10 Reflow)
+- `pages/charts.py`: Added `config={"responsive": True}` and `style={"width": "100%"}` to `dcc.Graph` so Plotly resizes the SVG when the container width changes at high zoom levels. Also set `displayModeBar: False` (the mode bar has no accessible label).
+- `components/tpm_violin_plot_plotly.py`: Moved legend below the chart (`orientation="h"`, `y=-0.25`, `margin.b=160`). At narrow viewports the long genotype labels previously occupied most of the horizontal space, leaving almost no room for the plot area.
+
+### Wrap navbar in html.Nav landmark (WCAG region)
+- `components/navbar.py`: Changed `html.Div` to `html.Nav` with `aria-label="Site navigation"`. The navbar content was outside any landmark, failing the axe region check. With this and the `<main>` added previously, all page content is now contained within landmarks.
+
+### Add main landmark and skip navigation link (WCAG 2.4.1)
+- `app.py`: Wrapped `page_container` in `html.Main(id="main-content")` so the page has a `<main>` landmark. Added a visually-hidden skip-to-main-content `html.A` as the first focusable element so keyboard users can bypass the repeated navbar.
+- `assets/style.css`: Added `.skip-nav` CSS — off-screen when unfocused (`position:absolute; left:-9999px`), visible when focused (`position:static`).
+
+### Extend nested-interactive fix to dcc.RadioItems (#stat-test)
+- `assets/accessibility.js`: `dcc.RadioItems` uses the same `role="listbox"` / `role="option"` rendering pattern as `dcc.Checklist`. Renamed and generalized `fixChecklistARIA()` to `fixOptionContainerARIA()`, which now iterates both `#group-select` and `#stat-test` and applies the same `role="group"` substitution and `role="option"` removal.
+
+### Fix nested-interactive: replace role=listbox with role=group on checklist (WCAG 4.1.2)
+- `assets/accessibility.js`: Previous fix (`aria-hidden` + `tabindex=-1` on checkboxes) did not satisfy the axe nested-interactive rule, which tests DOM structure — any focusable element inside an interactive ARIA role fails regardless of those attributes. `fixChecklistARIA()` now replaces `role="listbox"` on `#group-select` with `role="group"` (correct grouping role for a set of related checkboxes) and removes `role="option"` / `aria-selected` from each label, restoring the native `<label>`+`<input>` pattern. `role="group"` is not an interactive role, so nested checkboxes are permitted.
+
+### Fix nested-interactive violation in dcc.Checklist (WCAG 4.1.2)
+- `assets/accessibility.js`: Added `fixNestedInteractives()`. Dash 4 renders `dcc.Checklist` as `role="listbox"` with each option as `<label role="option">` wrapping `<input type="checkbox">`. The checkbox is a focusable descendant inside an interactive ARIA role, violating WCAG nested-interactive. The fix sets `aria-hidden="true"` and `tabindex="-1"` on each checkbox so the `role="option"` + `aria-selected` pair is the sole AT interface — the correct ARIA listbox pattern.
+
+### Fix missing ARIA accessible names on group-select and stat-test (WCAG 4.1.2)
+- `assets/accessibility.js`: Created. A `MutationObserver` watches the DOM and patches `aria-labelledby` onto `#group-select` (role=listbox) and `#stat-test` (role=radiogroup) after Dash renders them. Dash 4's `dcc.Checklist` and `dcc.RadioItems` do not expose ARIA props in their component API, so the attribute must be applied via JavaScript. The observer handles both initial page load and multi-page navigation.
+- `pages/charts.py`: Added `id="group-select-label"` to the "Groups" label and `id="stat-test-label"` to the "Statistical test" label so the observer has valid targets to reference.
+- `.pa11yci`: Added `http://localhost:8050/charts` to the URL list so CI catches accessibility violations on the charts page.
+
 ## 2026-07-17
 
 ### Pin Python version to 3.13

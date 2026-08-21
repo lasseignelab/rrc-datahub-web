@@ -1,10 +1,11 @@
 # Charts page: TPM violin plot driven by the PostgreSQL database.
 
 import logging
+import math
 
 import dash
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, clientside_callback, dcc, html
 
 from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -40,8 +41,7 @@ def _search_genes(search: str) -> list[str]:
         if search:
             query = query.filter(Gene.gene_name.ilike(f"{search}%"))
         return [
-            r[0]
-            for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
+            r[0] for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
         ]
     finally:
         session.close()
@@ -113,6 +113,12 @@ if _datasets:
 layout = html.Div(
     [
         html.H1("TPM Expression"),
+        html.P(
+            "Explore gene expression across datasets. Use the filters to select a "
+            "dataset, then choose a gene and one or more genotype groups to generate "
+            "a violin plot and summary statistics table of log₁₀(TPM + 1) values.",
+            style={"marginBottom": "16px"},
+        ),
         html.Div(
             [
                 html.Label("Dataset", htmlFor="dataset-select"),
@@ -139,7 +145,7 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.Label("Groups"),
+                html.Label("Groups", id="group-select-label"),
                 dcc.Checklist(
                     id="group-select",
                     options=[{"label": g, "value": g} for g in _initial_genotypes],
@@ -151,7 +157,7 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.Label("Statistical test"),
+                html.Label("Statistical test", id="stat-test-label"),
                 dcc.RadioItems(
                     id="stat-test",
                     options=[
@@ -168,8 +174,90 @@ layout = html.Div(
             ],
             style={"marginBottom": "16px"},
         ),
-        dcc.Graph(id="violin-plot"),
+        html.Div(
+            [
+                html.Button(
+                    "Show table",
+                    id="toggle-view-btn",
+                    style={"marginRight": "8px"},
+                    **{"aria-expanded": "false"},
+                ),
+                html.Button(
+                    "Download plot as PNG",
+                    id="download-png-btn",
+                ),
+                html.Button(
+                    "Download table as CSV",
+                    id="download-csv-btn",
+                    style={"display": "none"},
+                ),
+            ],
+            style={"marginBottom": "8px"},
+        ),
+        # Polite live region — announces view switches to screen readers.
+        html.Div(id="view-status", role="status", className="visually-hidden"),
+        html.Div(
+            dcc.Graph(
+                id="violin-plot",
+                config={"responsive": True, "displayModeBar": False},
+                # minHeight prevents the container from collapsing to ~0 px when
+                # figure={} during a callback update, which would cause the page
+                # to reflow and push nearby elements in and out of the viewport.
+                style={"width": "100%", "minHeight": "450px"},
+            ),
+            id="plot-container",
+        ),
+        html.Div(
+            [
+                html.P(id="table-status"),
+                html.Table(
+                    id="tpm-data-table",
+                    **{"aria-label": "TPM expression data"},
+                ),
+            ],
+            id="table-container",
+            style={"display": "none"},
+        ),
     ]
+)
+
+
+# ---------------------------------------------------------------------------
+# Clientside callback: toggle button -> switch plot / table view
+# ---------------------------------------------------------------------------
+# Updating style props via React (not direct DOM manipulation) is required so
+# that subsequent server callbacks don't cause React's reconciler to reset the
+# display back to the layout default.  Button text and aria-expanded are set
+# via DOM manipulation inside the function — safe because toggle-view-btn is
+# not a callback output and React will not reconcile it.
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (!n_clicks) { return window.dash_clientside.no_update; }
+        var showTable = n_clicks % 2 === 1;
+        var btn = document.getElementById("toggle-view-btn");
+        if (btn) {
+            btn.setAttribute("aria-expanded", showTable ? "true" : "false");
+            btn.textContent = showTable ? "Show plot" : "Show table";
+        }
+        var statusEl = document.getElementById("view-status");
+        if (statusEl) {
+            statusEl.textContent = showTable ? "Table view shown." : "Plot view shown.";
+        }
+        return [
+            {"display": showTable ? "none" : ""},
+            {"display": showTable ? "" : "none"},
+            {"display": showTable ? "none" : ""},
+            {"display": showTable ? "" : "none"}
+        ];
+    }
+    """,
+    Output("plot-container", "style"),
+    Output("table-container", "style"),
+    Output("download-png-btn", "style"),
+    Output("download-csv-btn", "style"),
+    Input("toggle-view-btn", "n_clicks"),
+    prevent_initial_call=True,
 )
 
 
@@ -252,3 +340,68 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
         stat_test=None if stat_test == "none" else stat_test,
         title=gene,
     )
+
+
+# ---------------------------------------------------------------------------
+# Callback 4: gene + groups -> populate accessible data table
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("table-status", "children"),
+    Output("tpm-data-table", "children"),
+    Input("dataset-select", "value"),
+    Input("gene-select", "value"),
+    Input("group-select", "value"),
+)
+def update_table(bioproject, gene, selected_groups):
+    """Build an accessible HTML table of per-sample TPM values.
+
+    The table is always populated in the background; visibility is toggled
+    client-side by the 'Show table / Show plot' button so there is no
+    server round-trip when switching views.
+
+    No-data states are reported via the sibling #table-status paragraph rather
+    than an html.Caption inside the table.  A table that contains only a
+    caption (no <th> elements) is misidentified as a layout table by axe-core,
+    which then flags the caption as a WCAG violation.
+    """
+    if not bioproject or not gene or not selected_groups:
+        return "No data to display. Select a dataset, gene, and groups.", []
+
+    df = _get_tpm_data(bioproject, gene)
+    if df.empty:
+        return "No expression data found for the current selection.", []
+
+    df = df[df["genotype"].isin(selected_groups)]
+    df = df.sort_values(["genotype", "TPM"]).reset_index(drop=True)
+
+    n_samples = len(df)
+    n_genotypes = df["genotype"].nunique()
+
+    return "", [
+        html.Caption(
+            f"{gene} expression — {n_samples} samples, " f"{n_genotypes} genotype(s)"
+        ),
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th("Genotype", scope="col"),
+                    html.Th("TPM", scope="col"),
+                    html.Th("log10(TPM + 1)", scope="col"),
+                ]
+            )
+        ),
+        html.Tbody(
+            [
+                html.Tr(
+                    [
+                        html.Td(row["genotype"]),
+                        html.Td(f"{row['TPM']:.4g}"),
+                        html.Td(f"{math.log10(row['TPM'] + 1):.4f}"),
+                    ]
+                )
+                for _, row in df.iterrows()
+            ]
+        ),
+    ]

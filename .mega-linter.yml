@@ -28,6 +28,11 @@ FILEIO_REPORTER: false
 
 PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: "tests/"
 
+# flake8 has no built-in file-extension filter and will attempt to parse any
+# file it finds (including .js) as Python, producing bogus E999 SyntaxErrors.
+# Restrict it to .py files only.
+PYTHON_FLAKE8_FILTER_REGEX_INCLUDE: "(\\.py)$"
+
 # isort does not reliably pick up pyproject.toml inside Docker; pass settings explicitly
 PYTHON_ISORT_ARGUMENTS: "--profile black -p app -p components -p config -p db -p pages"
 

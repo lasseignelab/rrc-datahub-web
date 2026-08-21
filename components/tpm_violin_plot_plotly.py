@@ -131,8 +131,17 @@ def plot_tpm_violin_plotly(
         boxmode="overlay",
         plot_bgcolor="white",
         paper_bgcolor="white",
-        legend_title_text=group_col,
+        legend=dict(
+            title_text=group_col,
+            orientation="h",
+            yanchor="top",
+            y=-0.25,
+            xanchor="left",
+            x=0,
+        ),
         font=dict(family="Arial", size=13),
+        autosize=True,
+        margin=dict(b=160),
     )
     fig.update_xaxes(showgrid=False, linecolor="black", ticks="outside")
     fig.update_yaxes(
