@@ -247,6 +247,7 @@ def _get_dataset_table(
                 Sample.underlying_variant,
                 Sample.sample_type,
                 Sample.sex,
+                Sample.genotype,
                 func.lower(Sample.age_range),
                 func.upper(Sample.age_range),
             )
@@ -260,11 +261,12 @@ def _get_dataset_table(
                 "underlying_variants": Counter(),
                 "sample_types": Counter(),
                 "sexes": Counter(),
+                "genotypes": Counter(),
                 "age_ranges": Counter(),
             }
             for bp in matching
         }
-        for bp, sci, var, stype, sex, age_lo, age_hi in samples:
+        for bp, sci, var, stype, sex, genotype, age_lo, age_hi in samples:
             if sci:
                 agg[bp]["scientific_names"][sci] += 1
             if var:
@@ -273,6 +275,8 @@ def _get_dataset_table(
                 agg[bp]["sample_types"][stype] += 1
             if sex:
                 agg[bp]["sexes"][sex] += 1
+            if genotype:
+                agg[bp]["genotypes"][genotype] += 1
             if age_lo is not None or age_hi is not None:
                 pair = (
                     int(age_lo) if age_lo is not None else None,
@@ -326,6 +330,10 @@ def _get_dataset_table(
                     f"{sex} ({cnt})"
                     for sex, cnt in sorted(agg[bp]["sexes"].items())
                 ],
+                "genotypes": [
+                    f"{g} ({cnt})"
+                    for g, cnt in sorted(agg[bp]["genotypes"].items())
+                ],
                 "age_ranges": [
                     f"{_fmt(lo, hi)} ({cnt})"
                     for (lo, hi), cnt in sorted(
@@ -362,6 +370,7 @@ def _build_table_rows(rows: list[dict], selected: str | None) -> list:
                 html.Td(", ".join(row["underlying_variants"])),
                 html.Td(", ".join(row["sample_types"])),
                 html.Td(", ".join(row["sexes"])),
+                html.Td(", ".join(row["genotypes"])),
                 html.Td(", ".join(row["age_ranges"])),
             ],
             className=("dataset-row-selected" if row["bioproject"] == selected else ""),
@@ -648,7 +657,7 @@ layout = html.Div(
                             id="include-unknown-age",
                             options=[
                                 {
-                                    "label": "Include samples with age not provided",
+                                    "label": "Include datasets with age not provided",
                                     "value": "include",
                                 }
                             ],
@@ -696,6 +705,7 @@ layout = html.Div(
                                                 ),
                                                 html.Th("Sample Type (n)", scope="col"),
                                                 html.Th("Sex (n)", scope="col"),
+                                                html.Th("Groups (n)", scope="col"),
                                                 html.Th("Age (n)", scope="col"),
                                             ]
                                         )
