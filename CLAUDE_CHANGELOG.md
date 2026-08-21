@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Add Groups column to dataset selection table
+- `pages/charts.py`: Added `Sample.genotype` to the `_get_dataset_table` query. Aggregates distinct genotypes per bioproject via `Counter` alongside the existing columns. Renders as a `"Groups (n)"` column between Sex and Age in the table header and rows.
+
 ### Remove NP/NA sentinel handling now that source data uses "Not provided"
 - `pages/charts.py`: Deleted `_display_value()` helper and the `NP` guard in `_readable_sample_type()`. All call sites in `_get_dataset_table()` and the filter checklists now use the raw DB value directly, which is already stored as `"Not provided"`.
 - `etl/load.py`: Removed `"NP"` and `"NA"` from `_NUMERIC_NULLS`; only `""` and `"Not provided"` are now treated as missing for numeric/range fields.
