@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Add Sex filter to Plot Parameters
+- `pages/charts.py`: Added `_get_sexes_for_dataset(bioproject)` query function. Added `sexes` parameter to `_get_tpm_data()`. Added `_initial_sexes_for_plot` to pre-load block. Added `dcc.Checklist(id="plot-sex-select")` below Sample type in the Plot Parameters layout, defaulting to all sex values selected. Extended `update_selectors` with two new Outputs for `plot-sex-select`. Added `plot-sex-select` as an Input to both `update_plot` and `update_table`.
+- `assets/accessibility.js`: Added `plot-sex-select` to `LABEL_MAP` and `OPTION_CONTAINERS`.
+
 ### Add Sample type filter to Plot Parameters
 - `pages/charts.py`: Added `_get_sample_types_for_dataset(bioproject)` query function. Added `sample_types` parameter to `_get_tpm_data()` so the DB query filters by sample type before returning rows. Added `_initial_sample_types_for_plot` to the pre-load block. Added `dcc.Checklist(id="plot-sample-type-select")` to the Plot Parameters layout between Groups and Statistical test, defaulting to all types selected. Extended `update_selectors` with two new Outputs to repopulate and reset the checklist when the dataset changes. Added `plot-sample-type-select` as an Input to both `update_plot` and `update_table`, with an early-exit guard when nothing is selected.
 - `assets/accessibility.js`: Added `plot-sample-type-select` to `LABEL_MAP` and `OPTION_CONTAINERS` to apply the same ARIA fixes as the Groups checklist.

@@ -11,6 +11,7 @@
         "age-unit": "age-unit-label",
         "group-select": "group-select-label",
         "plot-sample-type-select": "plot-sample-type-label",
+        "plot-sex-select": "plot-sex-label",
         "stat-test": "stat-test-label",
     };
 
@@ -39,6 +40,7 @@
         "group-select",
         "include-unknown-age",
         "plot-sample-type-select",
+        "plot-sex-select",
         "stat-test",
     ];
 
