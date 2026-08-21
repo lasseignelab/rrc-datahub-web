@@ -10,6 +10,7 @@
     var LABEL_MAP = {
         "age-unit": "age-unit-label",
         "group-select": "group-select-label",
+        "plot-sample-type-select": "plot-sample-type-label",
         "stat-test": "stat-test-label",
     };
 
@@ -37,6 +38,7 @@
     var OPTION_CONTAINERS = [
         "group-select",
         "include-unknown-age",
+        "plot-sample-type-select",
         "stat-test",
     ];
 

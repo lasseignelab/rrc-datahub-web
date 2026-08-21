@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Add Sample type filter to Plot Parameters
+- `pages/charts.py`: Added `_get_sample_types_for_dataset(bioproject)` query function. Added `sample_types` parameter to `_get_tpm_data()` so the DB query filters by sample type before returning rows. Added `_initial_sample_types_for_plot` to the pre-load block. Added `dcc.Checklist(id="plot-sample-type-select")` to the Plot Parameters layout between Groups and Statistical test, defaulting to all types selected. Extended `update_selectors` with two new Outputs to repopulate and reset the checklist when the dataset changes. Added `plot-sample-type-select` as an Input to both `update_plot` and `update_table`, with an early-exit guard when nothing is selected.
+- `assets/accessibility.js`: Added `plot-sample-type-select` to `LABEL_MAP` and `OPTION_CONTAINERS` to apply the same ARIA fixes as the Groups checklist.
+
 ### Convert four filter checklists to multi-select dropdowns
 - `pages/charts.py`: Replaced `dcc.Checklist` with `dcc.Dropdown(multi=True)` for the Scientific name, Underlying variant, Sample type, and Sex filters. The "Include datasets…" and "Only include datasets…" checklists below each dropdown remain unchanged. Added `or []` guards throughout the `filter_datasets` callback because `dcc.Dropdown` returns `None` (not `[]`) when cleared. Applied `black` auto-formatting.
 - `assets/accessibility.js`: Removed the four now-unused dropdown IDs from `LABEL_MAP` and `OPTION_CONTAINERS` (they were for the old checklists). Added `fixDropdownClearButtons()` to inject a visually-hidden text span into each `<a class="dash-dropdown-clear">` element — Dash's multi-select clear button is an anchor with an SVG-only icon that HTML_CodeSniffer flags as having no link content despite the `aria-label`.

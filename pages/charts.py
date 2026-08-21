@@ -497,6 +497,23 @@ def _get_genotypes(bioproject: str) -> list[str]:
         session.close()
 
 
+def _get_sample_types_for_dataset(bioproject: str) -> list[str]:
+    """Return sorted list of distinct non-null sample types for a dataset."""
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(Sample.sample_type)
+            .join(Dataset, Dataset.id == Sample.dataset_id)
+            .filter(Dataset.bioproject == bioproject, Sample.sample_type.isnot(None))
+            .distinct()
+            .order_by(Sample.sample_type)
+            .all()
+        )
+        return [r[0] for r in rows]
+    finally:
+        session.close()
+
+
 # Override title-casing for values where automatic conversion would be wrong.
 # Extend this dict as new sample_type values are added to the database.
 _SAMPLE_TYPE_LABELS: dict[str, str] = {
@@ -522,8 +539,11 @@ def _readable_sample_type(raw: str) -> str:
     return raw.replace("_", " ").replace("-", " ").title()
 
 
-def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
-    """Return DataFrame of (genotype, TPM) rows for a dataset and gene."""
+def _get_tpm_data(
+    bioproject: str, gene_name: str, sample_types: list[str]
+) -> pd.DataFrame:
+    """Return a DataFrame of (genotype, TPM) rows for the given dataset, gene, and
+    sample types."""
     session = SessionLocal()
     try:
         query = (
@@ -535,6 +555,7 @@ def _get_tpm_data(bioproject: str, gene_name: str) -> pd.DataFrame:
                 Dataset.bioproject == bioproject,
                 Gene.gene_name == gene_name,
                 Sample.genotype.isnot(None),
+                Sample.sample_type.in_(sample_types),
             )
         )
         return pd.DataFrame(query.all(), columns=["genotype", "TPM"])
@@ -584,13 +605,15 @@ except Exception as exc:
 
 _initial_genes: list[str] = []
 _initial_genotypes: list[str] = []
+_initial_sample_types_for_plot: list[str] = []
 
 if _datasets:
     try:
         _initial_genes = _search_genes("")
         _initial_genotypes = _get_genotypes(_datasets[0])
+        _initial_sample_types_for_plot = _get_sample_types_for_dataset(_datasets[0])
     except Exception as exc:
-        log.warning("Could not load initial genes/genotypes: %s", exc)
+        log.warning("Could not load initial genes/genotypes/sample types: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -871,6 +894,24 @@ layout = html.Div(
                 ),
                 html.Div(
                     [
+                        html.Label("Sample type", id="plot-sample-type-label"),
+                        dcc.Checklist(
+                            id="plot-sample-type-select",
+                            options=[
+                                {
+                                    "label": _readable_sample_type(st),
+                                    "value": st,
+                                }
+                                for st in _initial_sample_types_for_plot
+                            ],
+                            value=_initial_sample_types_for_plot,
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
                         html.Label("Statistical test", id="stat-test-label"),
                         dcc.RadioItems(
                             id="stat-test",
@@ -1110,20 +1151,25 @@ def filter_gene_options(search, current_gene):
     Output("gene-select", "value"),
     Output("group-select", "options"),
     Output("group-select", "value"),
+    Output("plot-sample-type-select", "options"),
+    Output("plot-sample-type-select", "value"),
     Input("dataset-selected", "data"),
 )
 def update_selectors(bioproject):
-    """Reset gene and group selections when the dataset changes."""
+    """Reset gene, group, and sample type selections when the dataset changes."""
     if not bioproject:
-        return None, [], []
+        return None, [], [], [], []
 
     genes = _search_genes("")
     genotypes = _get_genotypes(bioproject)
+    sample_types = _get_sample_types_for_dataset(bioproject)
 
     return (
         genes[0] if genes else None,
         [{"label": g, "value": g} for g in genotypes],
         genotypes,
+        [{"label": _readable_sample_type(st), "value": st} for st in sample_types],
+        sample_types,
     )
 
 
@@ -1138,15 +1184,16 @@ def update_selectors(bioproject):
     Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
+    Input("plot-sample-type-select", "value"),
     Input("stat-test", "value"),
 )
-def update_plot(bioproject, gene, selected_groups, stat_test):
+def update_plot(bioproject, gene, selected_groups, selected_sample_types, stat_test):
     """Query TPM values for the selected gene and render the violin plot."""
     meta = f"{bioproject}_{gene}" if bioproject and gene else ""
-    if not bioproject or not gene or not selected_groups:
+    if not bioproject or not gene or not selected_groups or not selected_sample_types:
         return {}, meta
 
-    df = _get_tpm_data(bioproject, gene)
+    df = _get_tpm_data(bioproject, gene, selected_sample_types)
     if df.empty:
         return {}, meta
 
@@ -1176,8 +1223,9 @@ def update_plot(bioproject, gene, selected_groups, stat_test):
     Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
+    Input("plot-sample-type-select", "value"),
 )
-def update_table(bioproject, gene, selected_groups):
+def update_table(bioproject, gene, selected_groups, selected_sample_types):
     """Build a per-genotype summary table of log10(TPM+1) statistics.
 
     No-data states are reported via the sibling #table-status paragraph rather
@@ -1185,10 +1233,10 @@ def update_table(bioproject, gene, selected_groups):
     caption (no <th> elements) is misidentified as a layout table by axe-core,
     which then flags the caption as a WCAG violation.
     """
-    if not bioproject or not gene or not selected_groups:
+    if not bioproject or not gene or not selected_groups or not selected_sample_types:
         return "No data to display. Select a dataset, gene, and groups.", []
 
-    df = _get_tpm_data(bioproject, gene)
+    df = _get_tpm_data(bioproject, gene, selected_sample_types)
     if df.empty:
         return "No expression data found for the current selection.", []
 
