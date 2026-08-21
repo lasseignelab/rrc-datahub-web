@@ -19,7 +19,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-_NUMERIC_NULLS = {"NP", "NA", ""}
+_NUMERIC_NULLS = {"", "Not provided"}
 
 
 def _staging_dir() -> Path:
@@ -28,7 +28,7 @@ def _staging_dir() -> Path:
 
 
 def _opt_str(val: str) -> str | None:
-    """Return None for blank strings; preserve other values including 'NP' and 'NA'."""
+    """Return None for blank strings; preserve all other values as-is."""
     stripped = val.strip()
     return None if stripped == "" else stripped
 

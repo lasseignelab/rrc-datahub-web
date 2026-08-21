@@ -311,11 +311,11 @@ def _get_dataset_table(
             {
                 "bioproject": bp,
                 "scientific_names": [
-                    f"{_display_value(name)} ({cnt})"
+                    f"{name} ({cnt})"
                     for name, cnt in sorted(agg[bp]["scientific_names"].items())
                 ],
                 "underlying_variants": [
-                    f"{_display_value(var)} ({cnt})"
+                    f"{var} ({cnt})"
                     for var, cnt in sorted(agg[bp]["underlying_variants"].items())
                 ],
                 "sample_types": [
@@ -323,7 +323,7 @@ def _get_dataset_table(
                     for st, cnt in sorted(agg[bp]["sample_types"].items())
                 ],
                 "sexes": [
-                    f"{_display_value(sex)} ({cnt})"
+                    f"{sex} ({cnt})"
                     for sex, cnt in sorted(agg[bp]["sexes"].items())
                 ],
                 "age_ranges": [
@@ -424,11 +424,6 @@ _SAMPLE_TYPE_LABELS: dict[str, str] = {
 }
 
 
-def _display_value(raw: str) -> str:
-    """Return 'Not provided' for the NP database sentinel, else the value as-is."""
-    return "Not provided" if raw == "NP" else raw
-
-
 def _aria_decimal(value: float) -> str:
     """Return a screen-reader-friendly label for a 4-decimal-place float.
 
@@ -441,8 +436,6 @@ def _aria_decimal(value: float) -> str:
 
 def _readable_sample_type(raw: str) -> str:
     """Return a human-readable label for a raw sample_type database value."""
-    if raw == "NP":
-        return "Not provided"
     if raw in _SAMPLE_TYPE_LABELS:
         return _SAMPLE_TYPE_LABELS[raw]
     return raw.replace("_", " ").replace("-", " ").title()
@@ -535,7 +528,7 @@ layout = html.Div(
                         dcc.Checklist(
                             id="scientific-name-select",
                             options=[
-                                {"label": _display_value(name), "value": name}
+                                {"label": name, "value": name}
                                 for name in _all_scientific_names
                             ],
                             value=_all_scientific_names,
@@ -550,7 +543,7 @@ layout = html.Div(
                         dcc.Checklist(
                             id="underlying-variant-select",
                             options=[
-                                {"label": _display_value(v), "value": v}
+                                {"label": v, "value": v}
                                 for v in _all_underlying_variants
                             ],
                             value=_all_underlying_variants,
@@ -580,7 +573,7 @@ layout = html.Div(
                         dcc.Checklist(
                             id="sex-select",
                             options=[
-                                {"label": _display_value(s), "value": s}
+                                {"label": s, "value": s}
                                 for s in _all_sexes
                             ],
                             value=_all_sexes,
