@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Force dataset table scrollbar always visible on macOS
+- `pages/charts.py`: Added `id="dataset-table-wrapper"` to the scrollable div around the dataset table.
+- `assets/style.css`: Added `::-webkit-scrollbar` rules targeting `#dataset-table-wrapper` to force the scrollbar to always render. macOS hides `overflow:scroll` bars until interaction regardless of CSS; explicit webkit scrollbar styling bypasses that system setting.
+
 ### Add Groups column to dataset selection table
 - `pages/charts.py`: Added `Sample.genotype` to the `_get_dataset_table` query. Aggregates distinct genotypes per bioproject via `Counter` alongside the existing columns. Renders as a `"Groups (n)"` column between Sex and Age in the table header and rows.
 
