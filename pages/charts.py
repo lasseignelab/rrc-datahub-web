@@ -40,7 +40,9 @@ def _get_all_scientific_names() -> list[str]:
 
 
 def _get_all_underlying_variants() -> list[str]:
-    """Return sorted list of distinct non-null underlying_variant values.
+    """Return sorted list of distinct known underlying_variant values.
+
+    Excludes null and Not provided; those are handled by include_unknown_variant.
 
     Queries the entire sample table so the checklist reflects all variants.
     """
@@ -48,7 +50,10 @@ def _get_all_underlying_variants() -> list[str]:
     try:
         rows = (
             session.query(Sample.underlying_variant)
-            .filter(Sample.underlying_variant.isnot(None))
+            .filter(
+                Sample.underlying_variant.isnot(None),
+                Sample.underlying_variant != "Not provided",
+            )
             .distinct()
             .order_by(Sample.underlying_variant)
             .all()
@@ -129,6 +134,7 @@ def _get_datasets_by_filters(
     age_range: tuple[int, int],
     include_unknown_age: bool,
     include_unknown_sex: bool,
+    include_unknown_variant: bool,
 ) -> list[str]:
     """Return sorted bioproject accessions matching all active filters.
 
@@ -138,6 +144,8 @@ def _get_datasets_by_filters(
     When include_unknown_age is True, samples with a null age_range pass
     the age condition unconditionally. When include_unknown_sex is True,
     samples with a null or 'Not provided' sex also pass the sex condition.
+    When include_unknown_variant is True, samples with a null or 'Not
+    provided' underlying_variant also pass the variant condition.
     """
     min_age, max_age = age_range
     overlap = and_(
@@ -156,6 +164,14 @@ def _get_datasets_by_filters(
         )
     else:
         sex_cond = Sample.sex.in_(sexes)
+    if include_unknown_variant:
+        variant_cond = or_(
+            Sample.underlying_variant.in_(underlying_variants),
+            Sample.underlying_variant.is_(None),
+            Sample.underlying_variant == "Not provided",
+        )
+    else:
+        variant_cond = Sample.underlying_variant.in_(underlying_variants)
     session = SessionLocal()
     try:
         rows = (
@@ -163,7 +179,7 @@ def _get_datasets_by_filters(
             .join(Sample, Sample.dataset_id == Dataset.id)
             .filter(
                 Sample.scientific_name.in_(scientific_names),
-                Sample.underlying_variant.in_(underlying_variants),
+                variant_cond,
                 Sample.sample_type.in_(sample_types),
                 sex_cond,
                 age_cond,
@@ -217,6 +233,7 @@ def _get_dataset_table(
     age_range: tuple[int, int],
     include_unknown_age: bool,
     include_unknown_sex: bool,
+    include_unknown_variant: bool,
 ) -> list[dict]:
     """Return one summary row per matching bioproject for the dataset table.
 
@@ -241,6 +258,14 @@ def _get_dataset_table(
         )
     else:
         sex_cond = Sample.sex.in_(sexes)
+    if include_unknown_variant:
+        variant_cond = or_(
+            Sample.underlying_variant.in_(underlying_variants),
+            Sample.underlying_variant.is_(None),
+            Sample.underlying_variant == "Not provided",
+        )
+    else:
+        variant_cond = Sample.underlying_variant.in_(underlying_variants)
     session = SessionLocal()
     try:
         matching = [
@@ -250,7 +275,7 @@ def _get_dataset_table(
                 .join(Sample, Sample.dataset_id == Dataset.id)
                 .filter(
                     Sample.scientific_name.in_(scientific_names),
-                    Sample.underlying_variant.in_(underlying_variants),
+                    variant_cond,
                     Sample.sample_type.in_(sample_types),
                     sex_cond,
                     age_cond,
@@ -579,6 +604,20 @@ layout = html.Div(
                             ],
                             value=_all_underlying_variants,
                             inline=True,
+                        ),
+                        dcc.Checklist(
+                            id="include-unknown-variant",
+                            options=[
+                                {
+                                    "label": (
+                                        "Include datasets with underlying"
+                                        " variant not provided"
+                                    ),
+                                    "value": "include",
+                                }
+                            ],
+                            value=["include"],
+                            style={"marginTop": "8px"},
                         ),
                     ],
                     style={"marginBottom": "16px"},
@@ -920,6 +959,7 @@ clientside_callback(
     Output("dataset-count", "children"),
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
+    Input("include-unknown-variant", "value"),
     Input("sample-type-select", "value"),
     Input("sex-select", "value"),
     Input("include-unknown-sex", "value"),
@@ -930,6 +970,7 @@ clientside_callback(
 def filter_datasets(
     selected_names,
     selected_variants,
+    include_unknown_variant,
     selected_types,
     selected_sexes,
     include_unknown_sex,
@@ -952,6 +993,7 @@ def filter_datasets(
         effective_age,
         bool(include_unknown_age),
         bool(include_unknown_sex),
+        bool(include_unknown_variant),
     )
     bioprojects = [r["bioproject"] for r in rows]
     selected = (
