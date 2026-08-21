@@ -18,6 +18,7 @@ dash.register_page(__name__, path="/charts")
 log = logging.getLogger(__name__)
 
 _GENE_SEARCH_LIMIT = 50
+_WILDTYPE_VALUE = "wild-type"
 
 
 def _get_all_scientific_names() -> list[str]:
@@ -53,6 +54,7 @@ def _get_all_underlying_variants() -> list[str]:
             .filter(
                 Sample.underlying_variant.isnot(None),
                 Sample.underlying_variant != "Not provided",
+                Sample.underlying_variant != _WILDTYPE_VALUE,
             )
             .distinct()
             .order_by(Sample.underlying_variant)
@@ -135,6 +137,7 @@ def _get_datasets_by_filters(
     include_unknown_age: bool,
     include_unknown_sex: bool,
     include_unknown_variant: bool,
+    require_wildtype: bool,
 ) -> list[str]:
     """Return sorted bioproject accessions matching all active filters.
 
@@ -146,6 +149,8 @@ def _get_datasets_by_filters(
     samples with a null or 'Not provided' sex also pass the sex condition.
     When include_unknown_variant is True, samples with a null or 'Not
     provided' underlying_variant also pass the variant condition.
+    When require_wildtype is True, only datasets that contain at least one
+    wild-type sample are included.
     """
     min_age, max_age = age_range
     overlap = and_(
@@ -188,7 +193,18 @@ def _get_datasets_by_filters(
             .order_by(Dataset.bioproject)
             .all()
         )
-        return [r[0] for r in rows]
+        result = [r[0] for r in rows]
+        if require_wildtype:
+            wt_bps = {
+                r[0]
+                for r in session.query(Dataset.bioproject)
+                .join(Sample, Sample.dataset_id == Dataset.id)
+                .filter(Sample.underlying_variant == _WILDTYPE_VALUE)
+                .distinct()
+                .all()
+            }
+            result = [bp for bp in result if bp in wt_bps]
+        return result
     finally:
         session.close()
 
@@ -234,6 +250,7 @@ def _get_dataset_table(
     include_unknown_age: bool,
     include_unknown_sex: bool,
     include_unknown_variant: bool,
+    require_wildtype: bool,
 ) -> list[dict]:
     """Return one summary row per matching bioproject for the dataset table.
 
@@ -285,6 +302,16 @@ def _get_dataset_table(
                 .all()
             )
         ]
+        if require_wildtype:
+            wt_bps = {
+                r[0]
+                for r in session.query(Dataset.bioproject)
+                .join(Sample, Sample.dataset_id == Dataset.id)
+                .filter(Sample.underlying_variant == _WILDTYPE_VALUE)
+                .distinct()
+                .all()
+            }
+            matching = [bp for bp in matching if bp in wt_bps]
         if not matching:
             return []
         samples = (
@@ -618,6 +645,20 @@ layout = html.Div(
                             ],
                             value=["include"],
                             style={"marginTop": "8px"},
+                        ),
+                        dcc.Checklist(
+                            id="require-wildtype",
+                            options=[
+                                {
+                                    "label": (
+                                        "Only include datasets with"
+                                        " matching controls"
+                                    ),
+                                    "value": "require",
+                                }
+                            ],
+                            value=[],
+                            style={"marginTop": "4px"},
                         ),
                     ],
                     style={"marginBottom": "16px"},
@@ -960,6 +1001,7 @@ clientside_callback(
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
     Input("include-unknown-variant", "value"),
+    Input("require-wildtype", "value"),
     Input("sample-type-select", "value"),
     Input("sex-select", "value"),
     Input("include-unknown-sex", "value"),
@@ -971,6 +1013,7 @@ def filter_datasets(
     selected_names,
     selected_variants,
     include_unknown_variant,
+    require_wildtype,
     selected_types,
     selected_sexes,
     include_unknown_sex,
@@ -995,6 +1038,7 @@ def filter_datasets(
         bool(include_unknown_age),
         bool(include_unknown_sex),
         bool(include_unknown_variant),
+        bool(require_wildtype),
     )
     bioprojects = [r["bioproject"] for r in rows]
     selected = (
