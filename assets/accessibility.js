@@ -10,10 +10,6 @@
     var LABEL_MAP = {
         "age-unit": "age-unit-label",
         "group-select": "group-select-label",
-        "sample-type-select": "sample-type-label",
-        "scientific-name-select": "scientific-name-label",
-        "sex-select": "sex-select-label",
-        "underlying-variant-select": "underlying-variant-label",
         "stat-test": "stat-test-label",
     };
 
@@ -41,10 +37,6 @@
     var OPTION_CONTAINERS = [
         "group-select",
         "include-unknown-age",
-        "sample-type-select",
-        "scientific-name-select",
-        "sex-select",
-        "underlying-variant-select",
         "stat-test",
     ];
 
@@ -64,9 +56,25 @@
         });
     }
 
+    // dcc.Dropdown renders its "Clear selection" button as <a class="dash-dropdown-clear">
+    // containing only an SVG icon — no text content. HTML_CodeSniffer flags this as a
+    // link with no accessible content, even though aria-label is present. Adding a
+    // visually-hidden span with the label text satisfies the rule without changing visuals.
+    function fixDropdownClearButtons() {
+        document.querySelectorAll("a.dash-dropdown-clear").forEach(function (a) {
+            if (!a.querySelector(".visually-hidden")) {
+                var span = document.createElement("span");
+                span.className = "visually-hidden";
+                span.textContent = "Clear selection";
+                a.appendChild(span);
+            }
+        });
+    }
+
     function applyAll() {
         applyLabels();
         fixOptionContainerARIA();
+        fixDropdownClearButtons();
     }
 
     var observer = new MutationObserver(applyAll);

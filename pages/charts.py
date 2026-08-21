@@ -401,12 +401,10 @@ def _get_dataset_table(
                     for st, cnt in sorted(agg[bp]["sample_types"].items())
                 ],
                 "sexes": [
-                    f"{sex} ({cnt})"
-                    for sex, cnt in sorted(agg[bp]["sexes"].items())
+                    f"{sex} ({cnt})" for sex, cnt in sorted(agg[bp]["sexes"].items())
                 ],
                 "genotypes": [
-                    f"{g} ({cnt})"
-                    for g, cnt in sorted(agg[bp]["genotypes"].items())
+                    f"{g} ({cnt})" for g, cnt in sorted(agg[bp]["genotypes"].items())
                 ],
                 "age_ranges": [
                     f"{_fmt(lo, hi)} ({cnt})"
@@ -608,14 +606,14 @@ layout = html.Div(
                 html.Div(
                     [
                         html.Label("Scientific name", id="scientific-name-label"),
-                        dcc.Checklist(
+                        dcc.Dropdown(
                             id="scientific-name-select",
                             options=[
                                 {"label": name, "value": name}
                                 for name in _all_scientific_names
                             ],
                             value=_all_scientific_names,
-                            inline=True,
+                            multi=True,
                         ),
                     ],
                     style={"marginBottom": "16px"},
@@ -623,14 +621,14 @@ layout = html.Div(
                 html.Div(
                     [
                         html.Label("Underlying variant", id="underlying-variant-label"),
-                        dcc.Checklist(
+                        dcc.Dropdown(
                             id="underlying-variant-select",
                             options=[
                                 {"label": v, "value": v}
                                 for v in _all_underlying_variants
                             ],
                             value=_all_underlying_variants,
-                            inline=True,
+                            multi=True,
                         ),
                         dcc.Checklist(
                             id="include-unknown-variant",
@@ -666,14 +664,14 @@ layout = html.Div(
                 html.Div(
                     [
                         html.Label("Sample type", id="sample-type-label"),
-                        dcc.Checklist(
+                        dcc.Dropdown(
                             id="sample-type-select",
                             options=[
                                 {"label": _readable_sample_type(st), "value": st}
                                 for st in _all_sample_types
                             ],
                             value=_all_sample_types,
-                            inline=True,
+                            multi=True,
                         ),
                     ],
                     style={"marginBottom": "16px"},
@@ -681,14 +679,11 @@ layout = html.Div(
                 html.Div(
                     [
                         html.Label("Sex", id="sex-select-label"),
-                        dcc.Checklist(
+                        dcc.Dropdown(
                             id="sex-select",
-                            options=[
-                                {"label": s, "value": s}
-                                for s in _all_sexes
-                            ],
+                            options=[{"label": s, "value": s} for s in _all_sexes],
                             value=_all_sexes,
-                            inline=True,
+                            multi=True,
                         ),
                         dcc.Checklist(
                             id="include-unknown-sex",
@@ -1030,9 +1025,9 @@ def filter_datasets(
         (int(age_days[0]), int(age_days[1])) if age_days else (_age_min, _age_max)
     )
     rows = _get_dataset_table(
-        selected_names,
-        selected_variants,
-        selected_types,
+        selected_names or [],
+        selected_variants or [],
+        selected_types or [],
         selected_sexes or [],
         effective_age,
         bool(include_unknown_age),

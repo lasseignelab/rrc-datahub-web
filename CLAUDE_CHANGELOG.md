@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Convert four filter checklists to multi-select dropdowns
+- `pages/charts.py`: Replaced `dcc.Checklist` with `dcc.Dropdown(multi=True)` for the Scientific name, Underlying variant, Sample type, and Sex filters. The "Include datasets…" and "Only include datasets…" checklists below each dropdown remain unchanged. Added `or []` guards throughout the `filter_datasets` callback because `dcc.Dropdown` returns `None` (not `[]`) when cleared. Applied `black` auto-formatting.
+- `assets/accessibility.js`: Removed the four now-unused dropdown IDs from `LABEL_MAP` and `OPTION_CONTAINERS` (they were for the old checklists). Added `fixDropdownClearButtons()` to inject a visually-hidden text span into each `<a class="dash-dropdown-clear">` element — Dash's multi-select clear button is an anchor with an SVG-only icon that HTML_CodeSniffer flags as having no link content despite the `aria-label`.
+
 ### Remove wild-type from variant checklist; add matching controls filter
 - `pages/charts.py`: Added `_WILDTYPE_VALUE = "wild-type"` constant. Excluded wild-type from `_get_all_underlying_variants()` so it no longer appears as a checklist option. Added `dcc.Checklist(id="require-wildtype")` labeled "Only include datasets with matching controls", defaulting to unchecked. When checked, both `_get_dataset_table` and `_get_datasets_by_filters` post-filter to bioprojects that contain at least one wild-type sample. Wired into `filter_datasets`.
 
