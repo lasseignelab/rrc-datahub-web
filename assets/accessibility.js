@@ -40,10 +40,23 @@
     var OPTION_CONTAINERS = [
         "group-select",
         "include-unknown-age",
+        "include-unknown-sex",
+        "include-unknown-variant",
         "plot-age-select",
         "plot-sample-type-select",
         "plot-sex-select",
+        "require-wildtype",
         "stat-test",
+    ];
+
+    // Single-option checklists (acting as checkboxes) whose container needs an
+    // accessible name. We derive the name from the option label text so no extra
+    // DOM elements are required in the layout.
+    var SINGLE_OPTION_CONTAINERS = [
+        "include-unknown-age",
+        "include-unknown-sex",
+        "include-unknown-variant",
+        "require-wildtype",
     ];
 
     function fixOptionContainerARIA() {
@@ -59,6 +72,20 @@
                 opt.removeAttribute("role");
                 opt.removeAttribute("aria-selected");
             });
+        });
+    }
+
+    function fixSingleOptionContainerLabels() {
+        SINGLE_OPTION_CONTAINERS.forEach(function (id) {
+            var container = document.getElementById(id);
+            if (!container) { return; }
+            if (container.getAttribute("aria-label") || container.getAttribute("aria-labelledby")) {
+                return;
+            }
+            var label = container.querySelector("label");
+            if (label) {
+                container.setAttribute("aria-label", label.textContent.trim());
+            }
         });
     }
 
@@ -80,6 +107,7 @@
     function applyAll() {
         applyLabels();
         fixOptionContainerARIA();
+        fixSingleOptionContainerLabels();
         fixDropdownClearButtons();
     }
 

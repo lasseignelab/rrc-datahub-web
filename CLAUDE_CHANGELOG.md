@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Fix: accessible name missing on single-option checklist containers
+- `assets/accessibility.js`: Added `include-unknown-sex`, `include-unknown-variant`, and `require-wildtype` to `OPTION_CONTAINERS` so they receive the `role="listbox"` → `role="group"` fix. Added `SINGLE_OPTION_CONTAINERS` list and `fixSingleOptionContainerLabels()` function, which reads each container's first option label text and sets it as `aria-label` on the container — giving screen readers an accessible name without adding extra DOM elements to the layout.
+
 ### Rename Genotype to Group in plot and data table
 - `components/tpm_violin_plot_plotly.py`: Added `group_label` parameter to `plot_tpm_violin_plotly`. When provided, it replaces `group_col` as the x-axis title and legend title, while leaving tick labels (the actual group values) unchanged.
 - `pages/charts.py`: Passed `group_label="Group"` to `plot_tpm_violin_plotly`. Changed the data table column header from "Genotype" to "Group (n)". Added `n` (sample count per group) to the `groupby` aggregation and displays it beside each group name as `"{genotype} (n)"`. Updated caption wording from "genotype(s)" to "group(s)".
