@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-21
+
+### Reset database before ETL reload with sequence restart
+- `etl/load.py`: Added `reset_database()` which issues `TRUNCATE dataset, gene, sample, sample_gene RESTART IDENTITY CASCADE` to delete all rows and reset autoincrement sequences to 1 before each full reload. Called at the top of `__main__` before the four load functions.
+
 ## 2026-08-12
 
 ### Add page description below Charts heading
