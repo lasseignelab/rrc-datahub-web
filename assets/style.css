@@ -45,6 +45,26 @@
     outline-offset: -1px;
 }
 
+/* Force scrollbar to always render on macOS (overrides system "show when scrolling" preference). */
+#dataset-table-wrapper::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 8px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 4px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
 /* Dataset selection table */
 #dataset-table {
     border-collapse: collapse;
