@@ -241,6 +241,30 @@ def _days_to_readable(n: int) -> tuple[int, str]:
     return round(n / 365.25), "year"
 
 
+def _plural(n: int, unit: str) -> str:
+    """Return '{n} {unit}' with the unit pluralised when n != 1."""
+    return f"{n} {unit if n == 1 else unit + 's'}"
+
+
+def _fmt(lo: int | None, hi: int | None) -> str:
+    """Format a (lower, upper) day-range pair as a human-readable string."""
+    if lo is not None and hi is not None:
+        if lo == hi:
+            return _plural(*_days_to_readable(lo))
+        lo_n, lo_u = _days_to_readable(lo)
+        hi_n, hi_u = _days_to_readable(hi)
+        if lo_u == hi_u:
+            return f"{lo_n}–{hi_n} {hi_u if hi_n == 1 else hi_u + 's'}"
+        return f"{_plural(lo_n, lo_u)}–{_plural(hi_n, hi_u)}"
+    if lo is not None:
+        n, u = _days_to_readable(lo)
+        return f"{_plural(n, u)}+"
+    if hi is not None:
+        n, u = _days_to_readable(hi)
+        return f"–{_plural(n, u)}"
+    return "Not provided"
+
+
 def _get_dataset_table(
     scientific_names: list[str],
     underlying_variants: list[str],
@@ -357,26 +381,6 @@ def _get_dataset_table(
                     int(age_hi) if age_hi is not None else None,
                 )
                 agg[bp]["age_ranges"][pair] += 1
-
-        def _plural(n: int, unit: str) -> str:
-            return f"{n} {unit if n == 1 else unit + 's'}"
-
-        def _fmt(lo: int | None, hi: int | None) -> str:
-            if lo is not None and hi is not None:
-                if lo == hi:
-                    return _plural(*_days_to_readable(lo))
-                lo_n, lo_u = _days_to_readable(lo)
-                hi_n, hi_u = _days_to_readable(hi)
-                if lo_u == hi_u:
-                    return f"{lo_n}–{hi_n} {hi_u if hi_n == 1 else hi_u + 's'}"
-                return f"{_plural(lo_n, lo_u)}–{_plural(hi_n, hi_u)}"
-            if lo is not None:
-                n, u = _days_to_readable(lo)
-                return f"{_plural(n, u)}+"
-            if hi is not None:
-                n, u = _days_to_readable(hi)
-                return f"–{_plural(n, u)}"
-            return "Not provided"
 
         def _sort_key(pair: tuple) -> tuple:
             lo, hi = pair
@@ -531,6 +535,48 @@ def _get_sexes_for_dataset(bioproject: str) -> list[str]:
         session.close()
 
 
+def _get_age_ranges_for_dataset(bioproject: str) -> list[dict]:
+    """Return checklist options for distinct age ranges in a dataset.
+
+    Labels match the Age column format in the dataset table. Values encode
+    the (lower, upper) day bounds as 'lo:hi', or 'none' for null age_range.
+    Options are sorted by lower bound then upper bound, with null last.
+    """
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(
+                func.lower(Sample.age_range),
+                func.upper(Sample.age_range),
+            )
+            .join(Dataset, Dataset.id == Sample.dataset_id)
+            .filter(Dataset.bioproject == bioproject)
+            .distinct()
+            .all()
+        )
+    finally:
+        session.close()
+
+    has_null = False
+    pairs: set[tuple[int, int]] = set()
+    for age_lo, age_hi in rows:
+        if age_lo is None and age_hi is None:
+            has_null = True
+        elif age_lo is not None and age_hi is not None:
+            pairs.add((int(age_lo), int(age_hi)))
+
+    def _age_sort_key(pair: tuple) -> tuple:
+        return (pair[0], pair[1])
+
+    options = [
+        {"label": _fmt(lo, hi), "value": f"{lo}:{hi}"}
+        for lo, hi in sorted(pairs, key=_age_sort_key)
+    ]
+    if has_null:
+        options.append({"label": "Not provided", "value": "none"})
+    return options
+
+
 # Override title-casing for values where automatic conversion would be wrong.
 # Extend this dict as new sample_type values are added to the database.
 _SAMPLE_TYPE_LABELS: dict[str, str] = {
@@ -557,10 +603,14 @@ def _readable_sample_type(raw: str) -> str:
 
 
 def _get_tpm_data(
-    bioproject: str, gene_name: str, sample_types: list[str], sexes: list[str]
+    bioproject: str,
+    gene_name: str,
+    sample_types: list[str],
+    sexes: list[str],
+    age_ranges: list[str],
 ) -> pd.DataFrame:
     """Return a DataFrame of (genotype, TPM) rows filtered by dataset, gene,
-    sample types, and sex."""
+    sample types, sex, and age ranges."""
     session = SessionLocal()
     try:
         query = (
@@ -576,6 +626,20 @@ def _get_tpm_data(
                 Sample.sex.in_(sexes),
             )
         )
+        age_conds = []
+        for val in age_ranges:
+            if val == "none":
+                age_conds.append(Sample.age_range.is_(None))
+            else:
+                lo, hi = (int(x) for x in val.split(":"))
+                age_conds.append(
+                    and_(
+                        func.lower(Sample.age_range) == lo,
+                        func.upper(Sample.age_range) == hi,
+                    )
+                )
+        if age_conds:
+            query = query.filter(or_(*age_conds))
         return pd.DataFrame(query.all(), columns=["genotype", "TPM"])
     finally:
         session.close()
@@ -625,6 +689,7 @@ _initial_genes: list[str] = []
 _initial_genotypes: list[str] = []
 _initial_sample_types_for_plot: list[str] = []
 _initial_sexes_for_plot: list[str] = []
+_initial_age_ranges_for_plot: list[dict] = []
 
 if _datasets:
     try:
@@ -632,10 +697,9 @@ if _datasets:
         _initial_genotypes = _get_genotypes(_datasets[0])
         _initial_sample_types_for_plot = _get_sample_types_for_dataset(_datasets[0])
         _initial_sexes_for_plot = _get_sexes_for_dataset(_datasets[0])
+        _initial_age_ranges_for_plot = _get_age_ranges_for_dataset(_datasets[0])
     except Exception as exc:
-        log.warning(
-            "Could not load initial genes/genotypes/sample types/sexes: %s", exc
-        )
+        log.warning("Could not load initial plot parameter options: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -949,6 +1013,20 @@ layout = html.Div(
                 ),
                 html.Div(
                     [
+                        html.Label("Age", id="plot-age-label"),
+                        dcc.Checklist(
+                            id="plot-age-select",
+                            options=_initial_age_ranges_for_plot,
+                            value=[
+                                opt["value"] for opt in _initial_age_ranges_for_plot
+                            ],
+                            inline=True,
+                        ),
+                    ],
+                    style={"marginBottom": "16px"},
+                ),
+                html.Div(
+                    [
                         html.Label("Statistical test", id="stat-test-label"),
                         dcc.RadioItems(
                             id="stat-test",
@@ -1192,17 +1270,22 @@ def filter_gene_options(search, current_gene):
     Output("plot-sample-type-select", "value"),
     Output("plot-sex-select", "options"),
     Output("plot-sex-select", "value"),
+    Output("plot-age-select", "options"),
+    Output("plot-age-select", "value"),
     Input("dataset-selected", "data"),
 )
 def update_selectors(bioproject):
-    """Reset gene, group, sample type, and sex selections when the dataset changes."""
+    """Reset gene, group, sample type, sex, and age selections
+    when the dataset changes.
+    """
     if not bioproject:
-        return None, [], [], [], [], [], []
+        return None, [], [], [], [], [], [], [], []
 
     genes = _search_genes("")
     genotypes = _get_genotypes(bioproject)
     sample_types = _get_sample_types_for_dataset(bioproject)
     sexes = _get_sexes_for_dataset(bioproject)
+    age_range_opts = _get_age_ranges_for_dataset(bioproject)
 
     return (
         genes[0] if genes else None,
@@ -1212,6 +1295,8 @@ def update_selectors(bioproject):
         sample_types,
         [{"label": s, "value": s} for s in sexes],
         sexes,
+        age_range_opts,
+        [opt["value"] for opt in age_range_opts],
     )
 
 
@@ -1228,10 +1313,17 @@ def update_selectors(bioproject):
     Input("group-select", "value"),
     Input("plot-sample-type-select", "value"),
     Input("plot-sex-select", "value"),
+    Input("plot-age-select", "value"),
     Input("stat-test", "value"),
 )
 def update_plot(
-    bioproject, gene, selected_groups, selected_sample_types, selected_sexes, stat_test
+    bioproject,
+    gene,
+    selected_groups,
+    selected_sample_types,
+    selected_sexes,
+    selected_age_ranges,
+    stat_test,
 ):
     """Query TPM values for the selected gene and render the violin plot."""
     meta = f"{bioproject}_{gene}" if bioproject and gene else ""
@@ -1241,10 +1333,13 @@ def update_plot(
         or not selected_groups
         or not selected_sample_types
         or not selected_sexes
+        or not selected_age_ranges
     ):
         return {}, meta
 
-    df = _get_tpm_data(bioproject, gene, selected_sample_types, selected_sexes)
+    df = _get_tpm_data(
+        bioproject, gene, selected_sample_types, selected_sexes, selected_age_ranges
+    )
     if df.empty:
         return {}, meta
 
@@ -1276,9 +1371,15 @@ def update_plot(
     Input("group-select", "value"),
     Input("plot-sample-type-select", "value"),
     Input("plot-sex-select", "value"),
+    Input("plot-age-select", "value"),
 )
 def update_table(
-    bioproject, gene, selected_groups, selected_sample_types, selected_sexes
+    bioproject,
+    gene,
+    selected_groups,
+    selected_sample_types,
+    selected_sexes,
+    selected_age_ranges,
 ):
     """Build a per-genotype summary table of log10(TPM+1) statistics.
 
@@ -1293,10 +1394,13 @@ def update_table(
         or not selected_groups
         or not selected_sample_types
         or not selected_sexes
+        or not selected_age_ranges
     ):
         return "No data to display. Select a dataset, gene, and groups.", []
 
-    df = _get_tpm_data(bioproject, gene, selected_sample_types, selected_sexes)
+    df = _get_tpm_data(
+        bioproject, gene, selected_sample_types, selected_sexes, selected_age_ranges
+    )
     if df.empty:
         return "No expression data found for the current selection.", []
 

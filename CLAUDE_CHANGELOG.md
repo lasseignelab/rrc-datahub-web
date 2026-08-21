@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Add Age filter to Plot Parameters
+- `pages/charts.py`: Moved `_plural(n, unit)` and `_fmt(lo, hi)` helpers from local scope inside `_get_dataset_table` to module level so they are available to the new `_get_age_ranges_for_dataset(bioproject)` function. Added `_get_age_ranges_for_dataset` which queries distinct age range bounds, returns human-readable labels (matching the Datasets table "Age" column format) with encoded values (`"{lo}:{hi}"` or `"none"` for null). Added `age_ranges` parameter to `_get_tpm_data()` using `or_()` of exact `and_(func.lower==lo, func.upper==hi)` conditions. Added `_initial_age_ranges_for_plot` to the pre-load block. Added `dcc.Checklist(id="plot-age-select")` to the Plot Parameters layout below Sex, defaulting to all age ranges selected. Extended `update_selectors` with two new Outputs for `plot-age-select`. Added `plot-age-select` as an Input to both `update_plot` and `update_table`, with an early-exit guard when nothing is selected.
+- `assets/accessibility.js`: Added `plot-age-select` to `LABEL_MAP` and `OPTION_CONTAINERS` to apply the same ARIA fixes as other checklists.
+
 ### Add Sex filter to Plot Parameters
 - `pages/charts.py`: Added `_get_sexes_for_dataset(bioproject)` query function. Added `sexes` parameter to `_get_tpm_data()`. Added `_initial_sexes_for_plot` to pre-load block. Added `dcc.Checklist(id="plot-sex-select")` below Sample type in the Plot Parameters layout, defaulting to all sex values selected. Extended `update_selectors` with two new Outputs for `plot-sex-select`. Added `plot-sex-select` as an Input to both `update_plot` and `update_table`.
 - `assets/accessibility.js`: Added `plot-sex-select` to `LABEL_MAP` and `OPTION_CONTAINERS`.
