@@ -6,6 +6,10 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Fix group colors to be stable when plot filters change
+- `components/tpm_violin_plot_plotly.py`: Renamed `_DEFAULT_COLORS` to `DEFAULT_COLORS` so it can be imported by callers.
+- `pages/charts.py`: Imports `DEFAULT_COLORS`. Added `State("group-select", "options")` to `update_plot` to access the full group list without an extra DB call. Builds a stable `{group: color}` dict keyed on the full options list and passes it as `palette` to `plot_tpm_violin_plotly`. Colors are now assigned by group identity so removing a group from the filter does not shift the colors of the remaining groups.
+
 ### Fix y-axis range to unfiltered dataset extent for consistent plot comparison
 - `pages/charts.py`: Added `_get_tpm_range(bioproject, gene_name)` which queries the global min/max of log10(TPM+1) for all samples in a dataset for a given gene, with no plot-parameter filters applied. In `update_plot`, after building the figure, calls `_get_tpm_range` and pins the y-axis with 5% padding via `fig.update_layout(yaxis=dict(range=[...]))`. The scale now stays fixed while Group, Sample type, Sex, and Age filters change.
 

@@ -9,7 +9,7 @@ import pandas as pd
 from dash import Input, Output, State, callback, clientside_callback, dcc, html
 from sqlalchemy import and_, func, or_
 
-from components.tpm_violin_plot_plotly import plot_tpm_violin_plotly
+from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
 
@@ -1345,6 +1345,7 @@ def update_selectors(bioproject):
     Input("plot-sex-select", "value"),
     Input("plot-age-select", "value"),
     Input("stat-test", "value"),
+    State("group-select", "options"),
 )
 def update_plot(
     bioproject,
@@ -1354,6 +1355,7 @@ def update_plot(
     selected_sexes,
     selected_age_ranges,
     stat_test,
+    all_group_options,
 ):
     """Query TPM values for the selected gene and render the violin plot."""
     meta = f"{bioproject}_{gene}" if bioproject and gene else ""
@@ -1376,6 +1378,14 @@ def update_plot(
     all_genotypes = sorted(df["genotype"].unique())
     df = df[df["genotype"].isin(selected_groups)]
 
+    # Assign colors by group identity using the full options list so colors
+    # stay stable when groups are removed from the filter.
+    all_option_values = [opt["value"] for opt in (all_group_options or [])]
+    stable_palette = {
+        g: DEFAULT_COLORS[i % len(DEFAULT_COLORS)]
+        for i, g in enumerate(all_option_values)
+    }
+
     fig = plot_tpm_violin_plotly(
         df,
         group_col="genotype",
@@ -1383,6 +1393,7 @@ def update_plot(
         group_order=[g for g in all_genotypes if g in selected_groups],
         stat_test=None if stat_test == "none" else stat_test,
         title=gene,
+        palette=stable_palette,
     )
 
     y_min, y_max = _get_tpm_range(bioproject, gene)

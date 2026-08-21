@@ -17,7 +17,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from scipy import stats
 
-_DEFAULT_COLORS = [
+DEFAULT_COLORS = [
     "#66c2a5",
     "#fc8d62",
     "#8da0cb",
@@ -159,11 +159,11 @@ def plot_tpm_violin_plotly(
 def _resolve_palette(palette: Optional[Union[dict, list]], group_order: list) -> list:
     if palette is None:
         return [
-            _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)] for i in range(len(group_order))
+            DEFAULT_COLORS[i % len(DEFAULT_COLORS)] for i in range(len(group_order))
         ]
     if isinstance(palette, dict):
         return [
-            palette.get(g, _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)])
+            palette.get(g, DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             for i, g in enumerate(group_order)
         ]
     return list(palette)
