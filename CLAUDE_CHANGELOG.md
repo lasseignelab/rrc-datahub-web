@@ -4,6 +4,12 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-21
+
+### Remove NP/NA sentinel handling now that source data uses "Not provided"
+- `pages/charts.py`: Deleted `_display_value()` helper and the `NP` guard in `_readable_sample_type()`. All call sites in `_get_dataset_table()` and the filter checklists now use the raw DB value directly, which is already stored as `"Not provided"`.
+- `etl/load.py`: Removed `"NP"` and `"NA"` from `_NUMERIC_NULLS`; only `""` and `"Not provided"` are now treated as missing for numeric/range fields.
+
 ## 2026-08-12
 
 ### Name download files `<dataset>_<gene>_tpm_expression.*`
