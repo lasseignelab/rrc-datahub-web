@@ -78,12 +78,15 @@ def _get_all_sample_types() -> list[str]:
 
 
 def _get_all_sexes() -> list[str]:
-    """Return sorted list of distinct non-null sex values in the database."""
+    """Return sorted list of distinct known sex values, excluding null and Not provided.
+
+    'Not provided' is excluded here; it is handled by the include_unknown_sex filter.
+    """
     session = SessionLocal()
     try:
         rows = (
             session.query(Sample.sex)
-            .filter(Sample.sex.isnot(None))
+            .filter(Sample.sex.isnot(None), Sample.sex != "Not provided")
             .distinct()
             .order_by(Sample.sex)
             .all()
@@ -125,6 +128,7 @@ def _get_datasets_by_filters(
     sexes: list[str],
     age_range: tuple[int, int],
     include_unknown_age: bool,
+    include_unknown_sex: bool,
 ) -> list[str]:
     """Return sorted bioproject accessions matching all active filters.
 
@@ -132,7 +136,8 @@ def _get_datasets_by_filters(
     scientific_name, underlying_variant, sample_type, and sex are all in
     the respective selected sets AND whose age satisfies the age condition.
     When include_unknown_age is True, samples with a null age_range pass
-    the age condition unconditionally.
+    the age condition unconditionally. When include_unknown_sex is True,
+    samples with a null or 'Not provided' sex also pass the sex condition.
     """
     min_age, max_age = age_range
     overlap = and_(
@@ -143,6 +148,14 @@ def _get_datasets_by_filters(
         age_cond = or_(Sample.age_range.is_(None), overlap)
     else:
         age_cond = and_(Sample.age_range.isnot(None), overlap)
+    if include_unknown_sex:
+        sex_cond = or_(
+            Sample.sex.in_(sexes),
+            Sample.sex.is_(None),
+            Sample.sex == "Not provided",
+        )
+    else:
+        sex_cond = Sample.sex.in_(sexes)
     session = SessionLocal()
     try:
         rows = (
@@ -152,7 +165,7 @@ def _get_datasets_by_filters(
                 Sample.scientific_name.in_(scientific_names),
                 Sample.underlying_variant.in_(underlying_variants),
                 Sample.sample_type.in_(sample_types),
-                Sample.sex.in_(sexes),
+                sex_cond,
                 age_cond,
             )
             .distinct()
@@ -203,6 +216,7 @@ def _get_dataset_table(
     sexes: list[str],
     age_range: tuple[int, int],
     include_unknown_age: bool,
+    include_unknown_sex: bool,
 ) -> list[dict]:
     """Return one summary row per matching bioproject for the dataset table.
 
@@ -219,6 +233,14 @@ def _get_dataset_table(
         age_cond = or_(Sample.age_range.is_(None), overlap)
     else:
         age_cond = and_(Sample.age_range.isnot(None), overlap)
+    if include_unknown_sex:
+        sex_cond = or_(
+            Sample.sex.in_(sexes),
+            Sample.sex.is_(None),
+            Sample.sex == "Not provided",
+        )
+    else:
+        sex_cond = Sample.sex.in_(sexes)
     session = SessionLocal()
     try:
         matching = [
@@ -230,7 +252,7 @@ def _get_dataset_table(
                     Sample.scientific_name.in_(scientific_names),
                     Sample.underlying_variant.in_(underlying_variants),
                     Sample.sample_type.in_(sample_types),
-                    Sample.sex.in_(sexes),
+                    sex_cond,
                     age_cond,
                 )
                 .distinct()
@@ -588,6 +610,17 @@ layout = html.Div(
                             value=_all_sexes,
                             inline=True,
                         ),
+                        dcc.Checklist(
+                            id="include-unknown-sex",
+                            options=[
+                                {
+                                    "label": "Include datasets with sex not provided",
+                                    "value": "include",
+                                }
+                            ],
+                            value=["include"],
+                            style={"marginTop": "8px"},
+                        ),
                     ],
                     style={"marginBottom": "16px"},
                 ),
@@ -889,6 +922,7 @@ clientside_callback(
     Input("underlying-variant-select", "value"),
     Input("sample-type-select", "value"),
     Input("sex-select", "value"),
+    Input("include-unknown-sex", "value"),
     Input("age-range-days", "data"),
     Input("include-unknown-age", "value"),
     State("dataset-selected", "data"),
@@ -898,6 +932,7 @@ def filter_datasets(
     selected_variants,
     selected_types,
     selected_sexes,
+    include_unknown_sex,
     age_days,
     include_unknown_age,
     current_dataset,
@@ -916,6 +951,7 @@ def filter_datasets(
         selected_sexes or [],
         effective_age,
         bool(include_unknown_age),
+        bool(include_unknown_sex),
     )
     bioprojects = [r["bioproject"] for r in rows]
     selected = (
