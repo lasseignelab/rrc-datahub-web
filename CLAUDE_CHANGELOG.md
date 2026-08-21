@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Fix: datasets with Not provided variant hidden when all variants unchecked
+- `pages/charts.py`: The `filter_datasets` early-exit guard tested `not selected_variants` unconditionally, so unchecking all variants returned an empty list even when "Include datasets with underlying variant not provided" was checked. Fixed by only exiting early when `selected_variants` is empty AND `include_unknown_variant` is also unchecked.
+
 ### Add "Include datasets with underlying variant not provided" checkbox
 - `pages/charts.py`: Removed `"Not provided"` from `_get_all_underlying_variants()` results. Added `dcc.Checklist(id="include-unknown-variant")` below the underlying variant checklist, defaulting to checked. Added `include_unknown_variant` parameter to `_get_dataset_table` and `_get_datasets_by_filters` with matching `or_` logic for null/Not provided values. Wired the new input into `filter_datasets`.
 
