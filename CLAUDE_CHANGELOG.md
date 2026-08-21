@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Remove wild-type from variant checklist; add matching controls filter
+- `pages/charts.py`: Added `_WILDTYPE_VALUE = "wild-type"` constant. Excluded wild-type from `_get_all_underlying_variants()` so it no longer appears as a checklist option. Added `dcc.Checklist(id="require-wildtype")` labeled "Only include datasets with matching controls", defaulting to unchecked. When checked, both `_get_dataset_table` and `_get_datasets_by_filters` post-filter to bioprojects that contain at least one wild-type sample. Wired into `filter_datasets`.
+
 ### Fix: datasets with Not provided variant hidden when all variants unchecked
 - `pages/charts.py`: The `filter_datasets` early-exit guard tested `not selected_variants` unconditionally, so unchecking all variants returned an empty list even when "Include datasets with underlying variant not provided" was checked. Fixed by only exiting early when `selected_variants` is empty AND `include_unknown_variant` is also unchecked.
 
