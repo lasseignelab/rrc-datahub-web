@@ -6,6 +6,9 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Add "Include datasets with underlying variant not provided" checkbox
+- `pages/charts.py`: Removed `"Not provided"` from `_get_all_underlying_variants()` results. Added `dcc.Checklist(id="include-unknown-variant")` below the underlying variant checklist, defaulting to checked. Added `include_unknown_variant` parameter to `_get_dataset_table` and `_get_datasets_by_filters` with matching `or_` logic for null/Not provided values. Wired the new input into `filter_datasets`.
+
 ### Add "Include datasets with sex not provided" checkbox to sex filter
 - `pages/charts.py`: Removed `"Not provided"` from `_get_all_sexes()` results so it no longer appears as a checklist option. Added `dcc.Checklist(id="include-unknown-sex")` below the sex checklist, defaulting to checked. Added `include_unknown_sex` parameter to `_get_dataset_table` and `_get_datasets_by_filters`; when checked, the sex filter condition expands to `sex IN (...) OR sex IS NULL OR sex = 'Not provided'`. Wired the new input into `filter_datasets`.
 
