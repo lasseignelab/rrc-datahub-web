@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --ink: #1A2E2B;
+  --teal-deep: #0E6E66;
+  --teal-pale: #E6F2F0;
+  --uab-green: #1F7A4D;
+  --paper: #FBFAF7;
+  --line: #D8DEDC;
+  --meta: #566664;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--teal-deep);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--uab-green);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+/* ---- Global brand bar (sits above nav on every page) ---- */
+
+.site-title-bar {
+  padding: 20px 24px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.brand-wordmark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--teal-deep);
+}
+
+.brand-tagline {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--meta);
+}
+
+/* ---- Navbar ---- */
+
+.site-nav {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  display: flex;
+  gap: 20px;
+}
+
+.site-nav .nav-link {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 4px 2px;
+  border-bottom: 2px solid transparent;
+}
+
+.site-nav .nav-link:hover {
+  color: var(--teal-deep);
+  border-bottom-color: var(--teal-deep);
+}
+
+.home-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+/* ---- Hero ---- */
+
+.hero {
+  position: relative;
+  padding: 64px 16px 48px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-motif {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--teal-deep) 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+  opacity: 0.08;
+  mask-image: radial-gradient(ellipse 60% 80% at 50% 40%, black 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 80% at 50% 40%, black 0%, transparent 75%);
+  pointer-events: none;
+}
+
+.hero-title {
+  position: relative;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  letter-spacing: -0.01em;
+  color: var(--teal-deep);
+  margin: 0 0 12px;
+}
+
+.hero-tagline {
+  position: relative;
+  font-size: 1.05rem;
+  color: var(--meta);
+  margin: 0;
+}
+
+/* ---- About ---- */
+
+.about-section {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  text-align: center;
+}
+
+.about-section h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+
+.about-text {
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 0.98rem;
+}
+
+/* ---- Single contact/version panel ---- */
+
+.info-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--teal-pale);
+  border-radius: 10px;
+  padding: 18px 28px;
+  margin: 8px 0 40px;
+}
+
+.info-col p {
+  margin: 3px 0;
+  font-size: 0.92rem;
+}
+
+.contact-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.meta-col {
+  text-align: right;
+}
+
+.meta-line {
+  color: var(--meta);
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--ink);
+}
+
+/* ---- Partners & funding ---- */
+
+.funding-section {
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.funding-section h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--meta);
+  margin-bottom: 24px;
+}
+
+.funding-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.funding-logos .logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* The Lasseigne Lab file has significant built-in whitespace/caption padding
+   around the mark itself, so it needs a taller box to read at a comparable
+   visual weight to the other logos. Adjust this value to taste once the
+   final logo file is in place. */
+.funding-logos .logo-lab {
+  height: 84px;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 640px) {
+  .info-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .meta-col {
+    text-align: left;
+  }
+}

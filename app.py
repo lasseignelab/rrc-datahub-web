@@ -1,15 +1,20 @@
+import dash
 from dash import Dash, html
-from dash.dcc.Graph import Graph
-import plotly.express as px
 
-app = Dash(__name__)
+from components.header import site_header
+from components.navbar import navbar
 
-fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
+server = app.server  # exposed for gunicorn/production serving
 
-app.layout = html.Div([
-    html.H1("Hello World"),
-    Graph(figure=fig)
-])
+app.layout = html.Div(
+    className="app-shell",
+    children=[
+        site_header(),
+        navbar(),
+        dash.page_container,
+    ],
+)
 
 if __name__ == "__main__":
     app.run(debug=True)
