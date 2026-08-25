@@ -4,6 +4,17 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-21
+
+### Handle "Not provided" sentinel in age_range numeric parser
+- `etl/load.py`: Added `"Not provided"` to `_NUMERIC_NULLS` so `_opt_numrange` treats it as a missing value. Source TSVs now use this string instead of `"NP"` for datasets with no age data.
+
+### Add --branch option to ETL download script
+- `etl/download.py`: Added a `ref` parameter (default `"develop"`) to `_download_github_file`, `_download_github_directory`, `download_geo_datasets`, `download_transformed_metadata`, and `run_download`. All GitHub Contents API requests now pass `?ref=<branch>`. The `__main__` block exposes this as `--branch` via `argparse`.
+
+### Reset database before ETL reload with sequence restart
+- `etl/load.py`: Added `reset_database()` which issues `TRUNCATE dataset, gene, sample, sample_gene RESTART IDENTITY CASCADE` to delete all rows and reset autoincrement sequences to 1 before each full reload. Called at the top of `__main__` before the four load functions.
+
 ## 2026-08-12
 
 ### Add page description below Charts heading
