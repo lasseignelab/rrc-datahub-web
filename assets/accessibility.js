@@ -8,7 +8,11 @@
     // Map element id -> id of the sibling label element that names it.
     // Fixes WCAG 4.1.2: role=listbox and role=radiogroup require accessible names.
     var LABEL_MAP = {
+        "age-unit": "age-unit-label",
         "group-select": "group-select-label",
+        "plot-age-select": "plot-age-label",
+        "plot-sample-type-select": "plot-sample-type-label",
+        "plot-sex-select": "plot-sex-label",
         "stat-test": "stat-test-label",
     };
 
@@ -33,7 +37,27 @@
     // for a set of related inputs) and remove role="option"/aria-selected from
     // labels, restoring the native <label>+<input> pattern which is fully
     // accessible and contains no nested-interactive violation.
-    var OPTION_CONTAINERS = ["group-select", "stat-test"];
+    var OPTION_CONTAINERS = [
+        "group-select",
+        "include-unknown-age",
+        "include-unknown-sex",
+        "include-unknown-variant",
+        "plot-age-select",
+        "plot-sample-type-select",
+        "plot-sex-select",
+        "require-wildtype",
+        "stat-test",
+    ];
+
+    // Single-option checklists (acting as checkboxes) whose container needs an
+    // accessible name. We derive the name from the option label text so no extra
+    // DOM elements are required in the layout.
+    var SINGLE_OPTION_CONTAINERS = [
+        "include-unknown-age",
+        "include-unknown-sex",
+        "include-unknown-variant",
+        "require-wildtype",
+    ];
 
     function fixOptionContainerARIA() {
         OPTION_CONTAINERS.forEach(function (id) {
@@ -51,9 +75,40 @@
         });
     }
 
+    function fixSingleOptionContainerLabels() {
+        SINGLE_OPTION_CONTAINERS.forEach(function (id) {
+            var container = document.getElementById(id);
+            if (!container) { return; }
+            if (container.getAttribute("aria-label") || container.getAttribute("aria-labelledby")) {
+                return;
+            }
+            var label = container.querySelector("label");
+            if (label) {
+                container.setAttribute("aria-label", label.textContent.trim());
+            }
+        });
+    }
+
+    // dcc.Dropdown renders its "Clear selection" button as <a class="dash-dropdown-clear">
+    // containing only an SVG icon — no text content. HTML_CodeSniffer flags this as a
+    // link with no accessible content, even though aria-label is present. Adding a
+    // visually-hidden span with the label text satisfies the rule without changing visuals.
+    function fixDropdownClearButtons() {
+        document.querySelectorAll("a.dash-dropdown-clear").forEach(function (a) {
+            if (!a.querySelector(".visually-hidden")) {
+                var span = document.createElement("span");
+                span.className = "visually-hidden";
+                span.textContent = "Clear selection";
+                a.appendChild(span);
+            }
+        });
+    }
+
     function applyAll() {
         applyLabels();
         fixOptionContainerARIA();
+        fixSingleOptionContainerLabels();
+        fixDropdownClearButtons();
     }
 
     var observer = new MutationObserver(applyAll);
@@ -63,6 +118,31 @@
     });
 
     applyAll();
+
+    // Dataset row selection: apply highlight and aria-pressed immediately on
+    // click for instant visual feedback while the Dash callback propagates.
+    document.addEventListener("click", function (evt) {
+        var btn = evt.target && evt.target.closest
+            ? evt.target.closest("[data-bp]")
+            : null;
+        if (!btn) { return; }
+        var table = document.getElementById("dataset-table");
+        if (!table) { return; }
+        table.querySelectorAll("[data-bp]").forEach(function (b) {
+            b.setAttribute("aria-pressed", "false");
+            var row = b.closest("tr");
+            if (row) { row.classList.remove("dataset-row-selected"); }
+        });
+        btn.setAttribute("aria-pressed", "true");
+        var selectedRow = btn.closest("tr");
+        if (selectedRow) { selectedRow.classList.add("dataset-row-selected"); }
+        // Notify Dash so downstream callbacks (plot, table, groups) update.
+        if (window.dash_clientside && window.dash_clientside.set_props) {
+            window.dash_clientside.set_props(
+                "dataset-selected", { data: btn.getAttribute("data-bp") }
+            );
+        }
+    });
 
     // Download handlers wired via event delegation rather than Dash clientside
     // callbacks. The buttons being Dash callback Inputs causes Dash 4 to apply a
@@ -75,10 +155,9 @@
         if (!wrapper) { return; }
         var plotEl = wrapper.querySelector(".js-plotly-plot") || wrapper;
         if (!plotEl._fullData || plotEl._fullData.length === 0) { return; }
-        var titleText = plotEl.layout && plotEl.layout.title && plotEl.layout.title.text;
-        var filename = titleText
-            ? titleText.replace(/[^a-zA-Z0-9_-]/g, "_")
-            : "tpm_expression_plot";
+        var metaEl = document.getElementById("download-meta");
+        var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
+        var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_plot";
         window.Plotly.toImage(plotEl, { format: "png", width: 1200, height: 700 })
             .then(function (dataUrl) {
                 var a = document.createElement("a");
@@ -107,10 +186,9 @@
             });
             rows.push(cells.join(","));
         });
-        var captionEl = table.querySelector("caption");
-        var filename = captionEl
-            ? captionEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_")
-            : "tpm_expression_data";
+        var metaEl = document.getElementById("download-meta");
+        var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
+        var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_data";
         var blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");

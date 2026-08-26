@@ -5,6 +5,7 @@
     height: 1px;
     overflow: hidden;
     position: absolute;
+    user-select: none;
     white-space: nowrap;
     width: 1px;
 }
@@ -42,6 +43,98 @@
 #tpm-data-table tbody tr:focus-within {
     outline: 2px solid #0057b8;
     outline-offset: -1px;
+}
+
+/* Force scrollbar to always render on macOS (overrides system "show when scrolling" preference). */
+#dataset-table-wrapper::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 8px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 4px;
+}
+
+#dataset-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+/* Dataset selection table */
+#dataset-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#dataset-table th,
+#dataset-table td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+#dataset-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+#dataset-table tbody tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
+
+#dataset-table tbody tr.dataset-row-selected {
+    background-color: #cce5ff;
+}
+
+#dataset-table tbody tr:hover {
+    background-color: #f0f4ff;
+}
+
+/* Radio-button appearance for row select buttons */
+#dataset-table td:first-child {
+    text-align: center;
+    padding: 4px;
+    width: 34px;
+}
+
+#dataset-table td:first-child button {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    background: white;
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#dataset-table td:first-child button:focus-visible {
+    outline: 2px solid #0057b8;
+    outline-offset: 2px;
+}
+
+#dataset-table td:first-child button[aria-pressed="true"]::before {
+    content: "";
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #0057b8;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* Skip navigation link — visually hidden until focused (WCAG 2.4.1). */

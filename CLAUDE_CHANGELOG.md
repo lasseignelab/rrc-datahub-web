@@ -6,6 +6,59 @@ A log of changes made by Claude Code in this project, newest first.
 
 ## 2026-08-21
 
+### Fix group colors to be stable when plot filters change
+- `components/tpm_violin_plot_plotly.py`: Renamed `_DEFAULT_COLORS` to `DEFAULT_COLORS` so it can be imported by callers.
+- `pages/charts.py`: Imports `DEFAULT_COLORS`. Added `State("group-select", "options")` to `update_plot` to access the full group list without an extra DB call. Builds a stable `{group: color}` dict keyed on the full options list and passes it as `palette` to `plot_tpm_violin_plotly`. Colors are now assigned by group identity so removing a group from the filter does not shift the colors of the remaining groups.
+
+### Fix y-axis range to unfiltered dataset extent for consistent plot comparison
+- `pages/charts.py`: Added `_get_tpm_range(bioproject, gene_name)` which queries the global min/max of log10(TPM+1) for all samples in a dataset for a given gene, with no plot-parameter filters applied. In `update_plot`, after building the figure, calls `_get_tpm_range` and pins the y-axis with 5% padding via `fig.update_layout(yaxis=dict(range=[...]))`. The scale now stays fixed while Group, Sample type, Sex, and Age filters change.
+
+### Fix: accessible name missing on single-option checklist containers
+- `assets/accessibility.js`: Added `include-unknown-sex`, `include-unknown-variant`, and `require-wildtype` to `OPTION_CONTAINERS` so they receive the `role="listbox"` → `role="group"` fix. Added `SINGLE_OPTION_CONTAINERS` list and `fixSingleOptionContainerLabels()` function, which reads each container's first option label text and sets it as `aria-label` on the container — giving screen readers an accessible name without adding extra DOM elements to the layout.
+
+### Rename Genotype to Group in plot and data table
+- `components/tpm_violin_plot_plotly.py`: Added `group_label` parameter to `plot_tpm_violin_plotly`. When provided, it replaces `group_col` as the x-axis title and legend title, while leaving tick labels (the actual group values) unchanged.
+- `pages/charts.py`: Passed `group_label="Group"` to `plot_tpm_violin_plotly`. Changed the data table column header from "Genotype" to "Group (n)". Added `n` (sample count per group) to the `groupby` aggregation and displays it beside each group name as `"{genotype} (n)"`. Updated caption wording from "genotype(s)" to "group(s)".
+
+### Add Age filter to Plot Parameters
+- `pages/charts.py`: Moved `_plural(n, unit)` and `_fmt(lo, hi)` helpers from local scope inside `_get_dataset_table` to module level so they are available to the new `_get_age_ranges_for_dataset(bioproject)` function. Added `_get_age_ranges_for_dataset` which queries distinct age range bounds, returns human-readable labels (matching the Datasets table "Age" column format) with encoded values (`"{lo}:{hi}"` or `"none"` for null). Added `age_ranges` parameter to `_get_tpm_data()` using `or_()` of exact `and_(func.lower==lo, func.upper==hi)` conditions. Added `_initial_age_ranges_for_plot` to the pre-load block. Added `dcc.Checklist(id="plot-age-select")` to the Plot Parameters layout below Sex, defaulting to all age ranges selected. Extended `update_selectors` with two new Outputs for `plot-age-select`. Added `plot-age-select` as an Input to both `update_plot` and `update_table`, with an early-exit guard when nothing is selected.
+- `assets/accessibility.js`: Added `plot-age-select` to `LABEL_MAP` and `OPTION_CONTAINERS` to apply the same ARIA fixes as other checklists.
+
+### Add Sex filter to Plot Parameters
+- `pages/charts.py`: Added `_get_sexes_for_dataset(bioproject)` query function. Added `sexes` parameter to `_get_tpm_data()`. Added `_initial_sexes_for_plot` to pre-load block. Added `dcc.Checklist(id="plot-sex-select")` below Sample type in the Plot Parameters layout, defaulting to all sex values selected. Extended `update_selectors` with two new Outputs for `plot-sex-select`. Added `plot-sex-select` as an Input to both `update_plot` and `update_table`.
+- `assets/accessibility.js`: Added `plot-sex-select` to `LABEL_MAP` and `OPTION_CONTAINERS`.
+
+### Add Sample type filter to Plot Parameters
+- `pages/charts.py`: Added `_get_sample_types_for_dataset(bioproject)` query function. Added `sample_types` parameter to `_get_tpm_data()` so the DB query filters by sample type before returning rows. Added `_initial_sample_types_for_plot` to the pre-load block. Added `dcc.Checklist(id="plot-sample-type-select")` to the Plot Parameters layout between Groups and Statistical test, defaulting to all types selected. Extended `update_selectors` with two new Outputs to repopulate and reset the checklist when the dataset changes. Added `plot-sample-type-select` as an Input to both `update_plot` and `update_table`, with an early-exit guard when nothing is selected.
+- `assets/accessibility.js`: Added `plot-sample-type-select` to `LABEL_MAP` and `OPTION_CONTAINERS` to apply the same ARIA fixes as the Groups checklist.
+
+### Convert four filter checklists to multi-select dropdowns
+- `pages/charts.py`: Replaced `dcc.Checklist` with `dcc.Dropdown(multi=True)` for the Scientific name, Underlying variant, Sample type, and Sex filters. The "Include datasets…" and "Only include datasets…" checklists below each dropdown remain unchanged. Added `or []` guards throughout the `filter_datasets` callback because `dcc.Dropdown` returns `None` (not `[]`) when cleared. Applied `black` auto-formatting.
+- `assets/accessibility.js`: Removed the four now-unused dropdown IDs from `LABEL_MAP` and `OPTION_CONTAINERS` (they were for the old checklists). Added `fixDropdownClearButtons()` to inject a visually-hidden text span into each `<a class="dash-dropdown-clear">` element — Dash's multi-select clear button is an anchor with an SVG-only icon that HTML_CodeSniffer flags as having no link content despite the `aria-label`.
+
+### Remove wild-type from variant checklist; add matching controls filter
+- `pages/charts.py`: Added `_WILDTYPE_VALUE = "wild-type"` constant. Excluded wild-type from `_get_all_underlying_variants()` so it no longer appears as a checklist option. Added `dcc.Checklist(id="require-wildtype")` labeled "Only include datasets with matching controls", defaulting to unchecked. When checked, both `_get_dataset_table` and `_get_datasets_by_filters` post-filter to bioprojects that contain at least one wild-type sample. Wired into `filter_datasets`.
+
+### Fix: datasets with Not provided variant hidden when all variants unchecked
+- `pages/charts.py`: The `filter_datasets` early-exit guard tested `not selected_variants` unconditionally, so unchecking all variants returned an empty list even when "Include datasets with underlying variant not provided" was checked. Fixed by only exiting early when `selected_variants` is empty AND `include_unknown_variant` is also unchecked.
+
+### Add "Include datasets with underlying variant not provided" checkbox
+- `pages/charts.py`: Removed `"Not provided"` from `_get_all_underlying_variants()` results. Added `dcc.Checklist(id="include-unknown-variant")` below the underlying variant checklist, defaulting to checked. Added `include_unknown_variant` parameter to `_get_dataset_table` and `_get_datasets_by_filters` with matching `or_` logic for null/Not provided values. Wired the new input into `filter_datasets`.
+
+### Add "Include datasets with sex not provided" checkbox to sex filter
+- `pages/charts.py`: Removed `"Not provided"` from `_get_all_sexes()` results so it no longer appears as a checklist option. Added `dcc.Checklist(id="include-unknown-sex")` below the sex checklist, defaulting to checked. Added `include_unknown_sex` parameter to `_get_dataset_table` and `_get_datasets_by_filters`; when checked, the sex filter condition expands to `sex IN (...) OR sex IS NULL OR sex = 'Not provided'`. Wired the new input into `filter_datasets`.
+
+### Force dataset table scrollbar always visible on macOS
+- `pages/charts.py`: Added `id="dataset-table-wrapper"` to the scrollable div around the dataset table.
+- `assets/style.css`: Added `::-webkit-scrollbar` rules targeting `#dataset-table-wrapper` to force the scrollbar to always render. macOS hides `overflow:scroll` bars until interaction regardless of CSS; explicit webkit scrollbar styling bypasses that system setting.
+
+### Add Groups column to dataset selection table
+- `pages/charts.py`: Added `Sample.genotype` to the `_get_dataset_table` query. Aggregates distinct genotypes per bioproject via `Counter` alongside the existing columns. Renders as a `"Groups (n)"` column between Sex and Age in the table header and rows.
+
+### Remove NP/NA sentinel handling now that source data uses "Not provided"
+- `pages/charts.py`: Deleted `_display_value()` helper and the `NP` guard in `_readable_sample_type()`. All call sites in `_get_dataset_table()` and the filter checklists now use the raw DB value directly, which is already stored as `"Not provided"`.
+- `etl/load.py`: Removed `"NP"` and `"NA"` from `_NUMERIC_NULLS`; only `""` and `"Not provided"` are now treated as missing for numeric/range fields.
+
 ### Handle "Not provided" sentinel in age_range numeric parser
 - `etl/load.py`: Added `"Not provided"` to `_NUMERIC_NULLS` so `_opt_numrange` treats it as a missing value. Source TSVs now use this string instead of `"NP"` for datasets with no age data.
 
@@ -19,6 +72,100 @@ A log of changes made by Claude Code in this project, newest first.
 
 ### Add page description below Charts heading
 - `pages/charts.py`: Added `html.P` immediately after `html.H1("TPM Expression")` describing how to use the page. Gives screen reader users orientation before they reach any interactive controls.
+
+### Name download files `<dataset>_<gene>_tpm_expression.*`
+- `pages/charts.py`: Added `html.Div(id="download-meta")` (hidden) to the layout. Added `Output("download-meta", "children")` to `update_plot`; writes `"{bioproject}_{gene}"` on every selection change.
+- `assets/accessibility.js`: Both PNG and CSV download handlers now read `download-meta.textContent` as the filename prefix, producing e.g. `PRJNA285844_Pkd1_tpm_expression.png` / `.csv`. Falls back to `tpm_expression_plot` / `tpm_expression_data` when the div is empty.
+
+### Improve screen reader announcement of decimal table values
+- `pages/charts.py`: Added `_aria_decimal(value)` helper that formats a 4-decimal float for screen readers by reading post-decimal digits individually (e.g. `"1 point 5 6 8 3"`). Each of the five numeric cells in the summary table (`Max`, `Q3`, `Median`, `Q1`, `Min`) now contains two `html.Span` elements: the visible value with `aria-hidden="true"` and a `visually-hidden` span with the spoken form, replacing the earlier `aria-label` on the `<td>` which caused double-reading.
+- `assets/style.css`: Added `user-select: none` to `.visually-hidden` so the hidden spoken text is excluded from clipboard copies when a user selects and pastes table content.
+
+## 2026-08-07
+
+### Display NP sentinel as "Not provided" in filters and dataset table
+- `pages/charts.py`: Added `_display_value(raw)` helper that maps the raw DB value `"NP"` to `"Not provided"` and passes all other values through unchanged. Applied to scientific name, underlying variant, and sex checklist labels and the corresponding dataset table columns. Updated `_readable_sample_type` with an early `"NP"` guard. Also changed the age column fallback and the "include unknown age" checkbox label from "Unknown"/"unknown age" to "Not provided"/"age not provided". The raw `"NP"` value is preserved as the checklist `value` prop so filter callbacks continue to query the database correctly.
+
+### Replace age RangeSlider with unit-aware min/max inputs
+- `pages/charts.py`: Removed `dcc.RangeSlider(id="age-range-slider")`. Added `html.Fieldset` containing two `dcc.Input` fields (min/max, id `age-min-input`/`age-max-input`) and a `dcc.Dropdown` unit selector (id `age-unit`, options: days/weeks/months/years). A `dcc.Store(id="age-range-days")` holds the current range in days. Two new callbacks handle the round-trip: `_convert_age_inputs_on_unit_change` re-expresses the stored days in the new unit when the dropdown changes; `_update_age_days_store` converts displayed values back to days when inputs change. `filter_datasets` updated to read from `age-range-days` store instead of the slider. Added `_DAYS_PER_UNIT` constant, `_to_days()`, and `_from_days()` module-level helpers.
+- `assets/accessibility.js`: Added `"age-unit": "age-unit-label"` to LABEL_MAP. Removed `labelRangeSliderInputs()` function (slider no longer present).
+
+## 2026-08-07
+
+### Format age column values as human-readable time units
+- `pages/charts.py`: Added module-level `_days_to_readable(n)` converting integer day counts to `(value, unit_singular)` in the most appropriate unit: <14 days→days, <84 days→weeks, <730 days→months, else years. Updated `_fmt` inside `_get_dataset_table` to use it: same-unit ranges collapse to `"2–3 weeks"`, cross-unit ranges label each side `"9 weeks–6 months"`. `humanize.naturaldelta` was evaluated but not used — it misclassifies 21 days as "a month". Column header changed from `"Age (days) (n)"` to `"Age (n)"` since the unit now appears inline with each value.
+
+### Add per-value sample counts to dataset table columns
+- `pages/charts.py`: Changed `_get_dataset_table()` to count samples per distinct value using `Counter` instead of `set`. Each grouped column (Scientific Name, Underlying Variant, Sample Type, Sex, Age) now returns strings like `"Pkd1 (6)"` rather than just `"Pkd1"`. `_readable_sample_type()` is applied inside `_get_dataset_table()` for sample types so `_build_table_rows()` just joins pre-formatted strings. Column headers updated to include `(n)` suffix (e.g. `"Scientific Name (n)"`).
+
+### Enable SQL query logging in development
+- `db/connection.py`: Added `_is_debug()` helper that reads the `DEBUG` env var (truthy values: `"1"`, `"true"`, `"yes"`). Passes `echo=_is_debug()` to `create_engine()` so SQLAlchemy logs all queries in development and stays silent in production.
+- `.env.example`: Added `DEBUG=true` with a comment explaining it should be omitted or set to false in production.
+
+---
+
+## 2026-08-05
+
+### Add dataset count below the Dataset label
+- `pages/charts.py`: Added `html.Span(id="dataset-count")` inline with the Dataset label. Added `Output("dataset-count", "children")` to `filter_datasets`; returns `"N dataset(s)"` (pluralised) on each filter change, or `"0 datasets"` on the early-exit path.
+
+### Replace per-sample TPM table with per-genotype log10(TPM+1) summary
+- `pages/charts.py`: Rewrote `update_table` to group by genotype and show Max, Q3, Median, Q1, Min of log10(TPM+1) — matching the five-number summary displayed by the violin plot. Removed the raw TPM column. Computes `log_tpm` via `df["TPM"].apply(lambda x: math.log10(x + 1))` then uses pandas named aggregation with `quantile(0.75)` and `quantile(0.25)` for Q3/Q1. Caption still reports total sample count and number of genotypes.
+
+### Tighten Age column header and collapse equal-bound ranges
+- `pages/charts.py`: Renamed table header from `"Age Range (days)"` to `"Age (days)"`. In `_fmt`, when both bounds are present and equal, returns just the single value as a string instead of `"lo–lo"`.
+
+### Show distinct age ranges in dataset table column
+- `pages/charts.py`: Changed `_get_dataset_table()` to accumulate distinct `(lower, upper)` integer pairs per bioproject into `age_ranges` (a set of tuples) instead of tracking a single min/max span. Added nested helpers `_fmt(lo, hi)` and `_sort_key(pair)` to format each pair as `"lo–hi"`, `"lo+"`, or `"–hi"`, and to sort by lower bound then upper bound. The returned dict key is now `"age_ranges"` (list of formatted strings, `["Unknown"]` when empty). Updated `_build_table_rows` to join the list with `", "`.
+
+### Add Age Range (days) column to dataset table
+- `pages/charts.py`: Extended `_get_dataset_table()` to also select `func.lower(Sample.age_range)` and `func.upper(Sample.age_range)` for each sample. The aggregation loop now tracks `age_min` and `age_max` per bioproject (min of all lower bounds, max of all upper bounds). The returned dict includes `"age_range"` formatted as `"X–Y"` (en-dash), or `"Unknown"` when all samples have a null age. Added `html.Th("Age Range (days)")` to the table header and `html.Td(row["age_range"])` to `_build_table_rows`.
+
+### Apply human-readable sample type labels in dataset table
+- `pages/charts.py`: In `_build_table_rows`, the Sample Type column now passes each raw value through `_readable_sample_type()` before joining, matching the labels shown in the filter checklist.
+
+### Style dataset table selector buttons as radio buttons
+- `pages/charts.py`: Changed the Select button label from `"Select"` to `""` (empty); visual content is now provided entirely by CSS.
+- `assets/style.css`: Added radio-button CSS for `#dataset-table td:first-child button` — circular border, `::before` filled dot when `aria-pressed="true"`, and a visible `:focus-visible` ring. The button is 18 × 18 px with a 50% border-radius so it appears as a circle.
+
+### Replace dataset dropdown with scrollable selection table
+- `pages/charts.py`: Added `_get_dataset_table()` which applies the same filter logic as `_get_datasets_by_filters()` then aggregates distinct `scientific_name`, `underlying_variant`, `sample_type`, and `sex` values per bioproject. Added `_build_table_rows()` to render `html.Tr` elements with a Select button, BioProject ID, and the four aggregated columns. Replaced `dcc.Dropdown(id="dataset-select")` with a fixed-height (280 px) scrollable `html.Div` containing `html.Table(id="dataset-table")` with a sticky header and `html.Tbody(id="dataset-table-body")` populated by callbacks. Added `dcc.Store(id="dataset-selected")` to hold the selected bioproject. Replaced the old `filter_datasets` callback (which output dropdown options/value) with one that outputs `dataset-table-body.children` and `dataset-selected.data`. Added a new `select_dataset` pattern-matching callback (using `ALL`) that fires when any row Select button is clicked and updates `dataset-selected.data` with `allow_duplicate=True`. Updated `update_selectors`, `update_plot`, and `update_table` callbacks to use `Input("dataset-selected", "data")` instead of `Input("dataset-select", "value")`. Added `ALL`, `ctx` and `PreventUpdate` imports.
+- `assets/style.css`: Added `#dataset-table` styles (border-collapse, sticky `th`, even-row stripe, `.dataset-row-selected` highlight in `#cce5ff`, hover state).
+- `assets/accessibility.js`: Added event delegation listener on `[data-bp]` buttons to immediately apply `aria-pressed="true"` and `dataset-row-selected` class to the clicked row, giving instant visual feedback before the Dash callback round-trip completes.
+
+### Add sex filter between sample type and age range
+- `pages/charts.py`: Added `_get_all_sexes()` to query all distinct non-null `sex` values. Pre-loads `_all_sexes`. Added `sex-select` `dcc.Checklist` to the layout between Sample type and Age range. Extended `_get_datasets_by_filters()` with a `sexes` parameter filtered via `Sample.sex.in_(sexes)`. Updated `filter_datasets` callback with the new `Input("sex-select", "value")`.
+- `assets/accessibility.js`: Added `"sex-select": "sex-select-label"` to `LABEL_MAP` and `"sex-select"` to `OPTION_CONTAINERS`.
+
+### Add checkbox to control whether unknown-age samples are included in dataset filter
+- `pages/charts.py`: Added `dcc.Checklist(id="include-unknown-age")` with a single option "Include samples with unknown age", checked by default, placed below the age range slider. Extended `_get_datasets_by_filters()` with `include_unknown_age: bool`; when True the age condition is `age_range IS NULL OR overlaps`; when False it is `age_range IS NOT NULL AND overlaps`. Updated `filter_datasets` callback with the new input, passing `bool(include_unknown_age)` (converts empty list to False).
+- `assets/accessibility.js`: Added `"include-unknown-age"` to `OPTION_CONTAINERS` to apply the same role=group fix as other checklists.
+
+### Add age range (days) filter to dataset filters section
+- `pages/charts.py`: Added `from sqlalchemy import and_, func, or_`. Added `_get_age_range_bounds()` which uses PostgreSQL `lower()`/`upper()` on the NUMRANGE column to find the global min/max age in days (falls back to 0–365 if no data). Pre-loads `_age_min` and `_age_max` at startup. Extended `_get_datasets_by_filters()` with an `age_range` parameter; the filter includes samples where `age_range` is null (unknown age always passes) OR the sample's age_range overlaps the selected range. Added `dcc.RangeSlider(id="age-range-slider")` to the layout after Sample type with tooltips always visible. Updated `filter_datasets` callback with the new `Input("age-range-slider", "value")`.
+- `assets/accessibility.js`: Added `labelRangeSliderInputs()` which uses `MutationObserver` (via `applyAll`) to set `aria-label` on the slider's two bare `<input type="number">` elements, fixing the WCAG 4.1.2 violation that pa11y detected.
+
+### Add underlying variant filter to dataset filters section
+- `pages/charts.py`: Added `_get_all_underlying_variants()` to query all distinct non-null `underlying_variant` values from the sample table. Added `underlying-variant-select` `dcc.Checklist` to the layout between scientific name and sample type. Extended `_get_datasets_by_filters()` to accept a third `underlying_variants` parameter and filter the dataset query against it. Updated `filter_datasets` callback with the new `Input("underlying-variant-select", "value")`.
+- `assets/accessibility.js`: Added `"underlying-variant-select": "underlying-variant-label"` to `LABEL_MAP` and `"underlying-variant-select"` to `OPTION_CONTAINERS`.
+
+### Remove cascade from scientific name to sample type
+- `pages/charts.py`: Removed `filter_sample_types_by_scientific_name` callback and the `_get_sample_types_by_scientific_names` query function. Sample type options are now fixed (all types always visible). Scientific name and sample type still both feed into `filter_datasets` to narrow the dataset dropdown.
+
+---
+
+## 2026-08-04
+
+### Organize Charts page into "Dataset filters" and "Plot parameters" sections
+- `pages/charts.py`: Wrapped the scientific name, sample type, and dataset controls in an `html.Section` with heading "Dataset filters" (`id="dataset-filters-heading"`, `aria-labelledby="dataset-filters-heading"`). Wrapped the gene, groups, statistical test, buttons, and output area in a second `html.Section` with heading "Plot parameters" (`id="plot-parameters-heading"`, `aria-labelledby="plot-parameters-heading"`). Sections use `aria-labelledby` pointing to their H2 headings so screen readers can identify each landmark.
+
+### Add scientific name filter above sample type; both filters narrow the dataset dropdown
+- `pages/charts.py`: Added `_get_all_scientific_names()` to query all distinct non-null `scientific_name` values from the sample table. Added `_get_sample_types_by_scientific_names(scientific_names)` to return only the sample types present in samples of the selected organisms. Replaced `_get_datasets_by_sample_types()` with `_get_datasets_by_filters(scientific_names, sample_types)` which requires samples to match both filters simultaneously. Layout: added `scientific-name-select` `dcc.Checklist` above the existing `sample-type-select`, with all names selected by default. Added callback 1 (`filter_sample_types_by_scientific_name`) wired `scientific-name-select.value → sample-type-select.options + value`; updated callback 2 (`filter_datasets`) to take both `scientific-name-select.value` and `sample-type-select.value` as inputs so datasets reflect both active filters.
+- `assets/accessibility.js`: Added `"scientific-name-select": "scientific-name-label"` to `LABEL_MAP` and `"scientific-name-select"` to `OPTION_CONTAINERS`.
+
+### Add sample type filter that narrows the dataset dropdown
+- `pages/charts.py`: Added `_get_all_sample_types()` to query all distinct non-null `sample_type` values across the entire database. Added `_get_datasets_by_sample_types(sample_types)` to return only bioproject accessions that contain at least one sample matching the selected types. Added `_SAMPLE_TYPE_LABELS` dict and `_readable_sample_type()` to convert raw database values to human-readable labels (underscores/hyphens → spaces, title-cased; with an override dict for values like "iPSC" that must not be title-cased). Layout: added `sample-type-select` `dcc.Checklist` above the dataset dropdown, showing all available sample types from the database with all selected by default. Added callback 1 (`filter_datasets_by_sample_type`) that takes the checklist value as input and updates `dataset-select.options` and `dataset-select.value`, preserving the current dataset if it is still in the filtered list.
+- `assets/accessibility.js`: Added `"sample-type-select": "sample-type-label"` to `LABEL_MAP` and `"sample-type-select"` to `OPTION_CONTAINERS` so the checklist gets the same ARIA role fix as the groups checklist.
 
 ## 2026-07-31
 

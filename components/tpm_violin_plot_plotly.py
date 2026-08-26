@@ -17,7 +17,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from scipy import stats
 
-_DEFAULT_COLORS = [
+DEFAULT_COLORS = [
     "#66c2a5",
     "#fc8d62",
     "#8da0cb",
@@ -40,6 +40,7 @@ def plot_tpm_violin_plotly(
     title: Optional[str] = None,
     show_n: bool = True,
     stat_test: Optional[str] = None,
+    group_label: Optional[str] = None,
 ) -> go.Figure:
     data = data.dropna(subset=[group_col, value_col]).copy()
 
@@ -117,9 +118,10 @@ def plot_tpm_violin_plotly(
         if pval is not None:
             full_title = f"{full_title}  (p={pval:.3g})".strip()
 
+    axis_label = group_label if group_label is not None else group_col
     fig.update_layout(
         title=full_title,
-        xaxis_title=group_col,
+        xaxis_title=axis_label,
         yaxis_title=ylabel,
         xaxis=dict(
             tickmode="array",
@@ -132,7 +134,7 @@ def plot_tpm_violin_plotly(
         plot_bgcolor="white",
         paper_bgcolor="white",
         legend=dict(
-            title_text=group_col,
+            title_text=axis_label,
             orientation="h",
             yanchor="top",
             y=-0.25,
@@ -157,11 +159,11 @@ def plot_tpm_violin_plotly(
 def _resolve_palette(palette: Optional[Union[dict, list]], group_order: list) -> list:
     if palette is None:
         return [
-            _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)] for i in range(len(group_order))
+            DEFAULT_COLORS[i % len(DEFAULT_COLORS)] for i in range(len(group_order))
         ]
     if isinstance(palette, dict):
         return [
-            palette.get(g, _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)])
+            palette.get(g, DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             for i, g in enumerate(group_order)
         ]
     return list(palette)
