@@ -10,6 +10,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from psycopg2.extras import NumericRange, execute_values
+from sqlalchemy import text
 
 from db.connection import SessionLocal, get_engine
 from db.models import Dataset, Gene, Sample, SampleGene
@@ -19,7 +20,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-_NUMERIC_NULLS = {"", "Not provided"}
+_NUMERIC_NULLS = {"NA", "", "Not provided"}
 
 
 def _staging_dir() -> Path:
@@ -58,6 +59,24 @@ def _opt_numrange(lower_str: str, upper_str: str) -> Any:
     lower = Decimal(lower_stripped)
     upper = Decimal(upper_stripped)
     return NumericRange(lower, upper, bounds="[]")  # type: ignore[arg-type]
+
+
+def reset_database() -> None:
+    """Truncate all application tables and reset their ID sequences.
+
+    Uses TRUNCATE ... RESTART IDENTITY CASCADE so all four tables are cleared
+    in dependency order automatically and every autoincrement sequence restarts
+    at 1. Call this once at the start of a full reload run.
+    """
+    log.warning("Resetting database — all existing rows will be deleted.")
+    with get_engine().begin() as conn:
+        conn.execute(
+            text(
+                "TRUNCATE dataset, gene, sample, sample_gene"
+                " RESTART IDENTITY CASCADE"
+            )
+        )
+    log.info("Database reset complete.")
 
 
 def load_datasets(staging: Path | None = None) -> int:
@@ -383,6 +402,7 @@ def load_tpm(staging: Path | None = None) -> int:
 
 
 if __name__ == "__main__":
+    reset_database()
     load_datasets()
     load_samples()
     load_genes()

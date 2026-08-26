@@ -12,6 +12,7 @@
 #   CHEAHA_BASE_PATH      — remote base path containing PRJNA* directories
 #   STAGING_DIR           — local directory for downloaded files (default: staging/)
 
+import argparse
 import getpass
 import logging
 import os
@@ -50,10 +51,12 @@ def _github_headers() -> dict:
     }
 
 
-def _download_github_file(repo_path: str, dest: Path) -> None:
+def _download_github_file(repo_path: str, dest: Path, ref: str = "develop") -> None:
     """Download a single file from the GitHub repo via the Contents API."""
     url = f"{GITHUB_API}/repos/{GITHUB_REPO}/contents/{repo_path}"
-    response = requests.get(url, headers=_github_headers(), timeout=30)
+    response = requests.get(
+        url, headers=_github_headers(), params={"ref": ref}, timeout=30
+    )
     response.raise_for_status()
     data = response.json()
 
@@ -64,21 +67,25 @@ def _download_github_file(repo_path: str, dest: Path) -> None:
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(file_response.content)
-    log.info("Downloaded %s → %s", repo_path, dest)
+    log.info("Downloaded %s@%s → %s", repo_path, ref, dest)
 
 
-def _download_github_directory(repo_path: str, dest: Path) -> None:
+def _download_github_directory(
+    repo_path: str, dest: Path, ref: str = "develop"
+) -> None:
     """Recursively download all files under a GitHub directory."""
     url = f"{GITHUB_API}/repos/{GITHUB_REPO}/contents/{repo_path}"
-    response = requests.get(url, headers=_github_headers(), timeout=30)
+    response = requests.get(
+        url, headers=_github_headers(), params={"ref": ref}, timeout=30
+    )
     response.raise_for_status()
 
     for entry in response.json():
         entry_dest = dest / entry["name"]
         if entry["type"] == "file":
-            _download_github_file(entry["path"], entry_dest)
+            _download_github_file(entry["path"], entry_dest, ref=ref)
         elif entry["type"] == "dir":
-            _download_github_directory(entry["path"], entry_dest)
+            _download_github_directory(entry["path"], entry_dest, ref=ref)
 
 
 def _open_cheaha_transport(host: str, user: str, password: str) -> paramiko.Transport:
@@ -128,19 +135,19 @@ def _list_cheaha_tpm_files(transport: paramiko.Transport, base_path: str) -> lis
         channel.close()
 
 
-def download_geo_datasets(staging: Path) -> Path:
+def download_geo_datasets(staging: Path, ref: str = "develop") -> Path:
     """Download geo_datasets.csv from GitHub."""
     dest = staging / "geo_datasets.csv"
-    log.info("Downloading geo_datasets.csv from GitHub…")
-    _download_github_file(GEO_DATASETS_PATH, dest)
+    log.info("Downloading geo_datasets.csv from GitHub (branch: %s)…", ref)
+    _download_github_file(GEO_DATASETS_PATH, dest, ref=ref)
     return dest
 
 
-def download_transformed_metadata(staging: Path) -> Path:
+def download_transformed_metadata(staging: Path, ref: str = "develop") -> Path:
     """Download the full transformed-metadata directory tree from GitHub."""
     dest = staging / "transformed-metadata"
-    log.info("Downloading transformed-metadata from GitHub…")
-    _download_github_directory(TRANSFORMED_METADATA_PATH, dest)
+    log.info("Downloading transformed-metadata from GitHub (branch: %s)…", ref)
+    _download_github_directory(TRANSFORMED_METADATA_PATH, dest, ref=ref)
     return dest
 
 
@@ -183,7 +190,7 @@ def download_tpm_files(staging: Path) -> list[Path]:
     return downloaded
 
 
-def run_download(staging: Path | None = None) -> dict:
+def run_download(staging: Path | None = None, ref: str = "develop") -> dict:
     """Run all three downloads and return paths to staged files.
 
     Returns a dict with keys:
@@ -196,8 +203,8 @@ def run_download(staging: Path | None = None) -> dict:
 
     log.info("Staging directory: %s", staging)
 
-    geo = download_geo_datasets(staging)
-    metadata = download_transformed_metadata(staging)
+    geo = download_geo_datasets(staging, ref=ref)
+    metadata = download_transformed_metadata(staging, ref=ref)
     tpm = download_tpm_files(staging)
 
     metadata_file_count = sum(1 for _ in metadata.rglob("*") if _.is_file())
@@ -212,4 +219,11 @@ def run_download(staging: Path | None = None) -> dict:
 
 
 if __name__ == "__main__":
-    run_download()
+    parser = argparse.ArgumentParser(description="Download ETL source data.")
+    parser.add_argument(
+        "--branch",
+        default="develop",
+        help="GitHub branch to download from (default: develop)",
+    )
+    args = parser.parse_args()
+    run_download(ref=args.branch)
