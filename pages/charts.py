@@ -43,7 +43,8 @@ def _get_all_scientific_names() -> list[str]:
 def _get_all_underlying_variants() -> list[str]:
     """Return sorted list of distinct known underlying_variant values.
 
-    Excludes null and Not provided; those are handled by include_unknown_variant.
+    Excludes null, Not provided, and Not applicable; those are handled by
+    include_unknown_variant.
 
     Queries the entire sample table so the checklist reflects all variants.
     """
@@ -54,6 +55,7 @@ def _get_all_underlying_variants() -> list[str]:
             .filter(
                 Sample.underlying_variant.isnot(None),
                 Sample.underlying_variant != "Not provided",
+                Sample.underlying_variant != "Not applicable",
                 Sample.underlying_variant != _WILDTYPE_VALUE,
             )
             .distinct()
@@ -85,15 +87,18 @@ def _get_all_sample_types() -> list[str]:
 
 
 def _get_all_sexes() -> list[str]:
-    """Return sorted list of distinct known sex values, excluding null and Not provided.
-
-    'Not provided' is excluded here; it is handled by the include_unknown_sex filter.
+    """Return sorted list of distinct known sex values, excluding null, Not provided,
+    and Not applicable; those are handled by the include_unknown_sex filter.
     """
     session = SessionLocal()
     try:
         rows = (
             session.query(Sample.sex)
-            .filter(Sample.sex.isnot(None), Sample.sex != "Not provided")
+            .filter(
+                Sample.sex.isnot(None),
+                Sample.sex != "Not provided",
+                Sample.sex != "Not applicable",
+            )
             .distinct()
             .order_by(Sample.sex)
             .all()
@@ -165,7 +170,7 @@ def _get_datasets_by_filters(
         sex_cond = or_(
             Sample.sex.in_(sexes),
             Sample.sex.is_(None),
-            Sample.sex == "Not provided",
+            Sample.sex.in_(["Not provided", "Not applicable"]),
         )
     else:
         sex_cond = Sample.sex.in_(sexes)
@@ -173,7 +178,7 @@ def _get_datasets_by_filters(
         variant_cond = or_(
             Sample.underlying_variant.in_(underlying_variants),
             Sample.underlying_variant.is_(None),
-            Sample.underlying_variant == "Not provided",
+            Sample.underlying_variant.in_(["Not provided", "Not applicable"]),
         )
     else:
         variant_cond = Sample.underlying_variant.in_(underlying_variants)
@@ -295,7 +300,7 @@ def _get_dataset_table(
         sex_cond = or_(
             Sample.sex.in_(sexes),
             Sample.sex.is_(None),
-            Sample.sex == "Not provided",
+            Sample.sex.in_(["Not provided", "Not applicable"]),
         )
     else:
         sex_cond = Sample.sex.in_(sexes)
@@ -303,7 +308,7 @@ def _get_dataset_table(
         variant_cond = or_(
             Sample.underlying_variant.in_(underlying_variants),
             Sample.underlying_variant.is_(None),
-            Sample.underlying_variant == "Not provided",
+            Sample.underlying_variant.in_(["Not provided", "Not applicable"]),
         )
     else:
         variant_cond = Sample.underlying_variant.in_(underlying_variants)
@@ -824,7 +829,7 @@ layout = html.Div(
                                 {
                                     "label": (
                                         "Include datasets with underlying"
-                                        " variant not provided"
+                                        " variant not provided or not applicable"
                                     ),
                                     "value": "include",
                                 }
@@ -877,7 +882,10 @@ layout = html.Div(
                             id="include-unknown-sex",
                             options=[
                                 {
-                                    "label": "Include datasets with sex not provided",
+                                    "label": (
+                                        "Include datasets with sex"
+                                        " not provided or not applicable"
+                                    ),
                                     "value": "include",
                                 }
                             ],
@@ -953,7 +961,10 @@ layout = html.Div(
                             id="include-unknown-age",
                             options=[
                                 {
-                                    "label": "Include datasets with age not provided",
+                                    "label": (
+                                        "Include datasets with age"
+                                        " not provided or not applicable"
+                                    ),
                                     "value": "include",
                                 }
                             ],
