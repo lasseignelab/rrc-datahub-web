@@ -348,6 +348,7 @@ def _get_dataset_table(
                 Sample.genotype,
                 func.lower(Sample.age_range),
                 func.upper(Sample.age_range),
+                Sample.age_raw,
             )
             .join(Sample, Sample.dataset_id == Dataset.id)
             .filter(Dataset.bioproject.in_(matching))
@@ -361,10 +362,11 @@ def _get_dataset_table(
                 "sexes": Counter(),
                 "genotypes": Counter(),
                 "age_ranges": Counter(),
+                "age_null_labels": Counter(),
             }
             for bp in matching
         }
-        for bp, sci, var, stype, sex, genotype, age_lo, age_hi in samples:
+        for bp, sci, var, stype, sex, genotype, age_lo, age_hi, age_raw in samples:
             if sci:
                 agg[bp]["scientific_names"][sci] += 1
             if var:
@@ -381,6 +383,13 @@ def _get_dataset_table(
                     int(age_hi) if age_hi is not None else None,
                 )
                 agg[bp]["age_ranges"][pair] += 1
+            else:
+                label = (
+                    age_raw
+                    if age_raw and age_raw not in ("Not provided", "")
+                    else "Not provided"
+                )
+                agg[bp]["age_null_labels"][label] += 1
 
         def _sort_key(pair: tuple) -> tuple:
             lo, hi = pair
@@ -410,12 +419,21 @@ def _get_dataset_table(
                 "genotypes": [
                     f"{g} ({cnt})" for g, cnt in sorted(agg[bp]["genotypes"].items())
                 ],
-                "age_ranges": [
-                    f"{_fmt(lo, hi)} ({cnt})"
-                    for (lo, hi), cnt in sorted(
-                        agg[bp]["age_ranges"].items(), key=lambda x: _sort_key(x[0])
-                    )
-                ]
+                "age_ranges": (
+                    [
+                        f"{_fmt(lo, hi)} ({cnt})"
+                        for (lo, hi), cnt in sorted(
+                            agg[bp]["age_ranges"].items(),
+                            key=lambda x: _sort_key(x[0]),
+                        )
+                    ]
+                    + [
+                        f"{label} ({cnt})"
+                        for label, cnt in sorted(
+                            agg[bp]["age_null_labels"].items()
+                        )
+                    ]
+                )
                 or ["Not provided"],
             }
             for bp in matching
@@ -539,7 +557,9 @@ def _get_age_ranges_for_dataset(bioproject: str) -> list[dict]:
     """Return checklist options for distinct age ranges in a dataset.
 
     Labels match the Age column format in the dataset table. Values encode
-    the (lower, upper) day bounds as 'lo:hi', or 'none' for null age_range.
+    the (lower, upper) day bounds as 'lo:hi'. Null age_range rows are
+    grouped by their age_raw label and encoded as 'raw:<label>' so that
+    'Not applicable' and 'Not provided' appear as separate options.
     Options are sorted by lower bound then upper bound, with null last.
     """
     session = SessionLocal()
@@ -548,6 +568,7 @@ def _get_age_ranges_for_dataset(bioproject: str) -> list[dict]:
             session.query(
                 func.lower(Sample.age_range),
                 func.upper(Sample.age_range),
+                Sample.age_raw,
             )
             .join(Dataset, Dataset.id == Sample.dataset_id)
             .filter(Dataset.bioproject == bioproject)
@@ -557,11 +578,16 @@ def _get_age_ranges_for_dataset(bioproject: str) -> list[dict]:
     finally:
         session.close()
 
-    has_null = False
+    null_labels: set[str] = set()
     pairs: set[tuple[int, int]] = set()
-    for age_lo, age_hi in rows:
+    for age_lo, age_hi, age_raw in rows:
         if age_lo is None and age_hi is None:
-            has_null = True
+            label = (
+                age_raw
+                if age_raw and age_raw not in ("Not provided", "")
+                else "Not provided"
+            )
+            null_labels.add(label)
         elif age_lo is not None and age_hi is not None:
             pairs.add((int(age_lo), int(age_hi)))
 
@@ -572,8 +598,8 @@ def _get_age_ranges_for_dataset(bioproject: str) -> list[dict]:
         {"label": _fmt(lo, hi), "value": f"{lo}:{hi}"}
         for lo, hi in sorted(pairs, key=_age_sort_key)
     ]
-    if has_null:
-        options.append({"label": "Not provided", "value": "none"})
+    for label in sorted(null_labels):
+        options.append({"label": label, "value": f"raw:{label}"})
     return options
 
 
@@ -628,8 +654,25 @@ def _get_tpm_data(
         )
         age_conds = []
         for val in age_ranges:
-            if val == "none":
-                age_conds.append(Sample.age_range.is_(None))
+            if val.startswith("raw:"):
+                label = val[4:]
+                if label == "Not provided":
+                    age_conds.append(
+                        and_(
+                            Sample.age_range.is_(None),
+                            or_(
+                                Sample.age_raw.is_(None),
+                                Sample.age_raw.in_(["", "Not provided"]),
+                            ),
+                        )
+                    )
+                else:
+                    age_conds.append(
+                        and_(
+                            Sample.age_range.is_(None),
+                            Sample.age_raw == label,
+                        )
+                    )
             else:
                 lo, hi = (int(x) for x in val.split(":"))
                 age_conds.append(

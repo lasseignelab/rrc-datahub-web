@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-08-27
+
+### Fix: "Not applicable" age shown as "Not provided" in dataset table and plot filters
+- `pages/charts.py`: In the dataset table query, added `Sample.age_raw` so null age_range rows can be labeled correctly. Null-range samples are now grouped separately by their `age_raw` value — "Not applicable" appears as "Not applicable" and anything else (null, empty, "Not provided") appears as "Not provided". Both appear in the Age column alongside numeric ranges. In `_get_age_ranges_for_dataset`, also added `age_raw` to the query so the plot parameter Age checklist produces a separate option for each distinct null-range label (e.g., "Not applicable" and "Not provided" as separate entries) with values encoded as `"raw:<label>"`. In `_get_tpm_data`, updated the age filter to handle `"raw:..."` values: "Not provided" matches rows where `age_range IS NULL` and `age_raw` is null, empty, or "Not provided"; other labels (e.g., "Not applicable") match rows where `age_range IS NULL` and `age_raw` equals that label exactly.
+
 ## 2026-08-21
 
 ### Fix group colors to be stable when plot filters change
