@@ -13,6 +13,8 @@ from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_pl
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
 
+from urllib.parse import parse_qs
+
 dash.register_page(__name__, path="/charts")
 
 log = logging.getLogger(__name__)
@@ -484,6 +486,28 @@ def _search_genes(search: str) -> list[str]:
         session.close()
 
 
+def _resolve_url_gene(url_search: str | None) -> str | None:
+    """Return the gene name from a '?gene=...' URL query string if it
+    matches a real gene in the database (case-insensitive exact match),
+    else None. Used to let the landing-page search box pre-select a gene
+    when it redirects here.
+    """
+    if not url_search:
+        return None
+    candidate = parse_qs(url_search.lstrip("?")).get("gene", [None])[0]
+    if not candidate:
+        return None
+    session = SessionLocal()
+    try:
+        match = (
+            session.query(Gene.gene_name)
+            .filter(func.lower(Gene.gene_name) == candidate.lower())
+            .first()
+        )
+        return match[0] if match else None
+    finally:
+        session.close()
+
 def _get_genotypes(bioproject: str) -> list[str]:
     """Return sorted list of distinct genotypes for a dataset."""
     session = SessionLocal()
@@ -738,7 +762,8 @@ if _datasets:
 
 layout = html.Div(
     [
-        html.H1("TPM Expression"),
+        dcc.Location(id="url"),
+	html.H1("TPM Expression"),
         html.P(
             "Explore gene expression across datasets. Use the filters to select a "
             "dataset, then choose a gene and one or more genotype groups to generate "
@@ -1275,28 +1300,37 @@ def _update_age_days_store(min_val, max_val, unit):
 # Callback 2: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
-
 @callback(
     Output("gene-select", "options"),
     Input("gene-select", "search_value"),
     State("gene-select", "value"),
+    State("url", "search"),
 )
-def filter_gene_options(search, current_gene):
-    """Return up to 50 gene names matching the typed prefix.
+def filter_gene_options(search, current_gene, url_search):
+    """Return matching genes while keeping the selected gene visible.
 
-    Always includes the currently selected gene so it stays visible in the
-    dropdown even when it falls outside the search results.
+    The gene supplied in the URL is also included so that a gene selected
+    from the landing-page search remains visible in the dropdown when the
+    charts page loads.
     """
     genes = _search_genes(search or "")
-    if current_gene and current_gene not in genes:
-        genes = [current_gene] + genes
-    return [{"label": g, "value": g} for g in genes]
 
+    url_gene = _resolve_url_gene(url_search)
+
+    genes_to_keep = []
+    if current_gene:
+        genes_to_keep.append(current_gene)
+
+    if url_gene and url_gene not in genes_to_keep:
+        genes_to_keep.append(url_gene)
+
+    genes = genes_to_keep + [gene for gene in genes if gene not in genes_to_keep]
+
+    return [{"label": gene, "value": gene} for gene in genes]
 
 # ---------------------------------------------------------------------------
 # Callback 4: dataset -> reset gene selection + repopulate group checklist
 # ---------------------------------------------------------------------------
-
 
 @callback(
     Output("gene-select", "value"),
@@ -1309,10 +1343,15 @@ def filter_gene_options(search, current_gene):
     Output("plot-age-select", "options"),
     Output("plot-age-select", "value"),
     Input("dataset-selected", "data"),
+    State("url", "search"),
 )
-def update_selectors(bioproject):
+def update_selectors(bioproject, url_search):
     """Reset gene, group, sample type, sex, and age selections
     when the dataset changes.
+
+    If the page URL includes a valid ?gene=<name> param (e.g. from the
+    landing-page search box redirecting here), that gene is used as the
+    default instead of the first alphabetical gene.
     """
     if not bioproject:
         return None, [], [], [], [], [], [], [], []
@@ -1323,8 +1362,11 @@ def update_selectors(bioproject):
     sexes = _get_sexes_for_dataset(bioproject)
     age_range_opts = _get_age_ranges_for_dataset(bioproject)
 
+    url_gene = _resolve_url_gene(url_search)
+    default_gene = url_gene or (genes[0] if genes else None)
+
     return (
-        genes[0] if genes else None,
+        default_gene,
         [{"label": g, "value": g} for g in genotypes],
         genotypes,
         [{"label": _readable_sample_type(st), "value": st} for st in sample_types],
@@ -1334,7 +1376,6 @@ def update_selectors(bioproject):
         age_range_opts,
         [opt["value"] for opt in age_range_opts],
     )
-
 
 # ---------------------------------------------------------------------------
 # Callback 5: gene + groups + stat test -> render plot
