@@ -9,4 +9,3 @@ def site_header():
         ],
         className="site-title-bar",
     )
-
