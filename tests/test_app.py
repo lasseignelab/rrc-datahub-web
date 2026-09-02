@@ -154,5 +154,5 @@ class TestGeneSearch:
             return found
 
         labels = find_all(landing_search.layout, html.Label)
-        matching = [l for l in labels if l.htmlFor == "gene-search-input"]
+        matching = [label for label in labels if label.htmlFor == "gene-search-input"]
         assert len(matching) == 1

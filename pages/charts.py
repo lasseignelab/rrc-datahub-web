@@ -508,6 +508,7 @@ def _resolve_url_gene(url_search: str | None) -> str | None:
     finally:
         session.close()
 
+
 def _get_genotypes(bioproject: str) -> list[str]:
     """Return sorted list of distinct genotypes for a dataset."""
     session = SessionLocal()
@@ -763,7 +764,7 @@ if _datasets:
 layout = html.Div(
     [
         dcc.Location(id="url"),
-	html.H1("TPM Expression"),
+        html.H1("TPM Expression"),
         html.P(
             "Explore gene expression across datasets. Use the filters to select a "
             "dataset, then choose a gene and one or more genotype groups to generate "
@@ -1331,6 +1332,7 @@ def filter_gene_options(search, current_gene, url_search):
 # ---------------------------------------------------------------------------
 # Callback 4: dataset -> reset gene selection + repopulate group checklist
 # ---------------------------------------------------------------------------
+
 
 @callback(
     Output("gene-select", "value"),

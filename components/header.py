@@ -1,6 +1,6 @@
 from dash import html
- 
- 
+
+
 def site_header():
     return html.Div(
         [
@@ -9,4 +9,4 @@ def site_header():
         ],
         className="site-title-bar",
     )
- 
+

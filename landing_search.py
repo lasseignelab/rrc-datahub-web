@@ -10,7 +10,6 @@ Flow:
 """
 from urllib.parse import urlencode
 
-import dash
 from dash import html, dcc, Input, Output, State, callback, no_update
 
 from gene_validate import resolve_gene
