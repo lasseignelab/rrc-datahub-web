@@ -50,6 +50,13 @@ jobs:
           # improve performance
           fetch-depth: 0
 
+      # Free disk space before pulling MegaLinter image
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/python* /opt/ghc /usr/share/dotnet
+          sudo apt-get clean
+          df -h
+
       # MegaLinter
       - name: MegaLinter
 
