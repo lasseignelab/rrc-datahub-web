@@ -54,8 +54,11 @@ jobs:
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/python* /opt/ghc /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache
           sudo apt-get clean
-          df -h
+          sudo apt-get autoremove -y
+          docker image prune -a -f
+          df -h      
 
       # MegaLinter
       - name: MegaLinter
