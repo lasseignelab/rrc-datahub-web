@@ -7,19 +7,8 @@ Flow:
     -> on success: redirect to the existing metadata-selection tab's route,
        with ?gene=<resolved gene> in the URL
     -> on failure: show an inline error, no redirect
-
-TODO before wiring into your app:
-  1. Set EXISTING_TAB_PATH below to the real route your metadata-selection
-     tab is registered at (whatever you passed to dash.register_page's
-     `path=` for that page).
-  2. In that existing page's layout/callback, read the `gene` query param
-     from dcc.Location(id="url").search and use it to pre-select/pre-filter
-     your gene dropdown. See read_gene_param_example() below for the pattern
-     -- adjust to whatever your actual selector's id/callback looks like.
-  3. Merge the layout snippet below into your actual landing page's layout
-     (this file's `layout` variable is written to drop in directly).
 """
-from urllib.parse import urlencode, parse_qs
+from urllib.parse import urlencode
 
 import dash
 from dash import html, dcc, Input, Output, State, callback, no_update
@@ -36,6 +25,22 @@ layout = html.Div(
 
         html.Div(
             [
+                html.Label(
+                    "Search by gene name",
+                    htmlFor="gene-search-input",
+                    style={
+                        "position": "absolute",
+                        "width": "1px",
+                        "height": "1px",
+                        "padding": "0",
+                        "margin": "-1px",
+                        "overflow": "hidden",
+                        "clip": "rect(0, 0, 0, 0)",
+                        "whiteSpace": "nowrap",
+                        "border": "0",
+                    },
+                ),
+
                 dcc.Input(
                     id="gene-search-input",
                     type="text",
@@ -107,26 +112,3 @@ def handle_gene_search(n_clicks, query):
 
     redirect_url = f"{EXISTING_TAB_PATH}?{urlencode({'gene': result.resolved_gene})}"
     return feedback, redirect_url
-
-
-# ---------------------------------------------------------------------------
-# Example of the receiving side -- adapt and move this into your existing
-# metadata-selection tab's page module, don't leave it here.
-# ---------------------------------------------------------------------------
-def read_gene_param_example():
-    """
-    Pattern for the existing tab to read `?gene=Pkd1` on load and pre-select
-    it in whatever gene dropdown/selector already exists there.
-
-    @callback(
-        Output("your-existing-gene-selector-id", "value"),
-        Input("url", "search"),   # requires dcc.Location(id="url") on that page
-    )
-    def prefill_gene_from_url(search):
-        if not search:
-            return no_update
-        params = parse_qs(search.lstrip("?"))
-        gene = params.get("gene", [None])[0]
-        return gene or no_update
-    """
-    pass
