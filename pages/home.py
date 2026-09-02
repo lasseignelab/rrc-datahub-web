@@ -1,4 +1,5 @@
 import dash
+import landing_search
 from dash import html
 
 dash.register_page(__name__, path="/", name="RRC PKD DataHub")
@@ -31,6 +32,12 @@ layout = html.Div(
                     className="hero-tagline",
                 ),
             ],
+        ),
+
+	 # ---- Gene search ----
+        html.Section(
+            className="search-section",
+            children=[landing_search.layout],
         ),
 
         # ---- About (placeholder copy) ----
