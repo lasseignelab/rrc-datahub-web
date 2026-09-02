@@ -69,12 +69,12 @@ jobs:
           # VALIDATE_ALL_CODEBASE: true
           #
           # To validate only diff with main, set to:
-          # VALIDATE_ALL_CODEBASE: >-
-          #   ${{
-          #     github.event_name == 'push' &&
-          #     github.ref == 'refs/heads/main'
-          #   }}
-          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_ALL_CODEBASE: >-
+             ${{
+               github.event_name == 'push' &&
+               github.ref == 'refs/heads/develop'
+             }}
+          # VALIDATE_ALL_CODEBASE: true
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
