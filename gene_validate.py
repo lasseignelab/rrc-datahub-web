@@ -76,4 +76,3 @@ def resolve_gene(query: str) -> GeneSearchResult:
         error=f"No gene matching '{query}' found in DataHub.",
     )
 ```
-
