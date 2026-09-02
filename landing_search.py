@@ -27,22 +27,63 @@ from dash import html, dcc, Input, Output, State, callback, no_update
 from gene_validate import resolve_gene
 
 # TODO: set this to your real route for the metadata-selection tab
-EXISTING_TAB_PATH = "/select-dataset"
+EXISTING_TAB_PATH = "/charts"
 
 
-layout = html.Div([
-    html.H3("Search DataHub"),
-    dcc.Input(
-        id="gene-search-input",
-        type="text",
-        placeholder="Search by gene name, e.g. Pkd1",
-        style={"width": "320px"},
-        debounce=True,
-    ),
-    html.Button("Search", id="gene-search-submit", n_clicks=0),
-    html.Div(id="gene-search-feedback", style={"marginTop": "8px"}),
-    dcc.Location(id="gene-search-redirect", refresh=True),
-])
+layout = html.Div(
+    [
+        html.H3("Search DataHub"),
+
+        html.Div(
+            [
+                dcc.Input(
+                    id="gene-search-input",
+                    type="text",
+                    placeholder="Search by gene name, e.g. Pkd1",
+                    debounce=True,
+                    style={
+                        "width": "320px",
+                        "height": "40px",
+                        "fontSize": "18px",
+                        "padding": "0 10px",
+                    },
+                ),
+
+                html.Button(
+                    "Search",
+                    id="gene-search-submit",
+                    n_clicks=0,
+                    style={
+                        "marginTop": "12px",
+                        "padding": "8px 24px",
+                        "fontSize": "16px",
+                    },
+                ),
+            ],
+            style={
+                "display": "flex",
+                "flexDirection": "column",
+                "alignItems": "center",
+            },
+        ),
+
+        html.Div(
+            id="gene-search-feedback",
+            style={
+                "marginTop": "8px",
+                "textAlign": "center",
+            },
+        ),
+
+        dcc.Location(
+            id="gene-search-redirect",
+            refresh=True,
+        ),
+    ],
+    style={
+        "textAlign": "center",
+    },
+)
 
 
 @callback(

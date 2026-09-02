@@ -8,10 +8,8 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from functools import lru_cache
 
-from sqlalchemy import select
-
+from db.connection import SessionLocal
 from db.models import Gene
-from db.session import SessionLocal
 
 
 @dataclass
@@ -32,10 +30,12 @@ def get_valid_genes() -> set[str]:
     """
     session = SessionLocal()
     try:
-        rows = session.execute(
-            select(Gene.gene_name).where(Gene.gene_name.isnot(None))
-        ).scalars().all()
-        return set(rows)
+        rows = (
+            session.query(Gene.gene_name)
+            .filter(Gene.gene_name.isnot(None))
+            .all()
+        )
+        return {r[0] for r in rows}
     finally:
         session.close()
 
