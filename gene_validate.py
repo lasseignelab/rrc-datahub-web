@@ -1,4 +1,3 @@
-```python
 """
 Validates a typed gene name against the real gene list, with a small
 tolerance for casing/typos -- same approach as validate.py from the
@@ -75,4 +74,3 @@ def resolve_gene(query: str) -> GeneSearchResult:
         corrected=False,
         error=f"No gene matching '{query}' found in DataHub.",
     )
-```
