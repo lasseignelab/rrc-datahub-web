@@ -1,3 +1,4 @@
+```python
 """
 Validates a typed gene name against the real gene list, with a small
 tolerance for casing/typos -- same approach as validate.py from the
@@ -43,26 +44,30 @@ def get_valid_genes() -> set[str]:
 def resolve_gene(query: str) -> GeneSearchResult:
     query = query.strip()
     if not query:
-    	return GeneSearchResult(
+        return GeneSearchResult(
             query=query,
             resolved_gene=None,
             corrected=False,
-            error="Enter a gene name to search."
-	)    
+            error="Enter a gene name to search.",
+        )
 
     valid_genes = get_valid_genes()
     lookup = {g.lower(): g for g in valid_genes}
 
     if query.lower() in lookup:
         return GeneSearchResult(
-	    query=query,
-	    resolved_gene=lookup[query.lower()],
-	    corrected=False
-	)
+            query=query,
+            resolved_gene=lookup[query.lower()],
+            corrected=False,
+        )
 
     close = get_close_matches(query, valid_genes, n=1, cutoff=0.8)
     if close:
-        return GeneSearchResult(query=query, resolved_gene=close[0], corrected=True)
+        return GeneSearchResult(
+            query=query,
+            resolved_gene=close[0],
+            corrected=True,
+        )
 
     return GeneSearchResult(
         query=query,
@@ -70,3 +75,5 @@ def resolve_gene(query: str) -> GeneSearchResult:
         corrected=False,
         error=f"No gene matching '{query}' found in DataHub.",
     )
+```
+
