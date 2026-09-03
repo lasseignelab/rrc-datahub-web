@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-09-03
+
+### Switch MegaLinter GitHub Action to Python flavor image
+- `.github/workflows/mega-linter.yml`: Changed `uses: oxsecurity/megalinter@v9` to `uses: oxsecurity/megalinter/flavors/python@v9`. The all-linters image was exhausting GitHub Actions runner disk space; the Python flavor ships only the Python linter family (pylint, ruff, black, flake8, isort, bandit, mypy, pyright) and is significantly smaller.
+
 ## 2026-08-21
 
 ### Fix group colors to be stable when plot filters change
