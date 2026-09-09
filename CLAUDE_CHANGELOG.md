@@ -4,6 +4,11 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-09-09
+
+### Clear staging directory before ETL download
+- `etl/download.py`: Added `_clear_staging(staging)` which deletes all files and subdirectories inside the staging directory (removing contents, not the directory itself). Called at the start of `run_download` right after the staging directory is resolved/logged, so stale data from a previous download no longer lingers alongside fresh files. Added `import shutil` for `shutil.rmtree`.
+
 ## 2026-09-03
 
 ### Switch MegaLinter GitHub Action to Python flavor image
