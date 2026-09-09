@@ -17,6 +17,7 @@ import getpass
 import logging
 import os
 import re
+import shutil
 from pathlib import Path
 
 import paramiko
@@ -40,6 +41,20 @@ def _staging_dir() -> Path:
     path = Path(os.getenv("STAGING_DIR", "staging"))
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _clear_staging(staging: Path) -> None:
+    """Delete everything inside the staging directory so old data doesn't linger.
+
+    Removes the contents rather than the directory itself, so the directory
+    handle stays valid for callers that resolved it earlier.
+    """
+    for entry in staging.iterdir():
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
+    log.info("Cleared staging directory: %s", staging)
 
 
 def _github_headers() -> dict:
@@ -202,6 +217,7 @@ def run_download(staging: Path | None = None, ref: str = "develop") -> dict:
         staging = _staging_dir()
 
     log.info("Staging directory: %s", staging)
+    _clear_staging(staging)
 
     geo = download_geo_datasets(staging, ref=ref)
     metadata = download_transformed_metadata(staging, ref=ref)
