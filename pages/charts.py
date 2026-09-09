@@ -1004,6 +1004,7 @@ layout = html.Div(
                             id="dataset-selected",
                             data=_datasets[0] if _datasets else None,
                         ),
+                        dcc.Store(id="url-gene-applied", data=False),
                     ],
                     style={"marginBottom": "16px"},
                 ),
@@ -1330,7 +1331,9 @@ def filter_gene_options(search, current_gene, url_search):
     return [{"label": gene, "value": gene} for gene in genes]
 
 # ---------------------------------------------------------------------------
-# Callback 4: dataset -> reset gene selection + repopulate group checklist
+# Callback 4: dataset -> reset group/sample-type/sex/age selections;
+# gene selection is preserved across dataset changes (except on first load,
+# where a valid ?gene=<name> URL param takes priority)
 # ---------------------------------------------------------------------------
 
 
@@ -1344,19 +1347,24 @@ def filter_gene_options(search, current_gene, url_search):
     Output("plot-sex-select", "value"),
     Output("plot-age-select", "options"),
     Output("plot-age-select", "value"),
+    Output("url-gene-applied", "data"),
     Input("dataset-selected", "data"),
+    State("gene-select", "value"),
     State("url", "search"),
+    State("url-gene-applied", "data"),
 )
-def update_selectors(bioproject, url_search):
-    """Reset gene, group, sample type, sex, and age selections
-    when the dataset changes.
+def update_selectors(bioproject, current_gene, url_search, url_gene_applied):
+    """Reset group, sample type, sex, and age selections when the dataset
+    changes. The gene selection is handled specially:
 
-    If the page URL includes a valid ?gene=<name> param (e.g. from the
-    landing-page search box redirecting here), that gene is used as the
-    default instead of the first alphabetical gene.
+    - On the very first load, a valid ?gene=<name> URL param (from the
+      landing-page search box) takes priority as the default.
+    - On every subsequent dataset change, whatever gene the user currently
+      has selected is preserved, rather than resetting to the first
+      alphabetical gene or re-applying the original URL param.
     """
     if not bioproject:
-        return None, [], [], [], [], [], [], [], []
+        return None, [], [], [], [], [], [], [], [], url_gene_applied
 
     genes = _search_genes("")
     genotypes = _get_genotypes(bioproject)
@@ -1364,8 +1372,13 @@ def update_selectors(bioproject, url_search):
     sexes = _get_sexes_for_dataset(bioproject)
     age_range_opts = _get_age_ranges_for_dataset(bioproject)
 
-    url_gene = _resolve_url_gene(url_search)
-    default_gene = url_gene or (genes[0] if genes else None)
+    if not url_gene_applied:
+        url_gene = _resolve_url_gene(url_search)
+        default_gene = url_gene or current_gene or (genes[0] if genes else None)
+        gene_applied = True
+    else:
+        default_gene = current_gene or (genes[0] if genes else None)
+        gene_applied = url_gene_applied
 
     return (
         default_gene,
@@ -1377,6 +1390,7 @@ def update_selectors(bioproject, url_search):
         sexes,
         age_range_opts,
         [opt["value"] for opt in age_range_opts],
+        gene_applied,
     )
 
 # ---------------------------------------------------------------------------
