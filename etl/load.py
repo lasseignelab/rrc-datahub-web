@@ -20,7 +20,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-_NUMERIC_NULLS = {"NA", "", "Not provided"}
+_NUMERIC_NULLS = {"Not applicable", "", "Not provided"}
 
 
 def _staging_dir() -> Path:
