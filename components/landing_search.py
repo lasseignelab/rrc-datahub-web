@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 from dash import html, dcc, Input, Output, State, callback, no_update
 
-from gene_validate import resolve_gene
+from db.gene_search import resolve_gene
 
 # TODO: set this to your real route for the metadata-selection tab
 EXISTING_TAB_PATH = "/charts"

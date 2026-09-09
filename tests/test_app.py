@@ -60,7 +60,7 @@ class TestGeneSearch:
     """
 
     def test_empty_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        import landing_search
+        from components import landing_search
         from dash import no_update
 
         feedback, redirect = landing_search.handle_gene_search(1, "")
@@ -69,7 +69,7 @@ class TestGeneSearch:
         assert redirect is no_update
 
     def test_none_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        import landing_search
+        from components import landing_search
         from dash import no_update
 
         feedback, redirect = landing_search.handle_gene_search(1, None)
@@ -78,8 +78,8 @@ class TestGeneSearch:
         assert redirect is no_update
 
     def test_exact_match_redirects_with_gene_param(self, monkeypatch):
-        import landing_search
-        from gene_validate import GeneSearchResult
+        from components import landing_search
+        from db.gene_search import GeneSearchResult
 
         monkeypatch.setattr(
             landing_search,
@@ -96,8 +96,8 @@ class TestGeneSearch:
         assert redirect == f"{landing_search.EXISTING_TAB_PATH}?gene=Pkd1"
 
     def test_corrected_typo_match_notes_original_query(self, monkeypatch):
-        import landing_search
-        from gene_validate import GeneSearchResult
+        from components import landing_search
+        from db.gene_search import GeneSearchResult
 
         monkeypatch.setattr(
             landing_search,
@@ -114,9 +114,9 @@ class TestGeneSearch:
         assert redirect == f"{landing_search.EXISTING_TAB_PATH}?gene=Pkd1"
 
     def test_no_match_shows_error_and_no_redirect(self, monkeypatch):
-        import landing_search
+        from components import landing_search
         from dash import no_update
-        from gene_validate import GeneSearchResult
+        from db.gene_search import GeneSearchResult
 
         monkeypatch.setattr(
             landing_search,
@@ -138,7 +138,7 @@ class TestGeneSearch:
         """Accessibility: gene-search-input must have a <label for=...>
         pointing at its id (regression check for the Pa11y fix)."""
         from dash import html
-        import landing_search
+        from components import landing_search
 
         def find_all(node, component_type):
             found = []
