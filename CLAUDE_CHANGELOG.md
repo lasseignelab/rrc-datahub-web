@@ -4,6 +4,24 @@ A log of changes made by Claude Code in this project, newest first.
 
 ---
 
+## 2026-09-09
+
+### Clear staging directory before ETL download
+- `etl/download.py`: Added `_clear_staging(staging)` which deletes all files and subdirectories inside the staging directory (removing contents, not the directory itself). Called at the start of `run_download` right after the staging directory is resolved/logged, so stale data from a previous download no longer lingers alongside fresh files. Added `import shutil` for `shutil.rmtree`.
+
+## 2026-09-03
+
+### Switch MegaLinter GitHub Action to Python flavor image
+- `.github/workflows/mega-linter.yml`: Changed `uses: oxsecurity/megalinter@v9` to `uses: oxsecurity/megalinter/flavors/python@v9`. The all-linters image was exhausting GitHub Actions runner disk space; the Python flavor ships only the Python linter family (pylint, ruff, black, flake8, isort, bandit, mypy, pyright) and is significantly smaller.
+
+## 2026-08-27
+
+### Fix: "Not applicable" not excluded from dropdowns or covered by unknown filters
+- `pages/charts.py`: Added `"Not applicable"` to the exclusion list in `_get_all_sexes()` and `_get_all_underlying_variants()` so it no longer appears in the dropdown options (same treatment as "Not provided"). Updated both `_get_datasets_by_filters` and `_get_dataset_table` to include `Sample.sex.in_(["Not provided", "Not applicable"])` and `Sample.underlying_variant.in_(["Not provided", "Not applicable"])` in the respective unknown-filter conditions. The age filter already covered both via `age_range IS NULL`. Updated all three checkbox labels to read "…not provided or not applicable".
+
+### Fix: "Not applicable" age shown as "Not provided" in dataset table and plot filters
+- `pages/charts.py`: In the dataset table query, added `Sample.age_raw` so null age_range rows can be labeled correctly. Null-range samples are now grouped separately by their `age_raw` value — "Not applicable" appears as "Not applicable" and anything else (null, empty, "Not provided") appears as "Not provided". Both appear in the Age column alongside numeric ranges. In `_get_age_ranges_for_dataset`, also added `age_raw` to the query so the plot parameter Age checklist produces a separate option for each distinct null-range label (e.g., "Not applicable" and "Not provided" as separate entries) with values encoded as `"raw:<label>"`. In `_get_tpm_data`, updated the age filter to handle `"raw:..."` values: "Not provided" matches rows where `age_range IS NULL` and `age_raw` is null, empty, or "Not provided"; other labels (e.g., "Not applicable") match rows where `age_range IS NULL` and `age_raw` equals that label exactly.
+
 ## 2026-08-21
 
 ### Fix group colors to be stable when plot filters change
