@@ -69,7 +69,7 @@ git pull origin <a-branch>
 
 Check the "Getting Started" instructions and make sure everything is set up and installed.
 
-[Getting Started](AGENTS.md#getting-started)
+[Getting Started](https://github.com/lasseignelab/rrc-datahub-web/blob/develop/AGENTS.md#getting-started)
 
 Run the database migrations in a terminal window.
 ```
