@@ -6,6 +6,9 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-09-10
 
+### Require agents to identify themselves in changelog entries
+- `AGENTS.md`: Extended the changelog instruction so each entry notes the agent name/model that made the change, since multiple agents work in this project. (Agent: Claude Sonnet 4.6)
+
 ### Rename agent files from CLAUDE* to AGENTS*
 - Renamed `CLAUDE.md` → `AGENTS.md` and `CLAUDE_CHANGELOG.md` → `AGENTS_CHANGELOG.md` (via `git mv` to preserve history).
 - Created a `CLAUDE.md` symlink pointing to `AGENTS.md` so tools that look for `CLAUDE.md` still resolve.

@@ -38,7 +38,7 @@ Follow these steps in order to get the project running locally.
 ## Instructions for AI agents
 
 - At the start of every session, read [AGENTS_CHANGELOG.md](AGENTS_CHANGELOG.md) to understand the recent history of changes in this project.
-- After making any change to this project, append an entry to [AGENTS_CHANGELOG.md](AGENTS_CHANGELOG.md) describing what was changed and why. Use the date `YYYY-MM-DD` and group changes under it. Add new entries at the top, below the header.
+- After making any change to this project, append an entry to [AGENTS_CHANGELOG.md](AGENTS_CHANGELOG.md) describing what was changed and why. Use the date `YYYY-MM-DD` and group changes under it. Add new entries at the top, below the header. Because multiple agents work in this project, identify yourself in each entry by noting the agent name/model that made the change.
 - **Before every commit and push**: run the full test suite (`pytest --headless`), MegaLinter (Docker command below), and pa11y (`npm run a11y` with the app running). All three must pass with zero errors before committing or pushing. Fix any failures first.
 
 Dash + Plotly web application for the RRC DataHub. Built in Python, served via Flask/Gunicorn, backed by a PostgreSQL database.
