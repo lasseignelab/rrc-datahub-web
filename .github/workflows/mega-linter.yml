@@ -50,6 +50,16 @@ jobs:
           # improve performance
           fetch-depth: 0
 
+      # Free disk space before pulling MegaLinter image
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/python* /opt/ghc /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache
+          sudo apt-get clean
+          sudo apt-get autoremove -y
+          docker image prune -a -f
+          df -h      
+
       # MegaLinter
       - name: MegaLinter
 
@@ -69,12 +79,12 @@ jobs:
           # VALIDATE_ALL_CODEBASE: true
           #
           # To validate only diff with main, set to:
-          # VALIDATE_ALL_CODEBASE: >-
-          #   ${{
-          #     github.event_name == 'push' &&
-          #     github.ref == 'refs/heads/main'
-          #   }}
-          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_ALL_CODEBASE: >-
+             ${{
+               github.event_name == 'push' &&
+               github.ref == 'refs/heads/develop'
+             }}
+          # VALIDATE_ALL_CODEBASE: true
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
