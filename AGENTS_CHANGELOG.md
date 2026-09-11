@@ -1,8 +1,21 @@
-# Claude Changelog
+# Agent Changelog
 
-A log of changes made by Claude Code in this project, newest first.
+A log of changes made by AI agents in this project, newest first.
 
 ---
+
+## 2026-09-10
+
+### Require agents to identify themselves in changelog entries
+- `AGENTS.md`: Extended the changelog instruction so each entry notes the agent name/model that made the change, since multiple agents work in this project. (Agent: Claude Sonnet 4.6)
+
+### Rename agent files from CLAUDE* to AGENTS*
+- Renamed `CLAUDE.md` → `AGENTS.md` and `CLAUDE_CHANGELOG.md` → `AGENTS_CHANGELOG.md` (via `git mv` to preserve history).
+- Created a `CLAUDE.md` symlink pointing to `AGENTS.md` so tools that look for `CLAUDE.md` still resolve.
+- `AGENTS.md`: Updated the document title and the two changelog-pointer instruction lines to reference `AGENTS_CHANGELOG.md`. Generalized the "Instructions for Claude Code" section heading (and its table-of-contents link/anchor) to "Instructions for AI agents".
+- `AGENTS_CHANGELOG.md`: Generalized the "Claude Changelog" title and "made by Claude Code" description to refer to AI agents.
+- `README.md` and `.github/pull_request_template.md`: Updated their `CLAUDE.md` links to `AGENTS.md`. In the PR template, replaced the hardcoded GitHub URL that pointed at a since-deleted branch with an absolute link to the `develop` branch: `[Getting Started](https://github.com/lasseignelab/rrc-datahub-web/blob/develop/AGENTS.md#getting-started)`. A relative link does not resolve when the template text is rendered in a PR description, so an absolute URL to a permanent branch is used.
+- Historical changelog entries below that mention `CLAUDE.md`/`CLAUDE_CHANGELOG.md` or Claude Code were left unchanged as an accurate record of the time.
 
 ## 2026-09-09
 
