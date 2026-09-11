@@ -20,7 +20,7 @@ EXISTING_TAB_PATH = "/charts"
 
 layout = html.Div(
     [
-        html.H3("Search DataHub"),
+        html.H2("Search DataHub"),
 
         html.Div(
             [
