@@ -17,5 +17,10 @@ def section_header(title, tooltip_text=None, header_id=None):
             title,
             html.I(className="bi bi-info-circle-fill text-muted ms-2", id=icon_id),
         ], className="d-inline-flex align-items-center mb-3"),
-        dbc.Tooltip(tooltip_text, target=icon_id, placement="right"),
+        dbc.Tooltip(
+            tooltip_text,
+            target=icon_id,
+            placement="right",
+            flip=True,
+        )
     ])

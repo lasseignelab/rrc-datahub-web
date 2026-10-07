@@ -12,6 +12,9 @@ Global styles
 --paper: #FBFAF7;
 --line: #D8DEDC;
 --meta: var(--bs-secondary-color);
+--Dash-Fill-Interactive-Strong: var(--bs-primary, #3498db);
+--dark-gray: #2c3e50;
+--dark-gray-hover: #1a252f;
 }
 
 * {
@@ -19,8 +22,8 @@ Global styles
   }
 
 body {
-margin: 8px;
-background: var(--bs-body-bg);
+margin: 0px;
+background: #f3f5f7;
 color: var(--ink);
 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 -webkit-font-smoothing: antialiased;
@@ -36,9 +39,62 @@ outline: 2px solid var(--uab-green);
 outline-offset: 2px;
 }
 
+
 .app-shell {
 min-height: 100vh;
 }
+
+.narrow-margins {
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+
+/* ==========================================================================
+Custom Components
+========================================================================== */
+.section-card {
+  background: #fff;
+  border: 1px solid #d8dee2;
+  border-radius: 6px;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.tooltip-inner {
+  width: 350px;
+  max-width: calc(100vw - 30px);
+  text-align: center;
+  white-space: normal;
+}
+
+/* Force dropdown option text to neutral gray, independent of global link
+   color or any accent variable, so it stays consistent across themes. */
+.Select-option,
+.VirtualizedSelectOption,
+.Select-menu-outer div[role="option"] {
+  color: #495057 !important;
+}
+
+.Select-option:hover,
+.Select-option.is-focused {
+  color: #212529 !important;
+  background-color: #f1f3f5 !important;
+}
+
+
+.btn-dark-gray {
+  background-color: var(--dark-gray);
+  border-color: var(--dark-gray);
+  color: #fff;
+}
+
+.btn-dark-gray:hover {
+  background-color: var(--dark-gray-hover);
+  border-color: var(--dark-gray-hover);
+  color: #fff;
+}
+
 
 /* ==========================================================================
 Accessibility
@@ -213,6 +269,23 @@ left: 50%;
 transform: translate(-50%, -50%);
 }
 
+
+/* ==========================================================================
+Final Graphic/Table
+========================================================================== */
+#plot-container {
+  max-width: 1500px;  
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;    
+}
+
+#plot-container .js-plotly-plot,
+#plot-container .plotly,
+#plot-container .main-svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* ==========================================================================
 Global brand bar
 ========================================================================== */
@@ -254,7 +327,7 @@ gap: 20px;
 }
 
 .site-nav .nav-link {
-font-family: 'Space Grotesk', sans-serif;
+font-family:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 font-weight: 600;
 font-size: 0.9rem;
 letter-spacing: 0.02em;
@@ -274,10 +347,38 @@ Home page
 ========================================================================== */
 
 .home-page {
-max-width: 1080px;
-margin: 0 auto;
-padding: 0 24px 64px;
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
 }
+
+.section-card-full-width {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #d8dee2;
+  padding: 1.5rem 1.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-section {
+  margin-top: 0;
+
+  background: linear-gradient(
+    to bottom,
+    #E7F4F2 0%,
+    #E7F4F2 50%,
+    rgba(231, 244, 242, 0.75) 70%,
+    rgba(231, 244, 242, 0) 100%
+  );
+
+  border: none;
+}
+
 
 /* ---- Hero ---- */
 
@@ -289,55 +390,87 @@ overflow: hidden;
 }
 
 .hero-motif {
-position: absolute;
-inset: 0;
-background-image: radial-gradient(
-var(--teal-deep) 1.5px,
-transparent 1.5px
-);
-background-size: 18px 18px;
-opacity: 0.08;
-mask-image: radial-gradient(
-ellipse 60% 80% at 50% 40%,
-black 0%,
-transparent 75%
-);
--webkit-mask-image: radial-gradient(
-ellipse 60% 80% at 50% 40%,
-black 0%,
-transparent 75%
-);
-pointer-events: none;
+  position: absolute;
+  inset: 0;
+
+  background-image: radial-gradient(
+    var(--teal-deep) 1.5px,
+    transparent 1.5px
+  );
+
+  background-size: 18px 18px;
+  opacity: 0.10;
+
+  mask-image: radial-gradient(
+    ellipse 100% 90% at 50% 40%,
+    black 0%,
+    black 75%,
+    transparent 100%
+  );
+
+  -webkit-mask-image: radial-gradient(
+    ellipse 100% 90% at 50% 40%,
+    black 0%,
+    black 75%,
+    transparent 100%
+  );
+
+  pointer-events: none;
 }
 
 .hero-title {
-position: relative;
-font-family: 'Space Grotesk', sans-serif;
-font-weight: 700;
-font-size: clamp(2.25rem, 5vw, 3.25rem);
-letter-spacing: -0.01em;
-color: var(--teal-deep);
-margin: 0 0 12px;
+  font-size: 6rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  text-align: center;
 }
 
 .hero-tagline {
 position: relative;
-font-size: 1.05rem;
+font-size: 1.25rem;
 color: var(--meta);
 margin: 0;
 }
 
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.gene-search-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px 0 40px;
+  font-size: 18px;
+}
+
 /* ---- About ---- */
 
+
+
 .about-section {
-max-width: 680px;
-margin: 0 auto;
-padding: 24px 16px 40px;
-text-align: center;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px 3rem 15px;
+  text-align: center;
 }
 
 .about-section h2 {
-font-family: 'Space Grotesk', sans-serif;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+text-transform: uppercase;
+letter-spacing: 0.04em;
+color: #54434f;
 font-size: 1.4rem;
 margin-bottom: 12px;
 }
@@ -348,28 +481,39 @@ line-height: 1.65;
 font-size: 0.98rem;
 }
 
+.about-card {
+  width: 90%;
+  max-width: 1400px;
+  margin: 6rem auto;
+  box-sizing: border-box;
+
+  background: #fff;
+  border: 1px solid #d8dee2;
+  border-radius: 6px;
+  padding: 1rem 1.5rem;
+}
+
 /* ---- Single contact/version panel ---- */
 
 .info-panel {
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 16px;
-background: var(--teal-pale);
-border-radius: 10px;
-padding: 18px 28px;
-margin: 8px 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  background: #e2edea;
+  padding: 28px 28px;
 }
 
 .info-col p {
+color: #000000;
 margin: 3px 0;
 font-size: 0.92rem;
 }
 
 .contact-name {
 font-weight: 600;
-color: var(--ink);
+color:#070707;
 }
 
 .meta-col {
@@ -381,24 +525,40 @@ color: var(--meta);
 }
 
 .mono {
-font-family: 'IBM Plex Mono', monospace;
-color: var(--ink);
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+color:#000000;
 }
 
 /* ---- Partners & funding ---- */
 
 .funding-section {
-text-align: center;
-padding-top: 24px;
-border-top: 1px solid var(--line);
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-top: 0;
+  margin-bottom: 0;
+
+  padding: 1.5rem 3rem 2.5rem;
+
+  background: linear-gradient(
+    to bottom,
+    #f3f5f7 0%,
+    #ffffff 35%,
+    #ffffff 100%
+  );
+
+  border: none;
+
+  text-align: center;
 }
 
-.funding-section h3 {
-font-family: 'Space Grotesk', sans-serif;
-font-size: 0.95rem;
+
+.funding-section H2 {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+font-size: 1.25rem;
 text-transform: uppercase;
 letter-spacing: 0.04em;
-color: var(--meta);
+color: #54434f;
 margin-bottom: 24px;
 }
 
@@ -411,7 +571,7 @@ flex-wrap: wrap;
 }
 
 .funding-logos .logo {
-height: 48px;
+height: 52px;
 width: auto;
 object-fit: contain;
 }
@@ -434,8 +594,17 @@ flex-direction: column;
 align-items: flex-start;
 }
 
+.about-card {
+  width: 90%;
+}
+
 .meta-col {
 text-align: left;
 }
+
+.tooltip-inner {
+    width: 220px;
+    max-width: calc(100vw - 30px);
+  }
 }
 

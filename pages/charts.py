@@ -815,209 +815,216 @@ if _datasets:
 # ---------------------------------------------------------------------------
 
 layout = html.Div([
+        dbc.Container([
+                dcc.Location(id="url"),
+                html.Section([
+                        html.H1("TPM Expression"),
+                        html.P(
+                            "Explore gene expression across datasets. Use the filters to select a "
+                            "dataset, then choose a gene and one or more genotype groups to generate "
+                            "a violin plot and summary statistics table of log₁₀(TPM + 1) values.",
+                            style={"marginBottom": "16px"},
+                        ),
 
-        dcc.Location(id="url"),
-        html.H1("TPM Expression"),
-        html.P(
-            "Explore gene expression across datasets. Use the filters to select a "
-            "dataset, then choose a gene and one or more genotype groups to generate "
-            "a violin plot and summary statistics table of log₁₀(TPM + 1) values.",
-            style={"marginBottom": "16px"},
-        ),
-        
-        html.Section([
-                section_header(
-                    "Dataset Filter",
-                    tooltip_text="Hover the icon — this text should pop up.",
-                    header_id="dataset-filter-heading",
-                ),
+                ],
+                className="section-card"),
 
-            # Row 1: Scientific Name | Sex | Age Range (wider)
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label("Scientific name", id="scientific-name-label", className="fw-semibold"),
-                                dcc.Dropdown(
-                                    id="scientific-name-select",
-                                    options=[
-                                        {"label": name, "value": name}
-                                        for name in _all_scientific_names
-                                    ],
-                                    value=_all_scientific_names,
-                                    multi=True,
-                                ),
-                            ],
-                            md=3,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label("Sex", id="sex-select-label", className="fw-semibold"),
-                                dcc.Dropdown(
-                                    id="sex-select",
-                                    options=[{"label": s, "value": s} for s in _all_sexes],
-                                    value=_all_sexes,
-                                    multi=True,
-                                ),
-                                dbc.Checklist(
-                                    id="include-unknown-sex",
-                                    options=[
-                                        {
-                                            "label": (
-                                                "Include datasets with sex"
-                                                " not provided or not applicable"
-                                            ),
-                                            "value": "include",
-                                        }
-                                    ],
-                                    value=["include"],
-                                    className="mt-2",
-                                ),
-                            ],
-                            md=3,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label("Age range", className="fw-semibold"),
-                                html.Div(
-                                    [
-                                        html.Label(
-                                            "Minimum",
-                                            htmlFor="age-min-input",
-                                            className="visually-hidden",
-                                        ),
-                                        dcc.Input(
-                                            id="age-min-input",
-                                            type="text",
-                                            inputMode="numeric",
-                                            debounce=True,
-                                            value=_age_min,
-                                            style={"flex": "1 1 0", "minWidth": "0"},
-                                        ),
-                                        html.Span("–", className="px-1"),
-                                        html.Label(
-                                            "Maximum",
-                                            htmlFor="age-max-input",
-                                            className="visually-hidden",
-                                        ),
-                                        dcc.Input(
-                                            id="age-max-input",
-                                            type="text",
-                                            inputMode="numeric",
-                                            debounce=True,
-                                            value=_age_max,
-                                            style={"flex": "1 1 0", "minWidth": "0"},
-                                        ),
-                                        html.Label(
-                                            "Unit",
-                                            id="age-unit-label",
-                                            className="ms-2 fw-semibold text-nowrap",
-                                        ),
-                                        dcc.Dropdown(
-                                            id="age-unit",
-                                            options=[
-                                                {"label": "days", "value": "days"},
-                                                {"label": "weeks", "value": "weeks"},
-                                                {"label": "months", "value": "months"},
-                                                {"label": "years", "value": "years"},
-                                            ],
-                                            value="days",
-                                            clearable=False,
-                                            style={"flex": "1.3 1 0", "minWidth": "110px"},
-                                        ),
-                                    ],
-                                    className="d-flex align-items-center gap-2 mt-1",
-                                ),
-                                dcc.Store(id="age-range-days", data=[_age_min, _age_max]),
-                                dbc.Checklist(
-                                    id="include-unknown-age",
-                                    options=[
-                                        {
-                                            "label": (
-                                                "Include datasets with age"
-                                                " not provided or not applicable"
-                                            ),
-                                            "value": "include",
-                                        }
-                                    ],
-                                    value=["include"],
-                                    className="mt-2",
-                                ),
-                            ],
-                            md=6,
-                        ),
-                    ],
-                    className="g-3 mb-3",
-                ),
 
-                # Row 2: Underlying Variant | Sample Type
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label("Underlying variant", id="underlying-variant-label", className="fw-semibold"),
-                                dcc.Dropdown(
-                                    id="underlying-variant-select",
-                                    options=[
-                                        {"label": v, "value": v}
-                                        for v in _all_underlying_variants
-                                    ],
-                                    value=_all_underlying_variants,
-                                    multi=True,
-                                ),
-                                dbc.Checklist(
-                                    id="include-unknown-variant",
-                                    options=[
-                                        {
-                                            "label": (
-                                                "Include datasets with underlying"
-                                                " variant not provided or not applicable"
+
+                html.Section([
+                    html.Section([
+                    section_header(
+                        "Dataset Filter",
+                        tooltip_text="Optional inclusion: Include datasets with missing or non-applicable information. Uncheck to exclude them.",
+                        header_id="dataset-filter-heading",
+                    ),
+                    # Row 1: Scientific Name | Sex | Age Range (wider)
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Scientific name", id="scientific-name-label", className="fw-semibold"),
+                                                    dcc.Dropdown(
+                                                        id="scientific-name-select",
+                                                        options=[
+                                                            {"label": name, "value": name}
+                                                            for name in _all_scientific_names
+                                                        ],
+                                                        value=_all_scientific_names,
+                                                        multi=True,
+                                                    ),
+                                                ],
+                                                md=3,
                                             ),
-                                            "value": "include",
-                                        }
-                                    ],
-                                    value=["include"],
-                                    className="mt-2",
-                                ),
-                                dbc.Checklist(
-                                    id="require-wildtype",
-                                    options=[
-                                        {
-                                            "label": (
-                                                "Only include datasets with"
-                                                " matching controls"
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Sex", id="sex-select-label", className="fw-semibold"),
+                                                    dcc.Dropdown(
+                                                        id="sex-select",
+                                                        options=[{"label": s, "value": s} for s in _all_sexes],
+                                                        value=_all_sexes,
+                                                        multi=True,
+                                                    ),
+                                                    dbc.Checklist(
+                                                        id="include-unknown-sex",
+                                                        options=[
+                                                            {
+                                                                "label": (
+                                                                    "Include datasets sex with not provided or N/A"
+                                                                ),
+                                                                "value": "include",
+                                                            }
+                                                        ],
+                                                        value=["include"],
+                                                        className="mt-2",
+                                                    ),
+                                                ],
+                                                md=3,
                                             ),
-                                            "value": "require",
-                                        }
-                                    ],
-                                    value=[],
-                                    className="mt-1",
-                                ),
-                            ],
-                            md=6,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label("Sample type", id="sample-type-label", className="fw-semibold"),
-                                dcc.Dropdown(
-                                    id="sample-type-select",
-                                    options=[
-                                        {"label": _readable_sample_type(st), "value": st}
-                                        for st in _all_sample_types
-                                    ],
-                                    value=_all_sample_types,
-                                    multi=True,
-                                ),
-                            ],
-                            md=6,
-                        ),
-                    ],
-                    className="g-3 mb-3",
-                ),
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Age range", className="fw-semibold"),
+                                                    html.Div(
+                                                        [
+                                                            html.Label(
+                                                                "Minimum",
+                                                                htmlFor="age-min-input",
+                                                                className="visually-hidden",
+                                                            ),
+                                                            dcc.Input(
+                                                                id="age-min-input",
+                                                                type="text",
+                                                                inputMode="numeric",
+                                                                debounce=True,
+                                                                value=_age_min,
+                                                                style={"flex": "1 1 0", "minWidth": "0"},
+                                                            ),
+                                                            html.Span("–", className="px-1"),
+                                                            html.Label(
+                                                                "Maximum",
+                                                                htmlFor="age-max-input",
+                                                                className="visually-hidden",
+                                                            ),
+                                                            dcc.Input(
+                                                                id="age-max-input",
+                                                                type="text",
+                                                                inputMode="numeric",
+                                                                debounce=True,
+                                                                value=_age_max,
+                                                                style={"flex": "1 1 0", "minWidth": "0"},
+                                                            ),
+                                                            html.Label(
+                                                                "Unit",
+                                                                id="age-unit-label",
+                                                                className="ms-2 fw-semibold text-nowrap",
+                                                            ),
+                                                            dcc.Dropdown(
+                                                                id="age-unit",
+                                                                options=[
+                                                                    {"label": "days", "value": "days"},
+                                                                    {"label": "weeks", "value": "weeks"},
+                                                                    {"label": "months", "value": "months"},
+                                                                    {"label": "years", "value": "years"},
+                                                                ],
+                                                                value="days",
+                                                                clearable=False,
+                                                                style={"flex": "1.3 1 0", "minWidth": "110px"},
+                                                            ),
+                                                        ],
+                                                        className="d-flex align-items-center gap-2 mt-1",
+                                                    ),
+                                                    dcc.Store(id="age-range-days", data=[_age_min, _age_max]),
+                                                    dbc.Checklist(
+                                                        id="include-unknown-age",
+                                                        options=[
+                                                            {
+                                                                "label": (
+                                                                    "Include datasets with age"
+                                                                    " not provided or N/A"
+                                                                ),
+                                                                "value": "include",
+                                                            }
+                                                        ],
+                                                        value=["include"],
+                                                        className="mt-2",
+                                                    ),
+                                                ],
+                                                md=6,
+                                            ),
+                                        ],
+                                        className="g-3 mb-3",
+                                    ),
+                    
+                                    # Row 2: Underlying Variant | Sample Type
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Underlying variant", id="underlying-variant-label", className="fw-semibold"),
+                                                    dcc.Dropdown(
+                                                        id="underlying-variant-select",
+                                                        options=[
+                                                            {"label": v, "value": v}
+                                                            for v in _all_underlying_variants
+                                                        ],
+                                                        value=_all_underlying_variants,
+                                                        multi=True,
+                                                    ),
+                                                    dbc.Checklist(
+                                                        id="include-unknown-variant",
+                                                        options=[
+                                                            {
+                                                                "label": (
+                                                                    "Include datasets with underlying"
+                                                                    " variant not provided or N/A"
+                                                                ),
+                                                                "value": "include",
+                                                            }
+                                                        ],
+                                                        value=["include"],
+                                                        className="mt-2",
+                                                    ),
+                                                    dbc.Checklist(
+                                                        id="require-wildtype",
+                                                        options=[
+                                                            {
+                                                                "label": (
+                                                                    "Only include datasets with"
+                                                                    " matching controls"
+                                                                ),
+                                                                "value": "require",
+                                                            }
+                                                        ],
+                                                        value=[],
+                                                        className="mt-1",
+                                                    ),
+                                                ],
+                                                md=6,
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Sample type", id="sample-type-label", className="fw-semibold"),
+                                                    dcc.Dropdown(
+                                                        id="sample-type-select",
+                                                        options=[
+                                                            {"label": _readable_sample_type(st), "value": st}
+                                                            for st in _all_sample_types
+                                                        ],
+                                                        value=_all_sample_types,
+                                                        multi=True,
+                                                    ),
+                                                ],
+                                                md=6,
+                                            ),
+                                        ],
+                                        className="g-3 mb-3",
+                                    ),
+                ], 
+                className="section-card"),
                 html.Div(
                     [
-                        html.Div(
-                            [   section_header("Found Dataset(s)", header_id="found-dataset-heading"),
+                        html.Div([   
+                            section_header("Found Dataset(s)", header_id="found-dataset-heading"),
                                 html.Label("Dataset", id="dataset-table-label"),
                                 html.Span(
                                     id="dataset-count",
@@ -1070,17 +1077,19 @@ layout = html.Div([
                         ),
                         dcc.Store(id="url-gene-applied", data=False),
                     ],
+                    className="section-card",
                     style={"marginBottom": "16px"},
                 ),
             ],
+            className="section-card",
             **{"aria-labelledby": "dataset-filters-heading"},
             style={"marginBottom": "32px"},
         ),
-        html.Section(
-            [
+                html.Section([ 
+        html.Section([
                 section_header(
                     "Edit Plot Parameters",
-                    tooltip_text="Hover the icon — this text should pop up.",
+                    tooltip_text="Edit the plot parameters for the previously selected dataset to customize the plot or table.",
                     header_id="edit-plot-parameters-heading",
                 ),
 
@@ -1191,29 +1200,34 @@ layout = html.Div([
                     ],
                     className="g-3 mb-3",
                 ),
+                
+
+                ], 
+                className="section-card",
+                ),
                 html.Div(
                     [
                         dbc.Button(
                             "Show table",
                             id="toggle-view-btn",
-                            color="primary",
-                            className="me-2",
+                            className="me-2 btn-dark-gray",
                         ),
                         dbc.Button(
                             "Download plot as PNG",
                             id="download-png-btn",
-                            color="primary",
-                            className="me-2",
+                            className="me-2 btn-dark-gray",
                         ),
                         dbc.Button(
                             "Download table as CSV",
                             id="download-csv-btn",
-                            color="primary",
+                            className="me-2 btn-download",
                             style={"display": "none"},
                         ),
                     ],
-                    className="mb-2 d-flex justify-content-center",
-                ),
+                    className="my-4 d-flex justify-content-center",
+                ),              
+                html.Section([
+                
                 # Polite live region — announces view switches to screen readers.
                 html.Div(id="view-status", role="status", className="visually-hidden"),
                 # Filename prefix for downloads — written by update_plot, read by JS.
@@ -1241,9 +1255,18 @@ layout = html.Div([
                     id="table-container",
                     style={"display": "none"},
                 ),
+            ], 
+                className="section-card",
+            ),
+
             ],
+            className="section-card",
             **{"aria-labelledby": "plot-parameters-heading"},
         ),
+
+
+        ], fluid=True, className="py-4 narrow-margins"),
+
     ])
 
 

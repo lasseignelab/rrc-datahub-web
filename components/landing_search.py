@@ -14,13 +14,16 @@ from dash import html, dcc, Input, Output, State, callback, no_update
 
 from db.gene_search import resolve_gene
 
+from dash import html
+import dash_bootstrap_components as dbc
+from dash_iconify import DashIconify
+
 # TODO: set this to your real route for the metadata-selection tab
 EXISTING_TAB_PATH = "/charts"
 
 
 layout = html.Div(
     [
-        html.H2("Search DataHub"),
 
         html.Div(
             [
@@ -40,34 +43,47 @@ layout = html.Div(
                     },
                 ),
 
-                dcc.Input(
-                    id="gene-search-input",
-                    type="text",
-                    placeholder="Search by gene name, e.g. Pkd1",
-                    debounce=True,
-                    style={
-                        "width": "320px",
-                        "height": "40px",
-                        "fontSize": "18px",
-                        "padding": "0 10px",
-                    },
+                html.Div(
+                    [
+                        DashIconify(
+                            icon="mdi:magnify",
+                            width=20,
+                            color="#7c8fa3",
+                            className="search-icon",
+                        ),
+
+                        dcc.Input(
+                            id="gene-search-input",
+                            type="text",
+                            placeholder="Search by gene name, e.g. Pkd1",
+                            debounce=True,
+                            className="gene-search-input",
+                        ),
+                    ],
+                    className="search-input-wrapper",
                 ),
 
-                html.Button(
-                    "Search",
+                dbc.Button(
+                    "Search Datahub",
                     id="gene-search-submit",
                     n_clicks=0,
                     style={
-                        "marginTop": "12px",
-                        "padding": "8px 24px",
+                        "height": "40px",
+                        "padding": "0 24px",
                         "fontSize": "16px",
+                        "flexShrink": "0",
                     },
-                ),
+                )
             ],
             style={
                 "display": "flex",
-                "flexDirection": "column",
+                "flexDirection": "row",
                 "alignItems": "center",
+                "justifyContent": "center",
+                "gap": "10px",
+                "width": "100%",
+                "maxWidth": "850px",
+                "margin": "0 auto",
             },
         ),
 
