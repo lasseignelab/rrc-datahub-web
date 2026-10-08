@@ -8,13 +8,13 @@ Flow:
        with ?gene=<resolved gene> in the URL
     -> on failure: show an inline error, no redirect
 """
+
 from urllib.parse import urlencode
 
 from dash import html, dcc, Input, Output, State, callback, no_update
 
 from db.gene_search import resolve_gene
 
-from dash import html
 import dash_bootstrap_components as dbc
 from dash_iconify import DashIconify
 
@@ -24,7 +24,6 @@ EXISTING_TAB_PATH = "/charts"
 
 layout = html.Div(
     [
-
         html.Div(
             [
                 html.Label(
@@ -42,7 +41,6 @@ layout = html.Div(
                         "border": "0",
                     },
                 ),
-
                 html.Div(
                     [
                         DashIconify(
@@ -51,7 +49,6 @@ layout = html.Div(
                             color="#7c8fa3",
                             className="search-icon",
                         ),
-
                         dcc.Input(
                             id="gene-search-input",
                             type="text",
@@ -62,7 +59,6 @@ layout = html.Div(
                     ],
                     className="search-input-wrapper",
                 ),
-
                 dbc.Button(
                     "Search Datahub",
                     id="gene-search-submit",
@@ -73,7 +69,7 @@ layout = html.Div(
                         "fontSize": "16px",
                         "flexShrink": "0",
                     },
-                )
+                ),
             ],
             style={
                 "display": "flex",
@@ -86,7 +82,6 @@ layout = html.Div(
                 "margin": "0 auto",
             },
         ),
-
         html.Div(
             id="gene-search-feedback",
             style={
@@ -94,7 +89,6 @@ layout = html.Div(
                 "textAlign": "center",
             },
         ),
-
         dcc.Location(
             id="gene-search-redirect",
             refresh=True,
