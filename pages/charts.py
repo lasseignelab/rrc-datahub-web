@@ -1,4 +1,5 @@
 # Charts page: TPM violin plot driven by the PostgreSQL database.
+# flake8: noqa: E501
 
 import logging
 import math
@@ -819,9 +820,13 @@ layout = html.Div(
                     [
                         html.H1("TPM Expression"),
                         html.P(
-                            "Explore gene expression across datasets. Use the filters to select a "
-                            "dataset, then choose a gene and one or more genotype groups to generate "
-                            "a violin plot and summary statistics table of log₁₀(TPM + 1) values.",
+                            (
+                                "Explore gene expression across datasets. Use the "
+                                "filters to select a dataset, then choose a gene "
+                                "and one or more genotype groups to generate a "
+                                "violin plot and summary statistics table of "
+                                "log₁₀(TPM + 1) values."
+                            ),
                             style={"marginBottom": "16px"},
                         ),
                     ],
@@ -833,7 +838,11 @@ layout = html.Div(
                             [
                                 section_header(
                                     "Dataset Filter",
-                                    tooltip_text="Optional inclusion: Include datasets with missing or non-applicable information. Uncheck to exclude them.",
+                                    tooltip_text=(
+                                        "Optional inclusion: Include datasets with "
+                                        "missing or non-applicable information. "
+                                        "Uncheck to exclude them."
+                                    ),
                                     header_id="dataset-filter-heading",
                                 ),
                                 # Row 1: Scientific Name | Sex | Age Range (wider)
@@ -849,8 +858,13 @@ layout = html.Div(
                                                 dcc.Dropdown(
                                                     id="scientific-name-select",
                                                     options=[
-                                                        {"label": name, "value": name}
-                                                        for name in _all_scientific_names
+                                                        {
+                                                            "label": name,
+                                                            "value": name,
+                                                        }
+                                                        for name in (
+                                                            _all_scientific_names
+                                                        )
                                                     ],
                                                     value=_all_scientific_names,
                                                     multi=True,
@@ -879,7 +893,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets sex with not provided or N/A"
+                                                                "Include datasets sex "
+                                                                "with not "
+                                                                "provided or N/A"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -893,7 +909,8 @@ layout = html.Div(
                                         dbc.Col(
                                             [
                                                 html.Label(
-                                                    "Age range", className="fw-semibold"
+                                                    "Age range",
+                                                    className="fw-semibold",
                                                 ),
                                                 html.Div(
                                                     [
@@ -935,7 +952,10 @@ layout = html.Div(
                                                         html.Label(
                                                             "Unit",
                                                             id="age-unit-label",
-                                                            className="ms-2 fw-semibold text-nowrap",
+                                                            className=(
+                                                                "ms-2 fw-semibold "
+                                                                "text-nowrap"
+                                                            ),
                                                         ),
                                                         dcc.Dropdown(
                                                             id="age-unit",
@@ -965,7 +985,10 @@ layout = html.Div(
                                                             },
                                                         ),
                                                     ],
-                                                    className="d-flex align-items-center gap-2 mt-1",
+                                                    className=(
+                                                        "d-flex align-items-center "
+                                                        "gap-2 mt-1"
+                                                    ),
                                                 ),
                                                 dcc.Store(
                                                     id="age-range-days",
@@ -976,8 +999,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets with age"
-                                                                " not provided or N/A"
+                                                                "Include datasets"
+                                                                " with age not "
+                                                                "provided or N/A"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1004,8 +1028,13 @@ layout = html.Div(
                                                 dcc.Dropdown(
                                                     id="underlying-variant-select",
                                                     options=[
-                                                        {"label": v, "value": v}
-                                                        for v in _all_underlying_variants
+                                                        {
+                                                            "label": v,
+                                                            "value": v,
+                                                        }
+                                                        for v in (
+                                                            _all_underlying_variants
+                                                        )
                                                     ],
                                                     value=_all_underlying_variants,
                                                     multi=True,
@@ -1015,8 +1044,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets with underlying"
-                                                                " variant not provided or N/A"
+                                                                "Include datasets with "
+                                                                "underlying variant "
+                                                                "not provided or N/A"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1029,8 +1059,8 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Only include datasets with"
-                                                                " matching controls"
+                                                                "Only include datasets "
+                                                                "with matching controls"
                                                             ),
                                                             "value": "require",
                                                         }
@@ -1052,12 +1082,14 @@ layout = html.Div(
                                                     id="sample-type-select",
                                                     options=[
                                                         {
-                                                            "label": _readable_sample_type(
-                                                                st
+                                                            "label": (
+                                                                _readable_sample_type(
+                                                                    st
+                                                                )
                                                             ),
                                                             "value": st,
                                                         }
-                                                        for st in _all_sample_types
+                                                        for st in (_all_sample_types)
                                                     ],
                                                     value=_all_sample_types,
                                                     multi=True,
@@ -1152,7 +1184,9 @@ layout = html.Div(
                             [
                                 section_header(
                                     "Edit Plot Parameters",
-                                    tooltip_text="Edit the plot parameters for the previously selected dataset to customize the plot or table.",
+                                    tooltip_text="Edit the plot parameters for "
+                                    "the previously selected dataset "
+                                    "to customize the plot or table.",
                                     header_id="edit-plot-parameters-heading",
                                 ),
                                 # Row 1: Gene | Group | Sample Type
@@ -1207,6 +1241,7 @@ layout = html.Div(
                                                     id="plot-sample-type-label",
                                                     className="fw-semibold",
                                                 ),
+                                            
                                                 dcc.Dropdown(
                                                     id="plot-sample-type-select",
                                                     options=[
@@ -1216,9 +1251,13 @@ layout = html.Div(
                                                             ),
                                                             "value": st,
                                                         }
-                                                        for st in _initial_sample_types_for_plot
+                                                        for st in (
+                                                            _initial_sample_types_for_plot
+                                                        )
                                                     ],
-                                                    value=_initial_sample_types_for_plot,
+                                                    value=(
+                                                        _initial_sample_types_for_plot
+                                                    ),
                                                     multi=True,
                                                 ),
                                             ],
@@ -1258,10 +1297,14 @@ layout = html.Div(
                                                 ),
                                                 dcc.Dropdown(
                                                     id="plot-age-select",
-                                                    options=_initial_age_ranges_for_plot,
+                                                    options=(
+                                                        _initial_age_ranges_for_plot
+                                                    ),
                                                     value=[
                                                         opt["value"]
-                                                        for opt in _initial_age_ranges_for_plot
+                                                        for opt in (
+                                                            _initial_age_ranges_for_plot
+                                                        )
                                                     ],
                                                     multi=True,
                                                 ),
@@ -1283,11 +1326,17 @@ layout = html.Div(
                                                             "value": "none",
                                                         },
                                                         {
-                                                            "label": "Mann-Whitney (2 groups)",
+                                                            "label": (
+                                                                "Mann-Whitney "
+                                                                "(2 groups)"
+                                                            ),
                                                             "value": "mannwhitney",
                                                         },
                                                         {
-                                                            "label": "Kruskal-Wallis (3 or more groups)",
+                                                            "label": (
+                                                                "Kruskal-Wallis ("
+                                                                "3 or more groups)"
+                                                            ),
                                                             "value": "kruskal",
                                                         },
                                                     ],
@@ -1325,13 +1374,15 @@ layout = html.Div(
                         ),
                         html.Section(
                             [
-                                # Polite live region — announces view switches to screen readers.
+                                # Polite live region — announces view switches
+                                # to screen readers.
                                 html.Div(
                                     id="view-status",
                                     role="status",
                                     className="visually-hidden",
                                 ),
-                                # Filename prefix for downloads — written by update_plot, read by JS.
+                                # Filename prefix for downloads — written
+                                # by update_plot, read by JS.
                                 html.Div(id="download-meta", style={"display": "none"}),
                                 html.Div(
                                     dcc.Graph(
@@ -1340,10 +1391,9 @@ layout = html.Div(
                                             "responsive": True,
                                             "displayModeBar": False,
                                         },
-                                        # minHeight prevents the container from collapsing to ~0 px
-                                        # when figure={} during a callback update, which would cause
-                                        # the page to reflow and push nearby elements in and out of
-                                        # the viewport.
+                                        # minHeight prevents collapsing.
+                                        # It also prevents reflow when figure={}
+                                        # during a callback update.
                                         style={"width": "100%", "minHeight": "450px"},
                                     ),
                                     id="plot-container",
