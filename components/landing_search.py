@@ -11,12 +11,11 @@ Flow:
 
 from urllib.parse import urlencode
 
-from dash import html, dcc, Input, Output, State, callback, no_update
+import dash_bootstrap_components as dbc
+from dash import Input, Output, State, callback, dcc, html, no_update
+from dash_iconify import DashIconify
 
 from db.gene_search import resolve_gene
-
-import dash_bootstrap_components as dbc
-from dash_iconify import DashIconify
 
 # TODO: set this to your real route for the metadata-selection tab
 EXISTING_TAB_PATH = "/charts"

@@ -1,6 +1,7 @@
 import dash
-from components import landing_search
 from dash import html
+
+from components import landing_search
 
 dash.register_page(__name__, path="/", name="RRC PKD DataHub")
 

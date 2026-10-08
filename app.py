@@ -1,5 +1,5 @@
-from dash import Dash, html, page_container
 import dash_bootstrap_components as dbc
+from dash import Dash, html, page_container
 
 from components.navbar import navbar
 

@@ -4,20 +4,18 @@
 import logging
 import math
 from collections import Counter
+from urllib.parse import parse_qs
 
 import dash
+import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, callback, clientside_callback, dcc, html
 from sqlalchemy import and_, func, or_
 
+from components.section_header import section_header
 from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
-
-from urllib.parse import parse_qs
-
-import dash_bootstrap_components as dbc
-from components.section_header import section_header
 
 dash.register_page(__name__, path="/charts")
 
@@ -1241,7 +1239,6 @@ layout = html.Div(
                                                     id="plot-sample-type-label",
                                                     className="fw-semibold",
                                                 ),
-                                            
                                                 dcc.Dropdown(
                                                     id="plot-sample-type-select",
                                                     options=[
