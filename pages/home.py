@@ -2,7 +2,7 @@ import dash
 from components import landing_search
 from dash import html
 
-dash.register_page(__name__, path="/", name="PKD RRC DataHub")
+dash.register_page(__name__, path="/", name="RRC PKD DataHub")
 
 # --- Update these two values whenever a new version ships ---
 VERSION = "0.1"
@@ -26,7 +26,7 @@ layout = html.Div(
                 className="hero",
                 children=[
                     html.Div(className="hero-motif", **{"aria-hidden": "true"}),
-                    html.H1("PKD RRC DataHub", className="hero-title"),
+                    html.H1("RRC PKD DataHub", className="hero-title"),
                     html.P(
                         "A shared home for polycystic kidney disease "
                         "transcriptomic data.",
@@ -50,7 +50,7 @@ layout = html.Div(
                         children=[
                             html.H2("Platform Overview"),
                             html.P(
-                                "The PKD RRC DataHub is a free, web-based platform that "
+                                "The RRC PKD DataHub is a free, web-based platform that "
                                 "streamlines access to public polycystic kidney disease "
                                 "(PKD) gene expression data. Every dataset is processed "
                                 "through a standardized pipeline, and a point-and-click "
