@@ -3,7 +3,7 @@ from dash import html
 
 from components import landing_search
 
-dash.register_page(__name__, path="/", name="PKD RRC DataHub")
+dash.register_page(__name__, path="/", name="Home")
 
 # --- Update these two values whenever a new version ships ---
 VERSION = "0.1"
