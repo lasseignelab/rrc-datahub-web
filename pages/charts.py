@@ -1184,7 +1184,7 @@ layout = html.Div(
                                     "Edit Plot Parameters",
                                     tooltip_text="Edit the plot parameters for "
                                     "the previously selected dataset "
-                                    "to customize the plot or table.",
+                                    "to customize the plot or table below.",
                                     header_id="edit-plot-parameters-heading",
                                 ),
                                 # Row 1: Gene | Group | Sample Type
