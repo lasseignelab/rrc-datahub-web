@@ -835,13 +835,13 @@ layout = html.Div(
                         html.Section(
                             [
                                 section_header(
-                                    "Dataset Filter",
+                                    title="Dataset Filter",
                                     tooltip_text=(
-                                        "Optional inclusion: Include datasets with "
-                                        "missing or non-applicable information. "
-                                        "Uncheck to exclude them."
+                                        "Use the dataset filters to control which "
+                                        "data are included in your results."
                                     ),
-                                    header_id="dataset-filter-heading",
+                                    header_id="dataset-filter",
+                                    heading_id="dataset-filter-title",
                                 ),
                                 # Row 1: Scientific Name | Sex | Age Range (wider)
                                 dbc.Row(
@@ -1181,11 +1181,13 @@ layout = html.Div(
                         html.Section(
                             [
                                 section_header(
-                                    "Edit Plot Parameters",
-                                    tooltip_text="Edit the plot parameters for "
-                                    "the previously selected dataset "
-                                    "to customize the plot or table below.",
-                                    header_id="edit-plot-parameters-heading",
+                                    title="Edit Plot Parameters",
+                                    tooltip_text=
+                                    "Customize how your selected dataset "
+                                    "is displayed by adjusting the plotting" 
+                                    " options below.",
+                                    header_id="edit-plot-parameters",
+                                    heading_id="edit-plot-parameters-title",
                                 ),
                                 # Row 1: Gene | Group | Sample Type
                                 dbc.Row(

@@ -1,3 +1,4 @@
+
 import dash_bootstrap_components as dbc
 from dash import html
 
@@ -6,34 +7,52 @@ def section_header(
     title,
     tooltip_text=None,
     header_id=None,
-    level=4,
+    heading_id=None,
 ):
-    """A section title, optionally with a hover-info icon.
+    """Render a styled section title with an optional info tooltip."""
 
-    header_id is required if tooltip_text is provided — dbc.Tooltip
-    needs a target id to attach the hover popup to.
-    """
-    if tooltip_text is None:
-        return html.H3(title, className="mb-3")
+    children = [title]
+    elements = []
 
-    icon_id = f"{header_id}-info-icon"
-    return html.Div(
-        [
-            html.H3(
-                [
-                    title,
-                    html.I(
-                        className="bi bi-info-circle-fill text-muted ms-2",
-                        id=icon_id,
-                    ),
-                ],
-                className="d-inline-flex align-items-center mb-3",
-            ),
+    if tooltip_text is not None:
+        if not header_id:
+            raise ValueError(
+                "header_id is required when tooltip_text is provided"
+            )
+
+        icon_id = f"{header_id}-info-icon"
+        tooltip_id = f"{icon_id}-tooltip"
+
+        children.append(
+            html.Button(
+                html.I(
+                    className="bi bi-info-circle-fill",
+                    **{"aria-hidden": "true"},
+                ),
+                id=icon_id,
+                type="button",
+                className="section-info-button",
+                **{
+                    "aria-label": f"More information about {title}",
+                    "aria-describedby": tooltip_id,
+                },
+            )
+        )
+
+        elements.append(
             dbc.Tooltip(
                 tooltip_text,
                 target=icon_id,
-                placement="right",
-                flip=True,
-            ),
-        ]
+                id=tooltip_id,
+            )
+        )
+
+    elements.append(
+        html.Div(
+            children,
+            **({"id": heading_id} if heading_id else {}),
+            className="section-header-title",
+        )
     )
+
+    return html.Div(elements, className="section-header")
