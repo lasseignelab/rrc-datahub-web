@@ -182,7 +182,15 @@
         table.querySelectorAll("tbody tr").forEach(function (tr) {
             var cells = [];
             tr.querySelectorAll("td").forEach(function (td) {
-                cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+                var value = td.innerText.trim();
+
+                // Keep only the actual numeric value from the cell.
+                var match = value.match(/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/);
+                if (match) {
+                    value = match[0];
+                }
+
+                cells.push('"' + value.replace(/"/g, '""') + '"');
             });
             rows.push(cells.join(","));
         });
