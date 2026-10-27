@@ -2,6 +2,8 @@ import dash
 from dash import html
 
 from components import landing_search
+from components.footer import footer
+
 
 dash.register_page(__name__, path="/", name="Home")
 
@@ -28,7 +30,13 @@ layout = html.Div(
                     className="hero",
                     children=[
                         html.Div(className="hero-motif", **{"aria-hidden": "true"}),
-                        html.H1("PKD RRC DataHub", className="hero-title"),
+                        html.H1(
+                            [
+                                html.Span("PKD RRC", className="brand-primary"),
+                                html.Span(" DataHub", className="brand-accent"),
+                            ],
+                            className="hero-title",
+                        ),
                         html.P(
                             "A shared home for polycystic kidney disease "
                             "transcriptomic data.",
@@ -68,71 +76,8 @@ layout = html.Div(
             ],
             className="about-card",
         ),
-        # ---- Partners & funding ----
-        html.Section(
-            className="section-card-full-width funding-section",
-            children=[
-                html.H2("Partners & Funding"),
-                html.Div(
-                    className="funding-logos",
-                    children=[
-                        logo(
-                            "logos/lasseigne_lab_logo.png",
-                            "Lasseigne Lab logo",
-                            "logo-lab",
-                        ),
-                        logo(
-                            "logos/uab_logo.png",
-                            "University of Alabama at Birmingham logo",
-                        ),
-                        logo(
-                            "logos/rrc_logo.png",
-                            "PKD Research Resource Consortium logo",
-                        ),
-                    ],
-                ),
-            ],
-        ),
-        # ---- Single contact/version panel ----
-        html.Section(
-            className="info-panel",
-            children=[
-                html.Div(
-                    className="info-col contact-col",
-                    children=[
-                        html.P(
-                            "Brittany Lasseigne, PhD",
-                            className="contact-name",
-                        ),
-                        html.P(
-                            html.A(
-                                "bnp0001@uab.edu",
-                                href="mailto:bnp0001@uab.edu",
-                            )
-                        ),
-                        html.P(
-                            html.A(
-                                "View on GitHub",
-                                href=GITHUB_URL,
-                                target="_blank",
-                            )
-                        ),
-                    ],
-                ),
-                html.Div(
-                    className="info-col meta-col",
-                    children=[
-                        html.P(
-                            ["Version ", html.Span(VERSION, className="mono")],
-                            className="meta-line",
-                        ),
-                        html.P(
-                            ["Updated ", html.Span(UPDATED, className="mono")],
-                            className="meta-line",
-                        ),
-                    ],
-                ),
-            ],
-        ),
+        
+        # ---- Contact, partner logos, and version footer ----
+        footer(),
     ],
 )

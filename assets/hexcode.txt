@@ -8,7 +8,7 @@ Main font: -apple-system, BlinkMacSystemFont, "Segoe UI", and Roboto
     /* Brand colors */
     --teal-deep: var(--bs-primary); - Bright Blue
     --teal-pale: #E6F2F0;
-    --uab-green: #1F7A4D;
+    --uab-green: #255959;;
 
     /* Borders */
     --line: #D8DEDC;
@@ -16,6 +16,7 @@ Main font: -apple-system, BlinkMacSystemFont, "Segoe UI", and Roboto
     /* Buttons */
     --dark-gray: #2C3E50;
     --dark-gray-hover: #1A252F;
+    --uab-green-hover: #123333;
 
     /* Dash interactive elements */
     --Dash-Fill-Interactive-Strong: var(--bs-primary, #3498db);

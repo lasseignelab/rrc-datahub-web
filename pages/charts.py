@@ -16,10 +16,23 @@ from components.section_header import section_header
 from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
+from components.footer import footer
 
 dash.register_page(__name__, path="/charts")
 
 log = logging.getLogger(__name__)
+
+# --- Update these two values whenever a new version ships ---
+VERSION = "0.1"
+UPDATED = "2026-08-24"
+# --------------------------------------------------------------
+
+GITHUB_URL = "https://github.com/lasseignelab/rrc-datahub"
+
+
+def logo(src, alt, extra_class=""):
+    css_class = f"logo {extra_class}".strip()
+    return html.Img(src=f"/assets/{src}", alt=alt, className=css_class)
 
 _GENE_SEARCH_LIMIT = 50
 _WILDTYPE_VALUE = "wild-type"
@@ -1419,6 +1432,8 @@ layout = html.Div(
             fluid=True,
             className="py-4 narrow-margins",
         ),
+        # ---- Contact, partner logos, and version footer ----
+        footer(),
     ]
 )
 
