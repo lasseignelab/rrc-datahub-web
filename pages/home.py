@@ -21,15 +21,18 @@ def logo(src, alt, extra_class=""):
 
 
 layout = html.Div(
-    className="narrow-margins home-page",
+    className="home-page",
     children=[
         # ---- Hero ----
         html.Section(
             [
+                html.Div(
+                    className="hero-motif",
+                    **{"aria-hidden": "true"}
+                ),
                 html.Section(
                     className="hero",
                     children=[
-                        html.Div(className="hero-motif", **{"aria-hidden": "true"}),
                         html.H1(
                             [
                                 html.Span("PKD RRC", className="brand-primary"),
@@ -52,9 +55,10 @@ layout = html.Div(
             ],
             className="section-card-full-width hero-section",
         ),
+
+        # ---- About ----
         html.Section(
             [
-                # ---- About (placeholder copy) ----
                 html.Section(
                     className="about-section",
                     children=[
@@ -76,8 +80,8 @@ layout = html.Div(
             ],
             className="about-card",
         ),
-        
-        # ---- Contact, partner logos, and version footer ----
+
+        # ---- Reusable footer ----
         footer(),
     ],
 )
