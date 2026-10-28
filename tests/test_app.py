@@ -27,13 +27,13 @@ def test_layout_contains_h1():
 
     h1_elements = find_all(home.layout, html.H1)
     assert len(h1_elements) == 1
-    assert h1_elements[0].children == "RRC PKD DataHub"
+    assert h1_elements[0].children == "PKD RRC DataHub"
 
 
 def test_heading_renders(dash_duo):
     """H1 is visible in the browser after page load."""
     dash_duo.start_server(app)
-    dash_duo.wait_for_text_to_equal("h1", "RRC PKD DataHub")
+    dash_duo.wait_for_text_to_equal("h1", "PKD RRC DataHub")
 
 
 def test_graph_renders(dash_duo):

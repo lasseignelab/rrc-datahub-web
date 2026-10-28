@@ -8,9 +8,12 @@ Flow:
        with ?gene=<resolved gene> in the URL
     -> on failure: show an inline error, no redirect
 """
+
 from urllib.parse import urlencode
 
-from dash import html, dcc, Input, Output, State, callback, no_update
+import dash_bootstrap_components as dbc
+from dash import Input, Output, State, callback, dcc, html, no_update
+from dash_iconify import DashIconify
 
 from db.gene_search import resolve_gene
 
@@ -20,8 +23,6 @@ EXISTING_TAB_PATH = "/charts"
 
 layout = html.Div(
     [
-        html.H2("Search DataHub"),
-
         html.Div(
             [
                 html.Label(
@@ -39,38 +40,47 @@ layout = html.Div(
                         "border": "0",
                     },
                 ),
-
-                dcc.Input(
-                    id="gene-search-input",
-                    type="text",
-                    placeholder="Search by gene name, e.g. Pkd1",
-                    debounce=True,
-                    style={
-                        "width": "320px",
-                        "height": "40px",
-                        "fontSize": "18px",
-                        "padding": "0 10px",
-                    },
+                html.Div(
+                    [
+                        DashIconify(
+                            icon="mdi:magnify",
+                            width=20,
+                            color="#7c8fa3",
+                            className="search-icon",
+                        ),
+                        dcc.Input(
+                            id="gene-search-input",
+                            type="text",
+                            placeholder="Search by gene name, e.g. Pkd1",
+                            debounce=True,
+                            className="gene-search-input",
+                        ),
+                    ],
+                    className="search-input-wrapper",
                 ),
-
-                html.Button(
-                    "Search",
+                dbc.Button(
+                    "Search Datahub",
                     id="gene-search-submit",
                     n_clicks=0,
                     style={
-                        "marginTop": "12px",
-                        "padding": "8px 24px",
+                        "height": "40px",
+                        "padding": "0 24px",
                         "fontSize": "16px",
+                        "flexShrink": "0",
                     },
                 ),
             ],
             style={
                 "display": "flex",
-                "flexDirection": "column",
+                "flexDirection": "row",
                 "alignItems": "center",
+                "justifyContent": "center",
+                "gap": "10px",
+                "width": "100%",
+                "maxWidth": "850px",
+                "margin": "0 auto",
             },
         ),
-
         html.Div(
             id="gene-search-feedback",
             style={
@@ -78,7 +88,6 @@ layout = html.Div(
                 "textAlign": "center",
             },
         ),
-
         dcc.Location(
             id="gene-search-redirect",
             refresh=True,
