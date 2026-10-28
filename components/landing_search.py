@@ -79,7 +79,7 @@ layout = html.Div(
                 "justifyContent": "center",
                 "gap": "10px",
                 "width": "100%",
-                "maxWidth": "900px",
+                "maxWidth": "1000px",
                 "margin": "0 auto",
             },
         ),

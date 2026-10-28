@@ -3,6 +3,7 @@ from dash import html
 
 from components import landing_search
 from components.footer import footer
+from components.feature_card import feature_card
 
 
 dash.register_page(__name__, path="/", name="Home")
@@ -41,8 +42,8 @@ layout = html.Div(
                             className="hero-title",
                         ),
                         html.P(
-                            "A shared home for polycystic kidney disease "
-                            "transcriptomic data.",
+                            "A shared resource for polycystic kidney disease "
+                            "(PKD) transcriptomic data.",
                             className="hero-tagline",
                         ),
                     ],
@@ -58,29 +59,66 @@ layout = html.Div(
 
         # ---- About ----
         html.Section(
-            [
-                html.Section(
-                    className="about-section",
+            className="about-card",
+            children=[
+                html.Div(
+                    className="about-content",
                     children=[
-                        html.H2("Platform Overview"),
-                        html.P(
-                            "The PKD RRC DataHub is a free, web-based platform that "
-                            "streamlines access to public polycystic kidney disease "
-                            "(PKD) gene expression data. Every dataset is processed "
-                            "through a standardized pipeline, and a point-and-click "
-                            "interface lets users search and filter by study "
-                            "characteristics and quality metrics without coding or "
-                            "bioinformatics expertise. By eliminating the burden of "
-                            "locating, processing, and vetting data, the DataHub "
-                            "accelerates hypothesis generation for PKD scientists.",
-                            className="about-text",
+                        html.Section(
+                            className="about-section",
+                            children=[
+                                html.H2("About the DataHub"),
+                                html.H3(
+                                    "A simpler way to explore PKD gene expression data.",
+                                    className="about-title",
+                                ),
+                                html.P(
+                                    "The PKD RRC DataHub is a free, web-based platform " 
+                                    "that makes public PKD gene expression data easier " 
+                                    "to access and analyze. The Datahub's standardized "
+                                    "data processing pipeline and user-friendly tools " 
+                                    "help researchers find and evaluate datasets without " 
+                                    "requiring programming skills or specialized " 
+                                    "bioinformatics knowledge.",
+                                    className="about-text",
+                                ),
+                            ],
                         ),
+                        html.Div(className="about-divider"),
+                        html.Div(
+                            className="about-features",
+                            children=[
+                                feature_card(
+                                    "Search",
+                                    "Find genes, datasets, and studies",
+                                    "lucide:search",
+                                    "feature-search-icon",
+                                ),
+                                feature_card(
+                                    "Filter",
+                                    "Refine by study characteristics",
+                                    "lucide:filter",
+                                    "filter-icon",
+                                    icon_size=45,
+                                ),
+                                feature_card(
+                                    "Visualize",
+                                    "Explore data through charts and tables",
+                                    "lucide:chart-no-axes-column-increasing",
+                                    "visualize-icon",
+                                ),
+                                feature_card(
+                                    "Export",
+                                    "Download results for further analysis",
+                                    "lucide:download",
+                                    "export-icon",
+                                ),
+                            ],
+                        )
                     ],
                 ),
             ],
-            className="about-card",
         ),
-
         # ---- Reusable footer ----
         footer(),
     ],
