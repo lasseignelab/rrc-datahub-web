@@ -798,7 +798,7 @@ Home page
     grid-template-columns: 1fr 2fr 1fr;
     align-items: center;
     gap: 24px;
-    padding: 24px 3%;
+    padding: 18px 3%;
     background: #e0edea;
     box-sizing: border-box;
 }
@@ -813,7 +813,6 @@ Home page
 /* Contact information */
 .contact-col {
     min-width: 0;
-    border-right: 1px solid #D8E2E2;
     padding-right: 20px;
 }
 
@@ -855,7 +854,8 @@ color:#000000;
     gap: clamp(16px, 3vw, 48px);
     min-width: 0;
     padding: 0;
-    border-right: 1px solid #D8E2E2;
+    border-left: 1px solid #d0dbdb;
+    border-right: 1px solid #d0dbdb;
 }
 
 .footer-logos img {
