@@ -1434,7 +1434,8 @@ layout = html.Div(
         ),
         # ---- Contact, partner logos, and version footer ----
         footer(),
-    ]
+    ],
+    className="charts-page",
 )
 
 

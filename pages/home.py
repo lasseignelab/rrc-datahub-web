@@ -84,7 +84,7 @@ layout = html.Div(
                                 ),
                             ],
                         ),
-                        html.Div(className="about-divider"),
+                        html.Div(className="about-divider"),  
                         html.Div(
                             className="about-features",
                             children=[
@@ -92,29 +92,25 @@ layout = html.Div(
                                     "Search",
                                     "Find genes, datasets, and studies",
                                     "lucide:search",
-                                    "feature-search-icon",
                                 ),
                                 feature_card(
                                     "Filter",
-                                    "Refine by study characteristics",
+                                    "Narrow results by study characteristics",
                                     "lucide:filter",
-                                    "filter-icon",
-                                    icon_size=45,
                                 ),
                                 feature_card(
                                     "Visualize",
-                                    "Explore data through charts and tables",
+                                    "Explore expression patterns with charts and tables",
                                     "lucide:chart-no-axes-column-increasing",
-                                    "visualize-icon",
                                 ),
                                 feature_card(
                                     "Export",
                                     "Download results for further analysis",
                                     "lucide:download",
-                                    "export-icon",
                                 ),
                             ],
-                        )
+                        ),
+
                     ],
                 ),
             ],

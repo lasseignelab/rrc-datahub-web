@@ -2,18 +2,19 @@ from dash import html
 from dash_iconify import DashIconify
 
 
-def feature_card(title, description, icon, color_class, icon_size=42):
+def feature_card(title, description, icon):
     return html.Div(
-        className="feature-item",
+        className="feature-row",
         children=[
             html.Div(
-                className=f"feature-card-icon {color_class}",
+                className="feature-row-icon",
                 children=DashIconify(
                     icon=icon,
-                    width=icon_size,
+                    width=24,
                 ),
             ),
-            html.H3(title),
-            html.P(description),
+            html.H3(title, className="feature-name"),
+            html.Div(className="feature-row-divider"),
+            html.P(description, className="feature-description"),
         ],
     )
