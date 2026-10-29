@@ -854,8 +854,6 @@ color:#000000;
     gap: clamp(16px, 3vw, 48px);
     min-width: 0;
     padding: 0;
-    border-left: 1px solid #d0dbdb;
-    border-right: 1px solid #d0dbdb;
 }
 
 .footer-logos img {
