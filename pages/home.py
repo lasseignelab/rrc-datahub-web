@@ -2,6 +2,9 @@ import dash
 from dash import html
 
 from components import landing_search
+from components.footer import footer
+from components.feature_card import feature_card
+
 
 dash.register_page(__name__, path="/", name="Home")
 
@@ -19,19 +22,28 @@ def logo(src, alt, extra_class=""):
 
 
 layout = html.Div(
-    className="narrow-margins home-page",
+    className="home-page",
     children=[
         # ---- Hero ----
         html.Section(
             [
+                html.Div(
+                    className="hero-motif",
+                    **{"aria-hidden": "true"}
+                ),
                 html.Section(
                     className="hero",
                     children=[
-                        html.Div(className="hero-motif", **{"aria-hidden": "true"}),
-                        html.H1("PKD RRC DataHub", className="hero-title"),
+                        html.H1(
+                            [
+                                html.Span("PKD RRC", className="brand-primary"),
+                                html.Span(" DataHub", className="brand-accent"),
+                            ],
+                            className="hero-title",
+                        ),
                         html.P(
-                            "A shared home for polycystic kidney disease "
-                            "transcriptomic data.",
+                            "A shared resource for polycystic kidney disease "
+                            "(PKD) transcriptomic data.",
                             className="hero-tagline",
                         ),
                     ],
@@ -44,95 +56,66 @@ layout = html.Div(
             ],
             className="section-card-full-width hero-section",
         ),
+
+        # ---- About ----
         html.Section(
-            [
-                # ---- About (placeholder copy) ----
-                html.Section(
-                    className="about-section",
-                    children=[
-                        html.H2("Platform Overview"),
-                        html.P(
-                            "The PKD RRC DataHub is a free, web-based platform that "
-                            "streamlines access to public polycystic kidney disease "
-                            "(PKD) gene expression data. Every dataset is processed "
-                            "through a standardized pipeline, and a point-and-click "
-                            "interface lets users search and filter by study "
-                            "characteristics and quality metrics without coding or "
-                            "bioinformatics expertise. By eliminating the burden of "
-                            "locating, processing, and vetting data, the DataHub "
-                            "accelerates hypothesis generation for PKD scientists.",
-                            className="about-text",
-                        ),
-                    ],
-                ),
-            ],
             className="about-card",
-        ),
-        # ---- Partners & funding ----
-        html.Section(
-            className="section-card-full-width funding-section",
             children=[
-                html.H2("Partners & Funding"),
                 html.Div(
-                    className="funding-logos",
+                    className="about-content",
                     children=[
-                        logo(
-                            "logos/lasseigne_lab_logo.png",
-                            "Lasseigne Lab logo",
-                            "logo-lab",
+                        html.Section(
+                            className="about-section",
+                            children=[
+                                html.H2("About the DataHub"),
+                                html.H3(
+                                    "A simpler way to explore PKD gene expression data.",
+                                    className="about-title",
+                                ),
+                                html.P(
+                                    "The PKD RRC DataHub is a free, web-based platform " 
+                                    "that makes public PKD gene expression data easier " 
+                                    "to access and analyze. The Datahub's standardized "
+                                    "data processing pipeline and user-friendly tools " 
+                                    "help researchers find and evaluate datasets without " 
+                                    "requiring programming skills or specialized " 
+                                    "bioinformatics knowledge.",
+                                    className="about-text",
+                                ),
+                            ],
                         ),
-                        logo(
-                            "logos/uab_logo.png",
-                            "University of Alabama at Birmingham logo",
+                        html.Div(className="about-divider"),  
+                        html.Div(
+                            className="about-features",
+                            children=[
+                                feature_card(
+                                    "Search",
+                                    "Find genes, datasets, and studies",
+                                    "lucide:search",
+                                ),
+                                feature_card(
+                                    "Filter",
+                                    "Narrow results by study characteristics",
+                                    "lucide:filter",
+                                ),
+                                feature_card(
+                                    "Visualize",
+                                    "Explore expression patterns with charts and tables",
+                                    "lucide:chart-no-axes-column-increasing",
+                                ),
+                                feature_card(
+                                    "Export",
+                                    "Download results for further analysis",
+                                    "lucide:download",
+                                ),
+                            ],
                         ),
-                        logo(
-                            "logos/rrc_logo.png",
-                            "PKD Research Resource Consortium logo",
-                        ),
+
                     ],
                 ),
             ],
         ),
-        # ---- Single contact/version panel ----
-        html.Section(
-            className="info-panel",
-            children=[
-                html.Div(
-                    className="info-col contact-col",
-                    children=[
-                        html.P(
-                            "Brittany Lasseigne, PhD",
-                            className="contact-name",
-                        ),
-                        html.P(
-                            html.A(
-                                "bnp0001@uab.edu",
-                                href="mailto:bnp0001@uab.edu",
-                            )
-                        ),
-                        html.P(
-                            html.A(
-                                "View on GitHub",
-                                href=GITHUB_URL,
-                                target="_blank",
-                            )
-                        ),
-                    ],
-                ),
-                html.Div(
-                    className="info-col meta-col",
-                    children=[
-                        html.P(
-                            ["Version ", html.Span(VERSION, className="mono")],
-                            className="meta-line",
-                        ),
-                        html.P(
-                            ["Updated ", html.Span(UPDATED, className="mono")],
-                            className="meta-line",
-                        ),
-                    ],
-                ),
-            ],
-        ),
+        # ---- Reusable footer ----
+        footer(),
     ],
 )

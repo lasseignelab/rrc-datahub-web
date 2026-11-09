@@ -5,16 +5,28 @@ Global styles
 ========================================================================== */
 
 :root {
---ink: var(--bs-body-color);
---teal-deep: var(--bs-primary);
---teal-pale: #E6F2F0;
---uab-green: #1F7A4D;
---paper: #FBFAF7;
---line: #D8DEDC;
---meta: var(--bs-secondary-color);
---Dash-Fill-Interactive-Strong: var(--bs-primary, #3498db);
---dark-gray: #2c3e50;
---dark-gray-hover: #1a252f;
+    /* Text colors */
+    --ink: var(--bs-body-color);
+    --meta: var(--bs-secondary-color);
+
+    /* Brand colors */
+    --teal-deep: var(--bs-primary);
+    --teal-pale: #E6F2F0;
+    --uab-green: #255959;;
+
+    /* Borders */
+    --line: #D8DEDC;
+
+    /* Teal buttons */
+    --uab-green: #255959;
+    --uab-green-hover: #123333;
+
+    /* Gray buttons */
+    --dark-gray: #2C3E50;
+    --dark-gray-hover: #1A252F;
+
+    /* Dash interactive elements */
+    --Dash-Fill-Interactive-Strong: var(--bs-primary, #3498db);
 }
 
 * {
@@ -54,11 +66,12 @@ min-height: 100vh;
 Custom Components
 ========================================================================== */
 .section-card {
-  background: #fff;
-  border: 1px solid #d8dee2;
-  border-radius: 6px;
-  padding: 1.5rem 1.75rem;
-  margin-bottom: 1.5rem;
+    background: #fff;
+    border: 1px solid rgba(216, 222, 226, 0.5);
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 6px rgba(37, 89, 89, 0.10);
 }
 
 .section-info-button {
@@ -119,7 +132,6 @@ Custom Components
   background-color: #f1f3f5 !important;
 }
 
-
 .btn-dark-gray {
   background-color: var(--dark-gray);
   border-color: var(--dark-gray);
@@ -132,6 +144,35 @@ Custom Components
   color: #fff;
 }
 
+/* Primary teal button */
+.btn-teal {
+    background-color: var(--uab-green);
+    border-color: var(--uab-green);
+    color: #FFFFFF;
+    transition: background-color 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.btn-teal:hover {
+    background-color: var(--uab-green-hover);
+    border-color: var(--uab-green-hover);
+    color: #FFFFFF;
+}
+
+/* Secondary dark gray button */
+.btn-gray {
+    background-color: var(--dark-gray);
+    border-color: var(--dark-gray);
+    color: #FFFFFF;
+    transition: background-color 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.btn-gray:hover {
+    background-color: var(--dark-gray-hover);
+    border-color: var(--dark-gray-hover);
+    color: #FFFFFF;
+}
 
 /* ==========================================================================
 Accessibility
@@ -355,28 +396,143 @@ color: var(--meta);
 Navbar
 ========================================================================== */
 
+/* Main navbar */
 .site-nav {
-padding: 14px 24px;
-border-bottom: 1px solid var(--line);
-background: var(--bs-body-bg);
-display: flex;
-gap: 20px;
+    position: relative;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 68px;
+    padding: 0 7%;
+    background-color: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    box-sizing: border-box;
 }
+
+/* Brand */
+.site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    text-decoration: none;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.brand-primary {
+    color: var(--ink);
+}
+
+.brand-accent {
+    color: var(--uab-green);
+}
+
+/* Desktop links */
+.nav-links {
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+    gap: 36px;
+}
+
 
 .site-nav .nav-link {
-font-family:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-font-weight: 600;
-font-size: 0.9rem;
-letter-spacing: 0.02em;
-color: var(--ink);
-text-decoration: none;
-padding: 4px 2px;
-border-bottom: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    height: 44px;
+    padding: 2px 0 0;
+    border-bottom: 2px solid transparent;
+    box-sizing: border-box;
+
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    letter-spacing: 0;
+    color: var(--ink);
+    text-decoration: none;
+
+    transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.site-nav .nav-link:hover {
-color: var(--teal-deep);
-border-bottom-color: var(--teal-deep);
+.site-nav .nav-link:hover,
+.site-nav .nav-link.active {
+  color: var(--uab-green);
+  border-bottom-color: var(--uab-green);
+}
+
+
+/* Hide hamburger on desktop */
+.mobile-menu {
+    display: none;
+}
+
+/* Hamburger button */
+.hamburger-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.hamburger-button::-webkit-details-marker {
+    display: none;
+}
+
+.hamburger-button::marker {
+    content: "";
+}
+
+.hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hamburger-line {
+    display: block;
+    width: 23px;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--ink);
+}
+
+/* Mobile dropdown */
+.mobile-menu-links {
+    position: absolute;
+    align-items: stretch;
+    text-align: left;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 4%;
+    background-color: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 6px 12px rgb(0 0 0 / 8%);
+}
+
+.mobile-menu-links .nav-link {
+  display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding: 12px 4px;
+    border-bottom: none;
+}
+
+.mobile-menu-links .nav-link:hover,
+.mobile-menu-links .nav-link.active {
+    border-bottom-color: transparent;
 }
 
 /* ==========================================================================
@@ -390,40 +546,47 @@ Home page
   padding-left: 0 !important;
   padding-right: 0 !important;
   box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-card-full-width {
-  width: 100%;
-  box-sizing: border-box;
-  background: #fff;
-  border: 1px solid #d8dee2;
-  padding: 1.5rem 1.75rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.hero-section {
-  margin-top: 0;
-
-  background: linear-gradient(
-    to bottom,
-    #E7F4F2 0%,
-    #E7F4F2 50%,
-    rgba(231, 244, 242, 0.75) 70%,
-    rgba(231, 244, 242, 0) 100%
-  );
-
-  border: none;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #d8dee2;
+    padding: 1.5rem 1.75rem;
+    margin: 0;
 }
 
 
 /* ---- Hero ---- */
-
 .hero {
-position: relative;
-padding: 64px 16px 48px;
-text-align: center;
-overflow: hidden;
+    position: relative;
+    width: 100%;
+    padding: 64px 16px 48px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.hero-section {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin-top: 0;
+    padding-bottom: 80px;
+
+    background: linear-gradient(
+      to bottom,
+      #E2F3F0 0%,
+      #E2F3F0 35%,
+      #E8F5F3 70%,
+      #F0F7F6 85%,
+      #F8FAFA 100%
+  );
+    border: none;
 }
 
 .hero-motif {
@@ -431,24 +594,24 @@ overflow: hidden;
   inset: 0;
 
   background-image: radial-gradient(
-    var(--teal-deep) 1.5px,
-    transparent 1.5px
+    var(--teal-deep) 2.1px,
+    transparent 1px
   );
 
-  background-size: 18px 18px;
+  background-size: 38px 38px;
   opacity: 0.10;
 
   mask-image: radial-gradient(
     ellipse 100% 90% at 50% 40%,
     black 0%,
-    black 75%,
+    black 90%,
     transparent 100%
   );
 
   -webkit-mask-image: radial-gradient(
     ellipse 100% 90% at 50% 40%,
     black 0%,
-    black 75%,
+    black 90%,
     transparent 100%
   );
 
@@ -456,17 +619,22 @@ overflow: hidden;
 }
 
 .hero-title {
-  font-size: 6rem;
-  font-weight: 600;
-  margin: 0 0 0.75rem;
-  text-align: center;
+    font-size: 5.5rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    text-align: center;
+    letter-spacing: -0.045em;
 }
 
 .hero-tagline {
-position: relative;
-font-size: 1.25rem;
-color: var(--meta);
-margin: 0;
+    font-size: 1.75rem;
+    color: var(--meta);
+    font-weight: 400;
+    max-width: 1400px;
+    width: 95%;
+    margin: 0 auto;
+    text-align: center;
+    line-height: 1.3;
 }
 
 .search-input-wrapper {
@@ -485,62 +653,169 @@ margin: 0;
 
 .gene-search-input {
   width: 100%;
-  height: 40px;
+  height: 50px;
   box-sizing: border-box;
   padding: 0 12px 0 40px;
   font-size: 18px;
+  border: 1px solid transparent;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(37, 89, 89, 0.16);
+    transition: border-color 0.2s ease,
+                box-shadow 0.2s ease;
 }
 
-/* ---- About ---- */
+.gene-search-input:focus {
+    border-color: var(--uab-green);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 89, 89, 0.15);
+}
 
 
+/* Platform Overview — full-width white section */
+.about-card {
+    width: 100%;
+    background: #fff;
+    box-sizing: border-box;
+    padding: 4rem 3rem;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+}
+
+.about-content {
+    display: grid;
+    grid-template-columns: 1.1fr 1px 0.9fr;
+    align-items: center;
+    gap: 2rem;
+    max-width: none;
+    margin: 0;
+}
 
 .about-section {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 24px 3rem 15px;
-  text-align: center;
+    min-width: 0;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+}
+
+.about-divider {
+    width: 1px;
+    height: 100%;
+    min-height: 180px;
+    background: #d8dee8;
 }
 
 .about-section h2 {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-text-transform: uppercase;
-letter-spacing: 0.04em;
-color: #54434f;
-font-size: 1.4rem;
-margin-bottom: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #405578;
+    margin: 0 0 24px;
+    text-align: left;
+}
+
+.about-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #0b1738;
+    margin: 0 0 16px;
+    text-align: left;
 }
 
 .about-text {
-color: var(--ink);
-line-height: 1.65;
-font-size: 0.98rem;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #405578;
+    margin: 0;
+    text-align: left;
 }
 
-.about-card {
-  width: 90%;
-  max-width: 1400px;
-  margin: 6rem auto;
-  box-sizing: border-box;
-
-  background: #fff;
-  border: 1px solid #d8dee2;
-  border-radius: 6px;
-  padding: 1rem 1.5rem;
+.about-features {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-left: 1.5rem;
+    box-sizing: border-box;
 }
 
-/* ---- Single contact/version panel ---- */
+.feature-row {
+    display: grid;
+    grid-template-columns: 48px 105px 1px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid #D5DDE8;
+}
 
+.feature-row:last-child {
+    border-bottom: none;
+}
+
+/* Matching teal icon circles */
+.feature-row-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #E0F3F0;
+    color: #087568;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    transition: transform 0.2s ease;
+}
+
+.feature-row-icon:hover {
+    transform: scale(1.08);
+}
+
+.feature-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0B1738;
+    margin: 0;
+}
+
+.feature-row-divider {
+    width: 1px;
+    height: 28px;
+    background: #C9D3E0;
+}
+
+.feature-description {
+    font-size: 1.15rem;
+    line-height: 1.45;
+    color: #52678B;
+    margin: 0;
+}
+
+/* ---- Footer Panel ---- */
 .info-panel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-
-  background: #e2edea;
-  padding: 28px 28px;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 3%;
+    background: #e0edea;
+    box-sizing: border-box;
 }
+
+.contact-col,
+.footer-logos,
+.meta-col {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* Contact information */
+.contact-col {
+    min-width: 0;
+    padding-right: 20px;
+}
+
 
 .info-col p {
 color: #000000;
@@ -554,7 +829,11 @@ color:#070707;
 }
 
 .meta-col {
-text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    min-width: 0;
 }
 
 .meta-line {
@@ -566,82 +845,338 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 color:#000000;
 }
 
-/* ---- Partners & funding ---- */
-
-.funding-section {
-  width: 100%;
-  box-sizing: border-box;
-
-  margin-top: 0;
-  margin-bottom: 0;
-
-  padding: 1.5rem 3rem 2.5rem;
-
-  background: linear-gradient(
-    to bottom,
-    #f3f5f7 0%,
-    #ffffff 35%,
-    #ffffff 100%
-  );
-
-  border: none;
-
-  text-align: center;
+/* Centered partner logos */
+.footer-logos {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 3vw, 48px);
+    min-width: 0;
+    padding: 0;
 }
 
-
-.funding-section H2 {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-font-size: 1.25rem;
-text-transform: uppercase;
-letter-spacing: 0.04em;
-color: #54434f;
-margin-bottom: 24px;
+.footer-logos img {
+    display: block;
+    flex: 0 1 auto;
+    width: auto !important;
+    height: 70px !important;
+    max-width: 32% !important;
+    object-fit: contain;
 }
 
-.funding-logos {
-display: flex;
-justify-content: center;
-align-items: center;
-gap: 40px;
-flex-wrap: wrap;
+.info-panel .footer-logos img.logo-lab {
+    flex: 0 1 auto;
+    width: 160px !important;
+    height: 160px !important;
+    max-width: 32% !important;
+    object-fit: contain !important;
 }
 
-.funding-logos .logo {
-height: 52px;
-width: auto;
-object-fit: contain;
-}
+/* ==========================================================================
+library page
+========================================================================== */
 
-/* The Lasseigne Lab file has significant built-in whitespace/caption padding
-around the mark itself, so it needs a taller box to read at a comparable
-visual weight to the other logos. Adjust this value to taste once the
-final logo file is in place. */
-.funding-logos .logo-lab {
-height: 84px;
-}
+
+
+
+/* ==========================================================================
+Charts page
+========================================================================== */
+
+
 
 /* ==========================================================================
 Responsive
 ========================================================================== */
 
-@media (max-width: 640px) {
-.info-panel {
-flex-direction: column;
-align-items: flex-start;
+/* ----Desktop---- */
+
+@media (min-width: 769px) {
+    .site-nav {
+        padding-left: 50px !important;
+        padding-right: 70px !important;
+    }
+
+    .site-nav .site-brand {
+        position: static;
+        margin-left: 0;
+        transform: none;
+    }
 }
 
-.about-card {
-  width: 90%;
+/* ---- Tablet footer ---- */
+@media (min-width: 601px) and (max-width: 1200px) {
+    .info-panel {
+        grid-template-columns: 1fr 1.5fr;
+        gap: 24px;
+        padding: 28px 4%;
+    }
+
+    .contact-col {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .footer-logos {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-content: center;
+        gap: 32px;
+        padding: 20px 0;
+    }
+
+    .footer-logos img {
+        max-width: 28%;
+    }
+
+    .meta-col {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    /*--- About Section ---*/
+    .about-content {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.75rem;
+        width: 100%;
+    }
+
+    .about-section {
+        width: 100%;
+    }
+
+    .about-title {
+        max-width: 800px;
+    }
+
+    .about-text {
+        max-width: none;
+    }
+
+    /* Turn the vertical divider into a horizontal divider */
+    .about-divider {
+        width: 100%;
+        height: 1px;
+        min-height: 0;
+    }
+
+    .about-features {
+        width: 100%;
+        padding-left: 0;
+        margin-left: 0;
+    }
+
 }
 
-.meta-col {
-text-align: left;
-}
 
-.tooltip-inner {
-    width: 220px;
-    max-width: calc(100vw - 30px);
+/* -----Small phones---- */
+  @media screen and (max-width: 600px) {
+
+    /*---- Custom Content--- */
+    .tooltip-inner {
+      width: 220px;
+      max-width: calc(100vw - 30px);
+    }
+
+   /* ----Navbar----- */
+    .site-nav {
+      justify-content: flex-start;
+      gap: 14px;
+      min-height: 60px;
+      padding: 0 4%;
+    }
+
+    .mobile-menu {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .desktop-nav-links {
+      display: none;
+    }
+
+    .site-brand {
+      font-size: 1.35rem;
+    }
+
+
+  /* ----Overall Home page -----*/
+    .info-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    }
+
+    .about-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .about-section {
+        padding: 24px 1rem 30px;
+    }
+
+    .meta-col {
+    text-align: left;
+    }
+
+    /*--- About Section ---*/
+    .about-card {
+        padding: 2rem 1.25rem;
+    }
+
+    .about-content {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+        width: 100%;
+    }
+
+    .about-section {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .about-title {
+        font-size: 1.8rem;
+        line-height: 1.2;
+    }
+
+    .about-text {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Change the divider from vertical to horizontal */
+    .about-divider {
+        width: 100%;
+        height: 1px;
+        min-height: 0;
+        background: #D8DEE8;
+    }
+
+    /* Feature rows use the full width */
+    .about-features {
+        width: 100%;
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .feature-row {
+        grid-template-columns: 40px 90px 1px minmax(0, 1fr);
+        column-gap: 12px;
+        padding: 12px 0;
+    }
+
+    .feature-row-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .feature-name {
+        font-size: 1rem;
+    }
+
+    .feature-description {
+        font-size: 0.85rem;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+
+
+
+  /* -----Footer------ */
+  .info-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      width: 100%;
+      padding: 28px 20px;
+      box-sizing: border-box;
+      text-align: center;
   }
-}
 
+  /* Contact section */
+  .info-panel .contact-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 0 0 20px;
+      margin: 0;
+      border: none;
+      border-bottom: 1px solid #D8E2E2;
+      text-align: center;
+      box-sizing: border-box;
+  }
+
+  .info-panel .contact-col p {
+      width: 100%;
+      text-align: center;
+      overflow-wrap: anywhere;
+  }
+
+  /* Logo container */
+  .info-panel .footer-logos {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      width: 100%;
+      padding: 12px 0;
+      margin: 0;
+      border: none;
+      box-sizing: border-box;
+  }
+
+  /* UAB and PKD RRC logos */
+  .info-panel .footer-logos img:not(.logo-lab) {
+      display: block;
+      flex: 0 0 auto;
+      width: auto !important;
+      height: 90px !important;
+      max-width: 90% !important;
+      margin: 0 auto;
+      object-fit: contain;
+  }
+
+  /* Larger Lasseigne Lab logo */
+  .info-panel .footer-logos img.logo-lab {
+      display: block;
+      flex: 0 0 auto;
+      width: 120px !important;
+      height: 120px !important;
+      max-width: none !important;
+      margin: 0 auto;
+      object-fit: contain !important;
+  }
+
+  /* Version section */
+  .info-panel .meta-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 20px 0 0;
+      margin: 0;
+      border: none;
+      border-top: 1px solid #D8E2E2;
+      text-align: center;
+      box-sizing: border-box;
+  }
+
+  .info-panel .meta-col p {
+      width: 100%;
+      text-align: center;
+      overflow-wrap: anywhere;
+  }
+
+}

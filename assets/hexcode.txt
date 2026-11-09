@@ -1,0 +1,37 @@
+Main font: -apple-system, BlinkMacSystemFont, "Segoe UI", and Roboto
+
+:root {
+    /* Text colors */
+    --ink: var(--bs-body-color);  - Dark Charcoal
+    --meta: var(--bs-secondary-color); - Muted Gray
+
+    /* Brand colors */
+    --teal-deep: var(--bs-primary); - Bright Blue
+    --teal-pale: #E6F2F0;
+    --uab-green: #255959;;
+
+    /* Borders */
+    --line: #D8DEDC;
+
+    /* Buttons */
+    --dark-gray: #2C3E50;
+    --dark-gray-hover: #1A252F;
+    --uab-green-hover: #123333;
+
+    /* Dash interactive elements */
+    --Dash-Fill-Interactive-Strong: var(--bs-primary, #3498db);
+}
+
+Body background:  #f3f5f7
+
+Section Card (Custom CSS Box)-
+Section Card background: #fff
+Section Card Border: #d8dee2
+
+Multiselect Option Selector (Charts Page)-
+#495057
+#212529
+#f1f3f5 
+
+
+
