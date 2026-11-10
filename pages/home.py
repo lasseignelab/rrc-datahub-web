@@ -74,7 +74,8 @@ layout = html.Div(
                                 ),
                                 html.P(
                                     "The PKD RRC DataHub is a free, web-based platform " 
-                                    "that makes public PKD gene expression data easier " 
+                                    "that makes public polycystic kidney disease (PKD) gene "
+                                    "expression data easier "
                                     "to access and analyze. The Datahub's standardized "
                                     "data processing pipeline and user-friendly tools " 
                                     "help researchers find and evaluate datasets without " 

@@ -118,14 +118,6 @@ Custom Components
     color: var(--bs-primary);
 }
 
-/* Force dropdown option text to neutral gray, independent of global link
-   color or any accent variable, so it stays consistent across themes. */
-.Select-option,
-.VirtualizedSelectOption,
-.Select-menu-outer div[role="option"] {
-  color: #495057 !important;
-}
-
 .Select-option:hover,
 .Select-option.is-focused {
   color: #212529 !important;
