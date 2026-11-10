@@ -238,50 +238,62 @@ _TPM_INSERT_SQL = (
 )
 
 
-def load_genes(staging: Path | None = None) -> int:
-    """Load gene identifiers from a reference TPM file into the gene table.
 
-    All PRJNA TPM files share the same 78,317-row Ensembl gene annotation, so
-    only the first file found is read. Rows already present (by gene_id string)
-    are skipped. Returns the count of newly inserted rows.
-    """
+def load_genes(staging: Path | None = None) -> int:
+    """Load unique gene identifiers from all staged TPM files."""
     if staging is None:
         staging = _staging_dir()
 
     tpm_dir = staging / "tpm"
     tpm_files = sorted(tpm_dir.glob("*/salmon.merged.gene_tpm.tsv"))
+
     if not tpm_files:
         raise FileNotFoundError(
             f"No salmon.merged.gene_tpm.tsv files found under {tpm_dir}. "
             "Run etl/download.py first."
         )
 
-    ref_file = tpm_files[0]
-    genes: list[tuple[str, str | None]] = []
-    with open(ref_file, newline="", encoding="utf-8") as fh:
-        reader = csv.DictReader(fh, delimiter="\t")
-        for row in reader:
-            gene_name = row["gene_name"].strip() or None
-            genes.append((row["gene_id"].strip(), gene_name))
+    genes: dict[str, str | None] = {}
+
+    for tpm_file in tpm_files:
+        log.info("Reading gene annotations from %s", tpm_file.parent.name)
+
+        with open(tpm_file, newline="", encoding="utf-8") as fh:
+            reader = csv.DictReader(fh, delimiter="\t")
+            for row in reader:
+                gene_id = row["gene_id"].strip()
+                gene_name = row["gene_name"].strip() or None
+
+                if gene_id not in genes or genes[gene_id] is None:
+                    genes[gene_id] = gene_name
 
     session = SessionLocal()
     inserted = 0
+
     try:
-        existing = {gid for (gid,) in session.query(Gene.gene_id).all()}
+        existing = {
+            gid for (gid,) in session.query(Gene.gene_id).all()
+        }
+
         new_genes = [
             {"gene_id": gid, "gene_name": gname}
-            for gid, gname in genes
+            for gid, gname in genes.items()
             if gid not in existing
         ]
+
         if new_genes:
-            session.bulk_insert_mappings(Gene, new_genes)  # type: ignore[arg-type]
+            session.bulk_insert_mappings(Gene, new_genes)
             session.commit()
             inserted = len(new_genes)
+
         log.info(
-            "Loaded %d new gene rows (skipped %d already present).",
+            "Loaded %d new genes from %d unique annotations "
+            "(skipped %d already present).",
             inserted,
+            len(genes),
             len(genes) - inserted,
         )
+
     except Exception:
         session.rollback()
         raise

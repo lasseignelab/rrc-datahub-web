@@ -137,7 +137,7 @@ def _list_cheaha_tpm_files(transport: paramiko.Transport, base_path: str) -> lis
     base_path comes from CHEAHA_BASE_PATH, a trusted environment variable
     controlled by the operator, not end-user input.
     """
-    find_cmd = f"find {base_path} -path '{CHEAHA_TPM_GLOB}' -type f"
+    find_cmd = f"find {base_path} -type f -path '*/star_salmon/salmon.merged.gene_tpm.tsv'"
     channel = transport.open_session()  # nosec B601
     try:
         channel.exec_command(find_cmd)  # nosec B601
