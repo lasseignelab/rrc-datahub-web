@@ -1182,10 +1182,11 @@ layout = html.Div(
                             [
                                 section_header(
                                     title="Edit Plot Parameters",
-                                    tooltip_text=
-                                    "Customize how your selected dataset "
-                                    "is displayed by adjusting the plotting" 
-                                    " options below.",
+                                    tooltip_text=(
+                                        "Customize how your selected dataset "
+                                        "is displayed by adjusting the plotting"
+                                        " options below."
+                                    ),
                                     header_id="edit-plot-parameters",
                                     heading_id="edit-plot-parameters-title",
                                 ),
