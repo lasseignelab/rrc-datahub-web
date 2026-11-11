@@ -4,6 +4,11 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-11
+
+### Document Render database update procedure
+- `AGENTS.md`: Added an "Updating the Render database" section (and table-of-contents entry) after "ETL load script", describing how to export `RENDER_DATABASE_URL` from the Render dashboard (never committed, since it contains secrets), dump the local database with `etl/db_dump.sh`, and restore it to Render with `etl/db_upload.sh`. The dump command passes `PGPASSWORD` as a command prefix so it is exported to `pg_dump`. (Agent: Claude Opus 5.5)
+
 ## 2026-09-10
 
 ### Require agents to identify themselves in changelog entries
