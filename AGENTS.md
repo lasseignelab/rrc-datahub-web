@@ -9,6 +9,7 @@
 - [Environment setup](#environment-setup)
 - [Database](#database)
 - [ETL load script](#etl-load-script)
+- [Updating the Render database](#updating-the-render-database)
 - [Testing](#testing)
 - [Running the app](#running-the-app)
 - [Linting (MegaLinter)](#linting-megalinter)
@@ -224,6 +225,34 @@ The script logs progress to stdout. On success it prints a summary line with the
 source venv/bin/activate
 python -m etl.load
 ```
+
+## Updating the Render database
+
+After loading data into your local database, copy it to the Render-hosted PostgreSQL database used by the deployed app. Both scripts must be run from the project root, and `pg_dump`/`pg_restore` must be on your `PATH` (installed with PostgreSQL).
+
+**1. Export the Render database URL.** Copy the **External Database URL** from the Render dashboard (the database's *Connections* section) and export it in your shell:
+
+```bash
+export RENDER_DATABASE_URL='postgresql://render_user:PASSWORD@HOST/render_database'
+```
+
+Replace everything inside the single quotes with the actual URL from the dashboard. The URL contains the database password, so **never commit it** or paste it into this file, `.env.example`, or any other tracked file.
+
+**2. Dump the local database.** Load the `DB_*` variables from `.env` and run the dump script in a subshell, so the variables don't leak into your interactive shell:
+
+```bash
+(set -a; source .env; set +a; PGPASSWORD="$DB_PASSWORD" etl/db_dump.sh)
+```
+
+This writes `local_database.dump` (custom format, without owner or ACL info) to the project root. The file is gitignored.
+
+**3. Upload the dump to Render.** Once the dump finishes, restore it into the Render database:
+
+```bash
+etl/db_upload.sh
+```
+
+This runs `pg_restore --clean --if-exists` against `$RENDER_DATABASE_URL`, which **drops and recreates** the existing objects in the Render database, replacing its contents with your local data.
 
 ## Testing
 
