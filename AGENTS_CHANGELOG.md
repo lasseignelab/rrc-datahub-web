@@ -4,6 +4,11 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-11
+
+### Fix: age range filter not filtering, and wrong values after unit change
+- `pages/charts.py`: Commit `7c4e47f` changed `age-min-input`/`age-max-input` from `type="number"` to `type="text"`, so Dash delivers strings and `_update_age_days_store` raised `TypeError` (`str * float`). The `age-range-days` store never updated, so the dataset filter ignored typed ages, and a unit change converted the stale store instead of the typed values. Added `_parse_age_input()` to parse text (blank/non-numeric falls back to defaults, negatives clamp to 0). `_update_age_days_store` now also reads the store as State and returns `no_update` when the inputs equal the store re-expressed in the current unit, so a unit change no longer round-trips through 1-decimal rounding and drifts the stored day range. (Agent: Claude Opus 5.5)
+
 ## 2026-09-10
 
 ### Require agents to identify themselves in changelog entries

@@ -1542,18 +1542,46 @@ def _convert_age_inputs_on_unit_change(unit, age_days):
     return _from_days(int(min_days), unit), _from_days(int(max_days), unit)
 
 
+def _parse_age_input(raw, default: float) -> float:
+    """Parse an age input value to a non-negative float.
+
+    The inputs are ``type="text"`` (for accessibility), so Dash delivers
+    strings; blank or non-numeric entries fall back to ``default``.
+    """
+    if raw is None:
+        return default
+    try:
+        value = float(str(raw).strip().replace(",", ""))
+    except ValueError:
+        return default
+    return max(value, 0.0)
+
+
 @callback(
     Output("age-range-days", "data"),
     Input("age-min-input", "value"),
     Input("age-max-input", "value"),
     State("age-unit", "value"),
+    State("age-range-days", "data"),
     prevent_initial_call=True,
 )
-def _update_age_days_store(min_val, max_val, unit):
+def _update_age_days_store(min_val, max_val, unit, age_days):
     """Convert the entered min/max to days and persist in the Store."""
     effective_unit = unit or "days"
-    lo = _to_days(min_val if min_val is not None else 0, effective_unit)
-    hi = _to_days(max_val if max_val is not None else _age_max, effective_unit)
+    lo_val = _parse_age_input(min_val, 0.0)
+    hi_val = _parse_age_input(max_val, _from_days(_age_max, effective_unit))
+
+    # A unit change rewrites the inputs with rounded values; converting those
+    # back would drift the stored day range, so keep the exact stored days.
+    if age_days:
+        stored_lo, stored_hi = int(age_days[0]), int(age_days[1])
+        if lo_val == _from_days(stored_lo, effective_unit) and hi_val == _from_days(
+            stored_hi, effective_unit
+        ):
+            return dash.no_update
+
+    lo = _to_days(lo_val, effective_unit)
+    hi = _to_days(hi_val, effective_unit)
     return [min(lo, hi), max(lo, hi)]
 
 
