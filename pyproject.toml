@@ -1,0 +1,12 @@
+[tool.bandit]
+exclude_dirs = ["tests"]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["app", "components", "config", "db", "pages"]
+
+[tool.pyright]
+# Third-party packages are not installed in the MegaLinter Docker image.
+# Import resolution is verified at runtime and in CI where packages are installed.
+reportMissingImports = "none"
+reportMissingModuleSource = "none"

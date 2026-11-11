@@ -1,0 +1,4 @@
+dash[testing]==4.1.0
+pytest
+pytest-html
+webdriver-manager
