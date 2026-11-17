@@ -469,27 +469,8 @@ color: var(--meta);
 margin: 0;
 }
 
-.search-input-wrapper {
-  position: relative;
-  width: 100%;
-}
 
-.search-icon {
-  position: absolute;
-  left: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 2;
-}
 
-.gene-search-input {
-  width: 100%;
-  height: 40px;
-  box-sizing: border-box;
-  padding: 0 12px 0 40px;
-  font-size: 18px;
-}
 
 /* ---- About ---- */
 
@@ -645,3 +626,123 @@ text-align: left;
   }
 }
 
+
+/* ---- Home-page data chat (components/data_chat.py) ---- */
+
+.data-chat {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.data-chat-log {
+  max-height: 420px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bs-body-bg);
+}
+
+.data-chat-log-empty {
+  display: none;
+}
+
+.data-chat-message {
+  margin-bottom: 12px;
+}
+
+.data-chat-message:last-child {
+  margin-bottom: 0;
+}
+
+.data-chat-message p:last-child {
+  margin-bottom: 0;
+}
+
+.data-chat-speaker {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--meta);
+}
+
+.data-chat-user {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--teal-pale);
+  color: var(--ink);
+}
+
+.data-chat-assistant table {
+  margin: 8px 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-chat-assistant th,
+.data-chat-assistant td {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+}
+
+.data-chat-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-chat-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.data-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* dcc.Input renders a wrapper div around the real <input>; style the
+   inner element so it fills the row. */
+.data-chat-input .dash-input-element {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--bs-body-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.data-chat-input .dash-input-element:focus-visible {
+  outline: 2px solid var(--uab-green);
+  outline-offset: 1px;
+}
+
+.data-chat-submit {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+.data-chat-status {
+  min-height: 1.5rem;
+  margin-top: 8px;
+  text-align: center;
+  color: var(--meta);
+}
+
+.data-chat-disclaimer {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--meta);
+}

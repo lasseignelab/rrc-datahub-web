@@ -1,7 +1,7 @@
 import dash
 from dash import html
 
-from components import landing_search
+from components import data_chat
 
 dash.register_page(__name__, path="/", name="Home")
 
@@ -36,10 +36,10 @@ layout = html.Div(
                         ),
                     ],
                 ),
-                # ---- Gene search ----
+                # ---- Data chat (replaces the gene search box) ----
                 html.Section(
                     className="search-section",
-                    children=[landing_search.layout],
+                    children=[data_chat.layout],
                 ),
             ],
             className="section-card-full-width hero-section",

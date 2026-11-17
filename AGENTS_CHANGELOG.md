@@ -4,6 +4,25 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-17
+
+### Chat links open the charts page filtered to the answer's datasets (branch `feature/add-ai-chat`)
+- `components/chat_assistant.py`: New `chart_link` tool (backed by `build_chart_link`) that builds the URL-encoded `/charts` link: `gene`, `datasets` (comma-separated, answer order), and repeatable `scientific_name`, `sex`, `underlying_variant`, `sample_type` plus `min_age_days`/`max_age_days`. The system prompt now requires every charts link to come from this tool, so the model never hand-writes URLs.
+- `pages/charts.py`: New `apply_url_filters` callback reads those parameters on load and sets the matching dataset filters (case-insensitive match against dropdown options; unmatched values leave the filter at its default; a named filter unticks its "not provided" box). A new `url-datasets` store limits the Found Dataset(s) table to the answer's datasets, and the first one the answer named is selected. A notice with a "Show all datasets" button clears the limit. Helpers `_parse_url_filters`, `_match_options`, `_limit_rows`, `_choose_selected`.
+- Tests: `tests/test_charts.py` (new; URL round-trip, matching, limiting, selection, filter callback) and link-encoding tests in `tests/test_chat_assistant.py`. Verified live: chat answers produce links that open with the expected filters and datasets. (Agent: Claude Opus 5.5)
+
+### Move the chat conversation below the question box (branch `feature/add-ai-chat`)
+- `components/data_chat.py`: The conversation log now comes after the input, status line and disclaimer, so the question box stays in place as the conversation grows. `assets/style.css`: `.data-chat-log` margin moved from bottom to top to match. (Agent: Claude Opus 5.5)
+
+### Replace home-page gene search with an AI data chat (branch `feature/add-ai-chat`)
+- `components/data_chat.py` (new): Chat box that replaces the gene search on the home page. A question is appended to a `dcc.Store` history immediately (so it shows at once), then a second callback asks the assistant and appends the reply. While waiting, the Ask button is disabled and a `role="status"` message announces progress; the conversation container is `role="log"` with `aria-live="polite"`. Replies render with `dcc.Markdown` (no raw HTML). Enter while an answer is pending is ignored so turns cannot interleave.
+- `components/chat_assistant.py` (new): Answers questions with Claude (`claude-opus-5-5`, effort `medium`) through the Anthropic SDK's beta tool runner, capped at 8 tool round-trips and the last 20 history messages. History between turns is text-only, which is always valid under the API's thinking-block history check. Uses top-level prompt caching for the stable system prompt and tools, and server-side refusal fallbacks (`fallbacks="default"`, beta `server-side-fallback-2026-07-01`). Missing credentials, auth, rate-limit, API and connection errors become short user-facing messages instead of exceptions. One `# pyright: ignore[reportCallIssue]` on the `tool_runner` call: the MegaLinter image bundles anthropic 0.84, which predates `fallbacks`; against the pinned SDK the call type-checks cleanly.
+- `db/chat_tools.py` (new): Read-only query functions the assistant calls as tools — `list_field_values`, `find_datasets` (field filters + age-in-days overlap), `describe_dataset`, and `gene_expression_summary` (n/mean/median/min/max TPM per dataset and group, gene names resolved with `db.gene_search.resolve_gene`). Filter and group-by fields are whitelisted in `SAMPLE_FIELDS`; results are capped at 200 rows.
+- Removed `components/landing_search.py` and its tests in `tests/test_app.py`; removed the now-unused `.search-input-wrapper`, `.search-icon`, `.gene-search-input` CSS. `db/gene_search.py` is kept (used by the chat's gene tool).
+- `pages/home.py`: Renders `data_chat.layout` in place of the search box. `assets/style.css`: chat styles using existing color tokens; the inner `.dash-input-element` is styled because Dash 4 wraps `dcc.Input` in a container div.
+- `requirements.txt`: Added `anthropic==2.9.0` and its pinned dependencies. `.env.example` and `AGENTS.md`: documented `ANTHROPIC_API_KEY`; added the new files to the project layout.
+- Tests: `tests/test_chat_tools.py`, `tests/test_chat_assistant.py` (Anthropic client mocked), `tests/test_data_chat.py` (callbacks, ARIA roles, label association, and a `dash_duo` check that the chat renders on the home page). No test needs a database or API key. (Agent: Claude Opus 5.5)
+
 ## 2026-09-10
 
 ### Require agents to identify themselves in changelog entries
