@@ -6,6 +6,9 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-17
 
+### Fix unresolvable pins in requirements.txt (branch `feature/add-ai-chat-gemini`)
+- `requirements.txt`: Bumped `typing_extensions` 4.15.0 → 4.16.0 (required by the pinned `anyio` and `pydantic`) and `idna` 3.11 → 3.20 (required by `httpx2`). The old pins made `pip install -r requirements.txt` fail with ResolutionImpossible in a fresh environment (e.g. CI). Same fix as on `feature/add-ai-chat`. (Agent: Claude Opus 5.5)
+
 ### Switch the data chat from Claude to the Gemini free tier (branch `feature/add-ai-chat`)
 - `components/chat_assistant.py`: Rewritten on the Google Gen AI SDK (`google-genai==3.4.0`) with model `gemini-3.8-flash` (free tier). Tools are plain Python functions run by the SDK's automatic function calling (max 8 calls per question). Filters are a Pydantic `SampleFilters` model and age bounds an `AgeRange` model: the SDK gives a bare `dict` parameter no properties, refuses an int for a `float | None` parameter, and cannot invoke a function with a `Literal` parameter, so field names are typed `str` and validated by `db/chat_tools.py`. Quota (429) and overload (503) errors show a "try again" message; a rejected key shows the not-configured message; safety blocks show a polite refusal.
 - Env var is now `GEMINI_API_KEY` (`.env.example`, `AGENTS.md`). `requirements.txt`: removed `anthropic`, `docstring_parser`, `jiter`, `opentelemetry-api`; added `google-genai` and its dependencies.
