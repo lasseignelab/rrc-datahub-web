@@ -6,6 +6,9 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-17
 
+### Fix unresolvable pins in requirements.txt (branch `feature/add-ai-chat`)
+- `requirements.txt`: Bumped `typing_extensions` 4.15.0 → 4.16.0 (required by the pinned `anyio` and `pydantic`) and `idna` 3.11 → 3.20 (required by `httpx2`). The packages added for the chat made `pip install -r requirements.txt` fail with ResolutionImpossible; it went unnoticed locally because the venv already had newer versions. Verified with a dry-run install into a clean venv. (Agent: Claude Opus 5.5)
+
 ### Chat links open the charts page filtered to the answer's datasets (branch `feature/add-ai-chat`)
 - `components/chat_assistant.py`: New `chart_link` tool (backed by `build_chart_link`) that builds the URL-encoded `/charts` link: `gene`, `datasets` (comma-separated, answer order), and repeatable `scientific_name`, `sex`, `underlying_variant`, `sample_type` plus `min_age_days`/`max_age_days`. The system prompt now requires every charts link to come from this tool, so the model never hand-writes URLs.
 - `pages/charts.py`: New `apply_url_filters` callback reads those parameters on load and sets the matching dataset filters (case-insensitive match against dropdown options; unmatched values leave the filter at its default; a named filter unticks its "not provided" box). A new `url-datasets` store limits the Found Dataset(s) table to the answer's datasets, and the first one the answer named is selected. A notice with a "Show all datasets" button clears the limit. Helpers `_parse_url_filters`, `_match_options`, `_limit_rows`, `_choose_selected`.
