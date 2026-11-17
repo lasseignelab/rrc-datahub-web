@@ -379,6 +379,74 @@ color: var(--teal-deep);
 border-bottom-color: var(--teal-deep);
 }
 
+/* ---- About dropdown (components/navbar.py) ---- */
+
+.about-menu {
+position: relative;
+}
+
+.site-nav .about-menu-toggle {
+background: none;
+border: 0;
+border-bottom: 2px solid transparent;
+border-radius: 0;
+box-shadow: none;
+cursor: pointer;
+}
+
+.site-nav .about-menu-toggle:hover,
+.site-nav .about-menu.show .about-menu-toggle {
+color: var(--teal-deep);
+border-bottom-color: var(--teal-deep);
+}
+
+.about-menu .dropdown-menu {
+position: absolute;
+z-index: 1000;
+min-width: 16rem;
+margin: 0;
+list-style: none;
+background: var(--bs-body-bg, #fff);
+border-radius: 6px;
+padding: 6px 0;
+border: 1px solid var(--line);
+box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.about-menu-item {
+display: flex;
+text-decoration: none;
+align-items: center;
+white-space: nowrap;
+padding: 10px 16px;
+color: var(--ink);
+}
+
+.about-menu-item:hover,
+.about-menu-item:focus {
+background: var(--teal-pale);
+color: var(--teal-deep);
+}
+
+/* margin (not flex gap) so spacing is identical in every browser */
+.about-menu-item .bi {
+margin-left: auto;
+padding-left: 1.5rem;
+font-size: 1.1rem;
+color: var(--meta);
+}
+
+/* Open on hover for mouse users; click/keyboard/touch use Bootstrap's toggle. */
+@media (hover: hover) {
+  /* !important overrides the inline position Popper leaves behind after
+  the menu has been opened by click once. */
+  .about-menu:hover > .dropdown-menu:not(.show) {
+  display: block;
+  inset: 100% auto auto 0 !important;
+  transform: none !important;
+  }
+}
+
 /* ==========================================================================
 Home page
 ========================================================================== */
@@ -619,6 +687,100 @@ visual weight to the other logos. Adjust this value to taste once the
 final logo file is in place. */
 .funding-logos .logo-lab {
 height: 84px;
+}
+
+/* ==========================================================================
+About page
+========================================================================== */
+
+.about-toc-title,
+.about-group-heading {
+scroll-margin-top: 1rem;
+font-size: 1.5rem;
+font-weight: 600;
+margin-bottom: 1rem;
+}
+
+.about-toc-list {
+margin-bottom: 0;
+padding-left: 1.25rem;
+}
+
+/* Sidebar "On this page" stays in view while scrolling on wide screens. */
+@media (min-width: 992px) {
+  .about-toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  }
+}
+
+.about-toc-list > li {
+break-inside: avoid;
+margin-bottom: 0.75rem;
+font-weight: 600;
+}
+
+.about-toc-list ul {
+font-weight: 400;
+padding-left: 1.25rem;
+}
+
+.about-item + .about-item {
+border-top: 1px solid var(--line);
+margin-top: 1.5rem;
+padding-top: 1.5rem;
+}
+
+.about-item-heading {
+font-size: 1.2rem;
+font-weight: 600;
+/* Keep anchored headings visible below the top of the viewport. */
+scroll-margin-top: 1rem;
+}
+
+.about-markdown {
+line-height: 1.65;
+/* Wide tables scroll sideways inside the card on narrow screens / high zoom
+   instead of spilling out (WCAG 1.4.10 allows 2-D scrolling for data tables). */
+overflow-x: auto;
+}
+
+.about-markdown h4 {
+font-size: 1rem;
+font-weight: 600;
+margin-top: 1.25rem;
+}
+
+.about-markdown table {
+border-collapse: collapse;
+margin-bottom: 1rem;
+max-width: none;
+}
+
+.about-markdown th,
+.about-markdown td {
+border: 1px solid #ccc;
+padding: 6px 10px;
+text-align: left;
+}
+
+.about-markdown th {
+background-color: #f0f0f0;
+text-align: center;
+vertical-align: middle;
+}
+
+.about-markdown blockquote {
+border-left: 3px solid var(--line);
+border-radius: 0;
+padding-left: 1rem;
+color: var(--ink);
+}
+
+.about-version-line {
+color: var(--meta);
 }
 
 /* ==========================================================================

@@ -4,6 +4,126 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-17
+
+### About page: future directions finalized
+- `content/about/future-directions.md`: Replaced cross-dataset comparisons with multi-gene views within one dataset (planned first); added AI-assisted gene search (chatbot for the search bar); removed the last placeholder. The About page now has no placeholders.
+- `content/about/faq.md`: Removed "Cross-dataset comparison is planned" to stay consistent with Future directions.
+- (Agent: Claude Opus 5.5)
+
+### About page: Age column header wrapping
+- `content/about/datasets.md`: Non-breaking space (U+00A0) in "postnatal day" so the header wraps as "Age" / "(postnatal day)" instead of splitting the parenthetical.
+- (Agent: Claude Opus 5.5)
+
+### About page: grant number format, nf-core acknowledgment
+- `content/about/funding.md`: Grant cited by core project number U54DK126087 (NIH acknowledgment convention) instead of 2U54DK126087-06.
+- `content/about/acknowledgments.md`: Removed the nf-core sentence (cited elsewhere, e.g. How to cite and Methodology).
+- (Agent: Claude Opus 5.5)
+
+### About page: funding and acknowledgments
+- `content/about/funding.md`: NIDDK/NIH grant 2U54DK126087-06 (UAB Childhood Cystic Kidney Disease Core Center, PKD RRC); institute confirmed by the DK activity code and NIH RePORTER listings for U54DK126087. Additional-funding placeholder removed; NIH disclaimer kept.
+- `content/about/acknowledgments.md`: PKD RRC feedback/beta-testing acknowledgment adapted from the author's poster (duplicate "PKD RRC" mention merged; CHOP spelled out); UAB IT-Research Computing Cheaha statement from docs.rc.uab.edu/grants/publications (Globus statement omitted); nf-core and dataset depositors kept.
+- (Agent: Claude Opus 5.5)
+
+### About page: team, contact, data license
+- `content/about/contact.md`: Rewritten: single contact email (bnp0001@uab.edu, temporary until the DataHub-specific UAB address exists); core team (Lasseigne, Soelter, Crumley, Casper, Okunbor) with roles, no individual emails, "with support from the other members of the Lasseigne Lab" linking to the lab website.
+- `content/about/feedback.md`: Contact email set to bnp0001@uab.edu (same temporary address).
+- `content/about/license.md`: Processed data licensed CC BY 4.0 (Zenodo default, per author).
+- TODO when the DataHub email exists: replace bnp0001@uab.edu in `content/about/contact.md` and `content/about/feedback.md` (and decide whether `pages/home.py` should switch too).
+- (Agent: Claude Opus 5.5)
+
+### About page: how to cite
+- `content/about/how-to-cite.md`: Preprint expected in 2027; interim citation of the website with version (https://datahub.pkdrrc.lasseigne.org/) and author list (Soelter, Crumley, Casper, Okunbor, Lasseigne; Last, F.M. format), Zenodo DOI for processed data (v0.1.0), and existing dataset/nf-core citation guidance. BibTeX placeholder removed. No placeholders remain.
+- (Agent: Claude Opus 5.5)
+
+### About page: methodology dataset selection and QC
+- `content/about/methodology.md`: Dataset selection (NCBI GEO and PubMed search for mouse kidney bulk RNA-seq in PKD; all v0.1.0 runs Illumina, verified in curated metadata `platform` column) and QC (MultiQC metrics compiled per dataset; no QC-based exclusions; not yet in the app) filled per author. No placeholders remain in this section.
+- (Agent: Claude Opus 5.5)
+
+### About page: methodology filled from the pipeline repo
+- `content/about/methodology.md`: Processing pipeline and Metadata curation rewritten from `lasseignelab/rrc-datahub` (README, `.caprc`, `src/01_geo_download.sh`, `src/04_run_nfcore_rnaseq.sh`, `src/05_transform_metadata.R`, `src/functions/get_bioproject_metadata.R`): ENA FASTQ download with MD5 verification; nf-core/rnaseq v3.25.0, STAR + Salmon (`--aligner star_salmon`), GRCm39 primary assembly, GENCODE M37; Zenodo DOI for processed outputs; Entrez SRA + BioSample metadata and the harmonization rules. Dataset selection and QC placeholders remain (need author input).
+- (Agent: Claude Opus 5.5)
+
+### About page: repository links, licenses, limitations
+- Linked the pipeline (`lasseignelab/rrc-datahub`) and web app (`lasseignelab/rrc-datahub-web`) repos where relevant: `overview.md` ("pipeline"), `methodology.md` (processing pipeline), `license.md`, `feedback.md`. Code stays on GitHub, so removed the "Archived code (Zenodo)" line from `code-availability.md`.
+- `license.md`: Corrected licenses per repo: pipeline is MIT (`rrc-datahub/LICENSE`), web app is GPL-3.0. Previously stated GPL-3.0 for all source code.
+- `feedback.md`: Website problems → `rrc-datahub-web` issues; metadata errors/dataset requests → `rrc-datahub` issues.
+- `limitations.md`: "Bulk tissue only" corrected to "Bulk RNA-seq only" (v0.1.0 includes cell lines and organoids); added sex-reporting limitation (only PRJNA857739 of 14 reports sex). Placeholder removed.
+- (Agent: Claude Opus 5.5)
+
+### About page: FAQ downloads and gene annotation
+- `content/about/faq.md`: Gene search answer now names the GENCODE mouse annotation (release M37), matching the pipeline (`lasseignelab/rrc-datahub` README and `src/02_ref_genome_download.sh`), instead of Ensembl. Download answer points to the Zenodo archive of each release's processed data (v0.1.0: doi:10.5281/zenodo.24325117) and to per-plot CSV downloads.
+- `content/about/code-availability.md`: Split the Zenodo line into processed data (v0.1.0, doi:10.5281/zenodo.24325117) and archived code (link pending).
+- (Agent: Claude Opus 5.5)
+
+### About page: user guide checked against release-0.1 Charts
+- `content/about/user-guide.md`: Button name corrected to **Search Datahub** (matches `components/landing_search.py`); added Age range instructions (min/max + unit: days, weeks, months, years) reflecting the release-0.1 age filter; Q1/Q3 spelled out; removed screenshot placeholder (text-only for now).
+- `content/about/release-history.md`: fixed a remaining two-part version ("v0.1." at sentence end → v0.1.0).
+- (Agent: Claude Opus 5.5)
+
+### About page: release date and future directions
+- `config.py`: `UPDATED` set to `2026-11-17`, the v0.1.0 release date (release-0.1 merged to main/develop today).
+- `content/about/release-history.md`: v0.1.0 dated 2026-11-17.
+- `content/about/future-directions.md`: v0.2.0 human bulk RNA-seq marked as in code review; added single-cell datasets (human and mouse) being processed for ingestion; QC abbreviation introduced.
+- (Agent: Claude Opus 5.5)
+
+### About page: sticky sidebar layout
+- `pages/about.py`: "On this page" moved into a left sidebar (`dbc.Col(lg=3)`) beside the content (`lg=9`); stacks into one column below 992px.
+- `assets/style.css`: Sidebar is `position: sticky` on ≥992px. Removed the 80ch cap on `.about-markdown` (content column now ~110 characters wide). `.about-markdown` gets `overflow-x: auto` so wide tables scroll inside the card on narrow screens / 400% zoom instead of overflowing (WCAG 1.4.10). Table of contents is single-column.
+- Verified with axe-core (WCAG 2.0/2.1/2.2 A+AA + best practice) with Flatly loaded: 0 violations on /about at 1288px and 320px, and with the About dropdown open; keyboard order skip link → nav → sidebar → content; no horizontal page scroll at 320px.
+- Found, not fixed (pre-existing, Charts page): axe `button-name` (critical) on 8 dropdown filters (`#scientific-name-select`, `#sex-select`, `#underlying-variant-select`, `#sample-type-select`, `#group-select`, `#plot-sample-type-select`, `#plot-sex-select`, `#plot-age-select`).
+- (Agent: Claude Opus 5.5)
+
+### About page: dataset publications
+- `content/about/datasets.md`: Filled the publication column (author, year) for all 14 BioProjects from the pipeline repo's dataset table; column renamed "Original publication" to match that table. No DOIs/links yet.
+- (Agent: Claude Opus 5.5)
+
+### About page: centered table headers
+- `assets/style.css`: `.about-markdown th` now `text-align: center; vertical-align: middle` (body cells stay left-aligned).
+- (Agent: Claude Opus 5.5)
+
+### About page: Datasets table filled from curated metadata
+- `content/about/datasets.md`: Filled Underlying variant, Sample type, Age (postnatal day), and Samples (n) for all 14 BioProjects from `staging/transformed-metadata/*_transformed.tsv`, counting each run once (same de-duplication as `etl/load.py`, so PRJNA805541 super-series rows map to PRJNA805542/PRJNA805547). Total 249 samples, added to the intro. Tissue and Treatment columns omitted (tissue is uniformly kidney or not provided; Treatment dropped to reduce wrapping). Added a note that wild-type controls are not listed and that "Not provided" means not reported in the source record. Source publication remains a placeholder.
+- (Agent: Claude Opus 5.5)
+
+### Version format MAJOR.MINOR.PATCH; About overview rewrite
+- `config.py`: `VERSION` is now `"0.1.0"`; comment documents the MAJOR.MINOR.PATCH format. Home and About pick this up automatically.
+- `content/about/*.md`: All version references now use three parts (v0.1.0, v0.2.0). Release-history intro replaced with a one-line statement of the format.
+- `content/about/overview.md`: RRC and PKD abbreviations now introduced in the first sentence; added "no account or login required"; added a mission paragraph adapted from the grant; UAB abbreviation introduced.
+- Abbreviations introduced at first appearance in page order: TPM in `release-history.md`, GEO in `limitations.md`.
+- (Agent: Claude Opus 5.5)
+
+### About page: modality-neutral wording
+- `content/about/{overview,datasets,faq,limitations,methodology}.md`: General descriptions of the DataHub no longer say "gene expression"/"expression data", since future releases add other data modalities; text now says "datasets"/"results". Wording specific to the current v0.1 bulk RNA-seq data (TPM, violin plots, release notes) is unchanged. Methodology now opens by stating it describes v0.1 and that methods for new data types will be added per release.
+- (Agent: Claude Opus 5.5)
+
+## 2026-11-16
+
+### Fix About dropdown: section jumps, hover position, icon spacing
+- `assets/anchor-scroll.js`: Jumps landed ~3000px off because `dcc.Markdown` renders asynchronously after the headings exist, pushing sections down after the scroll. The script now re-aligns the target on every DOM mutation / body resize until the layout is stable for 1.5 s (max 8 s), focuses the heading once, and stops immediately on user wheel/touch/key/mouse input. Also handles direct loads of `/about#...`.
+- `assets/style.css`: Hover-opened menu now overrides the inline Popper position left behind after a click-open (`inset`/`transform` with `!important`, only for `:not(.show)`), so it no longer opens offset and closes before the pointer reaches it. Icon spacing uses `margin-left: auto` + `padding-left` instead of flex `gap` for consistent rendering across browsers.
+- Verified with Flatly + Bootstrap Icons loaded and Markdown JS delayed 1.2 s: click from `/charts`, click on `/about`, hover-after-click, direct hash load, and user-scroll-not-hijacked all pass; pa11y 0 errors.
+- (Agent: Claude Opus 5.5)
+
+### About dropdown menu in navbar
+- `components/navbar.py`: Replaced the plain "About" link with a `dbc.DropdownMenu` listing the four About sections (Overview; Using the DataHub; Methods and reuse; People and support), each linking to `/about#<group id>` with a Bootstrap icon (`aria-hidden`). Entries live in `ABOUT_MENU`; ids must match `pages/about.py` `_group_id`.
+- `assets/anchor-scroll.js` (new): Scrolls to and focuses the element named in the URL hash once Dash renders it (browser anchor-jumping fails because pages render after navigation). Re-runs on `hashchange`, `popstate`, and Dash's `_dashprivate_pushstate`.
+- `assets/style.css`: Dropdown styles matching `.nav-link`; opens on hover for mouse users via `@media (hover: hover)`, while click, keyboard (Enter + arrow keys), and touch use Bootstrap's toggle. Added `scroll-margin-top` to About H2 headings.
+- `tests/test_about.py`: Navbar test now also checks dropdown items; new test asserts `ABOUT_MENU` anchors equal the About page group ids.
+- Verified in headless Chrome: hover opens menu; selecting an entry from `/charts` lands on and focuses the section; keyboard navigation works. pa11y WCAG2AA: 0 errors on `/`, `/charts`, `/about`, and `/charts` with the menu open.
+- (Agent: Claude Opus 5.5)
+
+### Add About page
+- `pages/about.py` (new): Registers `/about` ("About"). Renders one H1, an "On this page" in-page navigation, and four H2 group cards (Overview; Using the DataHub; Methods and reuse; People and support), each holding H3 subsections. Section order and titles come from the `SECTIONS` list; each slug is both the anchor id and the name of its markdown file. The Version and release history subsection also shows the live `VERSION`/`UPDATED` from `config.py`. No database access, so the page renders in CI without PostgreSQL.
+- `content/about/*.md` (new, 15 files): Page copy kept outside Python so it can be edited without touching layout code. Bodies start at `####` because the page supplies H1–H3. Unknown details are marked `\[PLACEHOLDER: ...\]` (brackets escaped so Markdown does not render them as links); `grep -rn PLACEHOLDER content/about` lists what is left to fill in.
+- `config.py` (new): Moved `VERSION`, `UPDATED`, and `GITHUB_URL` out of `pages/home.py` so Home and About show the same version from one place. `pages/home.py` now imports them; no other change to Home.
+- `components/navbar.py`: Added an "About" link after "Charts".
+- `assets/style.css`: Added an "About page" block (table of contents, group/item headings, markdown tables, version line).
+- `.pa11yci`: Added `http://localhost:8050/about`.
+- `tests/test_about.py` (new): Checks single H1, a non-empty markdown file per section, no markdown heading above level 4, every table-of-contents link targets an existing id, one Markdown block per section, navbar link, and a `dash_duo` render test.
+- `AGENTS.md`: Documented `config.py` contents and the `content/about/` folder in Project layout.
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-11
 
 ### Clear outstanding black/isort MegaLinter findings

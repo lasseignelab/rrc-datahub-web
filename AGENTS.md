@@ -47,8 +47,10 @@ Dash + Plotly web application for the RRC DataHub. Built in Python, served via F
 
 ```
 app.py              # Dash app entry point
-config.py           # App configuration (env vars, constants)
+config.py           # Shared constants (VERSION, UPDATED, GITHUB_URL); bump on release
 pages/              # Multi-page Dash pages (one file per page)
+content/
+  about/            # Markdown copy for the About page (one file per section; start at ####)
 components/         # Reusable layout components (charts, filters, navbar)
 db/
   connection.py     # PostgreSQL connection setup (psycopg2 + python-dotenv)

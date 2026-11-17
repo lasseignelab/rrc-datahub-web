@@ -1,0 +1,19 @@
+- **Between-study differences.** Datasets come from different labs, library
+  preparations, sequencing platforms, and depths. Uniform reprocessing reduces
+  but does not remove these batch effects, so compare values *within* a
+  dataset rather than absolute values *across* datasets.
+- **Metadata depend on the original submission.** Sample characteristics
+  (sex, age, genotype, treatment) are curated from public SRA and Gene
+  Expression Omnibus (GEO) records.
+  Where a record is incomplete, values are shown as "Not provided."
+- **Statistical tests are exploratory.** P-values are computed per gene with
+  no correction for testing many genes, and do not account for study design.
+  Use them for hypothesis generation, not as confirmatory results.
+- **Bulk RNA-seq only.** v0.1.0 contains bulk RNA-seq, which averages
+  expression across all cells in a sample.
+- **Mouse models.** v0.1.0 contains mouse data only; findings may not translate
+  directly to human PKD.
+
+- **Sex is rarely reported.** Only 1 of the 14 datasets in v0.1.0
+  (PRJNA857739) reports sample sex, so filtering by sex excludes most
+  datasets.

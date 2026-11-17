@@ -2,15 +2,9 @@ import dash
 from dash import html
 
 from components import landing_search
+from config import GITHUB_URL, UPDATED, VERSION
 
 dash.register_page(__name__, path="/", name="Home")
-
-# --- Update these two values whenever a new version ships ---
-VERSION = "0.1"
-UPDATED = "2026-08-24"
-# --------------------------------------------------------------
-
-GITHUB_URL = "https://github.com/lasseignelab/rrc-datahub"
 
 
 def logo(src, alt, extra_class=""):
