@@ -1,31 +1,28 @@
 """
-Claude-backed assistant that answers questions about the DataHub's data.
+Gemini-backed assistant that answers questions about the DataHub's data.
 
 The assistant gets read-only tools over the sample metadata and gene
-expression tables (see db/chat_tools.py) and runs them through the Anthropic
-SDK's tool runner. Conversation history between turns is kept as plain text
-only: dropping every earlier thinking/tool block is always valid for the API,
-and it keeps the browser-side history store small.
+expression tables (see db/chat_tools.py). They are plain Python functions
+passed to the Google Gen AI SDK, whose automatic function calling runs the
+tool loop: Gemini asks for a tool, the SDK calls the function and sends the
+result back, until Gemini writes its answer. Conversation history between
+turns is kept as plain text only, which keeps the browser-side history
+store small.
 
-Requires ANTHROPIC_API_KEY in the environment (loaded from .env).
+Requires GEMINI_API_KEY in the environment (loaded from .env). On the free
+tier, Google may use questions and answers to improve its products.
 """
 
 import json
 import logging
 import os
-from typing import Literal
+from typing import Any
 from urllib.parse import urlencode
 
-import anthropic
-from anthropic import beta_tool
-from anthropic.lib.tools import BetaFunctionTool
-from anthropic.types import AnthropicBetaParam
-from anthropic.types.beta import (
-    BetaCacheControlEphemeralParam,
-    BetaMessageParam,
-    BetaOutputConfigParam,
-)
 from dotenv import load_dotenv
+from google import genai
+from google.genai import errors, types
+from pydantic import BaseModel
 
 from db import chat_tools
 
@@ -33,19 +30,34 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-opus-5-5"
-# Caps how many tool round-trips one question may take, bounding cost and
-# latency if the model keeps searching.
-MAX_TOOL_ITERATIONS = 8
+MODEL = "gemini-3.5-flash-lite"
+API_KEY_ENV = "GEMINI_API_KEY"
+# Caps how many tool calls one question may make, bounding latency and
+# free-tier quota use if the model keeps searching.
+MAX_TOOL_CALLS = 8
 # Only the most recent turns are replayed, so a long session cannot grow the
-# request (and its cost) without bound.
+# request without bound.
 MAX_HISTORY_MESSAGES = 20
 
 NOT_CONFIGURED_MESSAGE = (
     "The data assistant isn't configured yet (missing or invalid API key)."
 )
+BUSY_MESSAGE = (
+    "The data assistant has reached its usage limit for now. "
+    "Please try again in a minute."
+)
+ERROR_MESSAGE = "Sorry, the data assistant hit an error. Please try again."
+BLOCKED_MESSAGE = "Sorry, I can't help with that question."
+INCOMPLETE_MESSAGE = (
+    "I couldn't finish answering that. Try asking a narrower question, "
+    "for example about one gene or one dataset."
+)
 
-SampleField = Literal[
+# Field names the tools accept. Tool parameters are annotated `str`, not
+# Literal, because the SDK's automatic function calling cannot invoke a
+# function with a Literal parameter; db/chat_tools.py rejects any other name
+# with an error listing these, which Gemini sees and can correct.
+SAMPLE_FIELD_NAMES = (
     "scientific_name",
     "sample_type",
     "sex",
@@ -59,7 +71,7 @@ SampleField = Literal[
     "treatment_group",
     "library_layout",
     "platform",
-]
+)
 
 SYSTEM_PROMPT = """\
 You are the data assistant for the PKD RRC DataHub, a public portal of \
@@ -79,7 +91,7 @@ sequencing run.
 not fully standardized (e.g. "kidney" vs "whole kidney"), so call \
 list_field_values to see the real values before filtering on a field.
 - Ages are stored as text (the "age" field) and as a range in days; use \
-min_age_days/max_age_days to filter by age.
+the age argument (min_days/max_days) to filter by age.
 - Expression is reported in TPM (transcripts per million) from salmon.
 
 When an answer names datasets or a gene, end it with a link to the charts \
@@ -97,63 +109,102 @@ sample counts so readers can judge how much data supports a number.\
 """
 
 
-def _as_json(payload: dict) -> str:
-    """Serialize a tool result for Claude."""
-    return json.dumps(payload, default=str)
+class SampleFilters(BaseModel):
+    """Exact sample metadata values to match (case-insensitive).
+
+    Leave a field out to not filter on it. Use values as returned by
+    list_field_values.
+    """
+
+    scientific_name: str | None = None
+    sample_type: str | None = None
+    sex: str | None = None
+    underlying_variant: str | None = None
+    genotype: str | None = None
+    strain: str | None = None
+    tissue: str | None = None
+    source_name: str | None = None
+    age: str | None = None
+    treatment: str | None = None
+    treatment_group: str | None = None
+    library_layout: str | None = None
+    platform: str | None = None
 
 
-@beta_tool
-def list_field_values(field: SampleField) -> str:
+class AgeRange(BaseModel):
+    """Age bounds in days; leave a bound out to not limit that side."""
+
+    min_days: float | None = None
+    max_days: float | None = None
+
+
+def _age_bounds(age: AgeRange | None) -> tuple[float | None, float | None]:
+    """Return (min_days, max_days) from an optional AgeRange."""
+    return (age.min_days, age.max_days) if age else (None, None)
+
+
+def _filter_map(filters: SampleFilters | None) -> dict[str, str]:
+    """Return the filters that were set, as a field name -> value map."""
+    if filters is None:
+        return {}
+    return {
+        name: value
+        for name, value in filters.model_dump(exclude_none=True).items()
+        if value
+    }
+
+
+def _json_safe(payload: dict) -> dict[str, Any]:
+    """Round-trip a tool result through JSON so every value is serializable."""
+    return json.loads(json.dumps(payload, default=str))
+
+
+def list_field_values(field: str) -> dict[str, Any]:
     """List the distinct values of one sample metadata field, with counts.
 
     Call this before filtering on a field, because values are not
     standardized across datasets.
 
     Args:
-        field: The sample metadata field to list.
+        field: The sample metadata field to list. One of: scientific_name,
+            sample_type, sex, underlying_variant, genotype, strain, tissue,
+            source_name, age, treatment, treatment_group, library_layout,
+            platform.
     """
-    return _as_json(chat_tools.list_field_values(field))
+    return _json_safe(chat_tools.list_field_values(field))
 
 
-@beta_tool
 def find_datasets(
-    filters: dict[str, str] | None = None,
-    min_age_days: float | None = None,
-    max_age_days: float | None = None,
-) -> str:
+    filters: SampleFilters | None = None,
+    age: AgeRange | None = None,
+) -> dict[str, Any]:
     """Find datasets that have samples matching all the given filters.
 
     Returns each matching BioProject with its count of matching samples.
 
     Args:
-        filters: Map of sample field name to the exact value to match
-            (case-insensitive), e.g. {"sex": "female", "underlying_variant":
-            "Pkd1"}. Field names are the same as for list_field_values.
-        min_age_days: Keep samples whose age range reaches at least this
-            many days.
-        max_age_days: Keep samples whose age range starts at or below this
-            many days.
+        filters: Sample metadata values to match, e.g. sex "female" and
+            underlying_variant "Pkd1".
+        age: Keep samples whose age range overlaps these bounds, in days.
     """
-    return _as_json(chat_tools.find_datasets(filters, min_age_days, max_age_days))
+    return _json_safe(chat_tools.find_datasets(_filter_map(filters), *_age_bounds(age)))
 
 
-@beta_tool
-def describe_dataset(bioproject: str) -> str:
+def describe_dataset(bioproject: str) -> dict[str, Any]:
     """Describe one dataset: total samples and value counts for each field.
 
     Args:
         bioproject: The dataset's BioProject accession, e.g. PRJNA285844.
     """
-    return _as_json(chat_tools.describe_dataset(bioproject))
+    return _json_safe(chat_tools.describe_dataset(bioproject))
 
 
-@beta_tool
 def gene_expression_summary(
     gene: str,
-    group_by: SampleField = "genotype",
+    group_by: str = "genotype",
     bioproject: str | None = None,
-    filters: dict[str, str] | None = None,
-) -> str:
+    filters: SampleFilters | None = None,
+) -> dict[str, Any]:
     """Summarize a gene's expression (TPM) per dataset and sample group.
 
     Returns sample count, mean, median, min and max TPM for each
@@ -162,13 +213,16 @@ def gene_expression_summary(
 
     Args:
         gene: Gene symbol, e.g. Pkd1.
-        group_by: Sample field to split each dataset's samples by.
+        group_by: Sample field to split each dataset's samples by; one of
+            the field names listed for list_field_values.
         bioproject: Limit to one dataset's BioProject accession.
-        filters: Map of sample field name to exact value, as in
-            find_datasets, to restrict which samples are included.
+        filters: Sample metadata values to match, as in find_datasets, to
+            restrict which samples are included.
     """
-    return _as_json(
-        chat_tools.gene_expression_summary(gene, group_by, bioproject, filters)
+    return _json_safe(
+        chat_tools.gene_expression_summary(
+            gene, group_by, bioproject, _filter_map(filters)
+        )
     )
 
 
@@ -212,7 +266,6 @@ def build_chart_link(
     return "/charts?" + urlencode(params) if params else "/charts"
 
 
-@beta_tool
 def chart_link(
     datasets: list[str],
     gene: str | None = None,
@@ -220,9 +273,8 @@ def chart_link(
     sex: list[str] | None = None,
     underlying_variant: list[str] | None = None,
     sample_type: list[str] | None = None,
-    min_age_days: float | None = None,
-    max_age_days: float | None = None,
-) -> str:
+    age: AgeRange | None = None,
+) -> dict[str, str]:
     """Build the link to the charts page for an answer.
 
     The charts page opens with its dataset table limited to `datasets`, the
@@ -238,26 +290,22 @@ def chart_link(
         sex: Sex values to select, e.g. ["female"].
         underlying_variant: Underlying variant values to select.
         sample_type: Sample type values to select.
-        min_age_days: Lower bound of the age filter, in days.
-        max_age_days: Upper bound of the age filter, in days.
+        age: Age filter bounds, in days.
     """
-    return _as_json(
-        {
-            "url": build_chart_link(
-                datasets,
-                gene,
-                scientific_name,
-                sex,
-                underlying_variant,
-                sample_type,
-                min_age_days,
-                max_age_days,
-            )
-        }
-    )
+    return {
+        "url": build_chart_link(
+            datasets,
+            gene,
+            scientific_name,
+            sex,
+            underlying_variant,
+            sample_type,
+            *_age_bounds(age),
+        )
+    }
 
 
-TOOLS: list[BetaFunctionTool] = [
+TOOLS = [
     list_field_values,
     find_datasets,
     describe_dataset,
@@ -265,31 +313,55 @@ TOOLS: list[BetaFunctionTool] = [
     chart_link,
 ]
 
-# Request settings, typed with the SDK's own param types so the
-# tool_runner overloads type-check in every linter environment.
-OUTPUT_CONFIG: BetaOutputConfigParam = {"effort": "medium"}
-# Stable system prompt + tools: cache them across questions.
-CACHE_CONTROL: BetaCacheControlEphemeralParam = {"type": "ephemeral"}
-# If a safety classifier declines, the API retries on a fallback model it
-# chooses instead of failing the question.
-BETAS: list[AnthropicBetaParam] = ["server-side-fallback-2026-07-01"]
+# Finish reasons meaning Gemini declined to answer (safety or policy).
+_BLOCKED_FINISH_REASONS = {
+    types.FinishReason.SAFETY,
+    types.FinishReason.PROHIBITED_CONTENT,
+    types.FinishReason.BLOCKLIST,
+    types.FinishReason.SPII,
+}
 
-_client: anthropic.Anthropic | None = None
+_client: genai.Client | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
-    """Return a shared Anthropic client, created on first use."""
+def _get_client() -> genai.Client:
+    """Return a shared Gemini client, created on first use."""
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        _client = genai.Client(api_key=os.environ.get(API_KEY_ENV))
     return _client
 
 
-def _final_text(message) -> str:
-    """Join the text blocks of a response into one string."""
-    return "\n\n".join(
-        block.text for block in message.content if block.type == "text"
-    ).strip()
+def _build_contents(history: list[dict], question: str) -> list[types.Content]:
+    """Turn earlier text-only turns plus the new question into Gemini contents."""
+    roles = {"user": "user", "assistant": "model"}
+    contents: list[types.Content] = []
+    for turn in history[-MAX_HISTORY_MESSAGES:]:
+        text = str(turn.get("content") or "")
+        role = roles.get(turn.get("role", ""))
+        if text and role:
+            contents.append(types.Content(role=role, parts=[types.Part(text=text)]))
+    # A conversation must start with a user turn.
+    while contents and contents[0].role != "user":
+        contents.pop(0)
+    contents.append(types.Content(role="user", parts=[types.Part(text=question)]))
+    return contents
+
+
+def _message_for_api_error(error: errors.APIError) -> str:
+    """Map a Gemini API error to a short user-facing message."""
+    message = str(error.message or "")
+    if error.code == 429:
+        logger.warning("Gemini quota or rate limit hit: %s", message)
+        return BUSY_MESSAGE
+    if error.code in (401, 403) or "API key" in message:
+        logger.error("Gemini rejected the API key: %s", message)
+        return NOT_CONFIGURED_MESSAGE
+    if error.code == 503:
+        logger.warning("Gemini is overloaded: %s", message)
+        return BUSY_MESSAGE
+    logger.error("Gemini API error %s: %s", error.code, message)
+    return ERROR_MESSAGE
 
 
 def answer_question(history: list[dict], question: str) -> str:
@@ -304,67 +376,36 @@ def answer_question(history: list[dict], question: str) -> str:
         short user-facing message rather than raised, so the page never
         shows a stack trace.
     """
-    messages: list[BetaMessageParam] = []
-    for turn in history[-MAX_HISTORY_MESSAGES:]:
-        content = str(turn.get("content") or "")
-        if not content:
-            continue
-        if turn.get("role") == "user":
-            messages.append({"role": "user", "content": content})
-        elif turn.get("role") == "assistant":
-            messages.append({"role": "assistant", "content": content})
-    # The API requires the first message to come from the user.
-    while messages and messages[0]["role"] != "user":
-        messages.pop(0)
-    messages.append({"role": "user", "content": question})
-
-    # With no credentials the SDK raises a TypeError at request time rather
-    # than an API error, so check up front and answer politely instead.
-    if not (
-        os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
-    ):
+    if not os.environ.get(API_KEY_ENV):
         return NOT_CONFIGURED_MESSAGE
 
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        tools=TOOLS,
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(
+            maximum_remote_calls=MAX_TOOL_CALLS
+        ),
+    )
     try:
-        # The MegaLinter image bundles anthropic 0.84, which predates
-        # `fallbacks`; against the pinned SDK in requirements.txt this call
-        # type-checks cleanly, so silence only that stale-stub mismatch.
-        runner = (
-            _get_client().beta.messages.tool_runner(  # pyright: ignore[reportCallIssue]
-                model=MODEL,
-                max_tokens=16000,
-                system=SYSTEM_PROMPT,
-                tools=TOOLS,
-                messages=messages,
-                max_iterations=MAX_TOOL_ITERATIONS,
-                output_config=OUTPUT_CONFIG,
-                cache_control=CACHE_CONTROL,
-                betas=BETAS,
-                fallbacks="default",
-            )
+        response = _get_client().models.generate_content(
+            model=MODEL,
+            contents=_build_contents(history, question),
+            config=config,
         )
-        final = runner.until_done()
-    except anthropic.AuthenticationError:
-        logger.exception("Anthropic authentication failed")
-        return NOT_CONFIGURED_MESSAGE
-    except anthropic.RateLimitError:
-        logger.warning("Anthropic rate limit hit")
-        return "The data assistant is busy right now. Please try again in a minute."
-    except anthropic.APIStatusError as error:
-        logger.exception("Anthropic API error %s", error.status_code)
-        return "Sorry, the data assistant hit an error. Please try again."
-    except anthropic.APIConnectionError:
-        logger.exception("Could not reach the Anthropic API")
-        return "The data assistant couldn't be reached. Please try again later."
+    except errors.APIError as error:
+        return _message_for_api_error(error)
+    # Network failures surface as transport-library exceptions; whatever the
+    # cause, the page should show a message rather than a stack trace.
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.exception("Could not get an answer from Gemini")
+        return ERROR_MESSAGE
 
-    if final.stop_reason == "refusal":
-        return "Sorry, I can't help with that question."
-    if final.stop_reason == "max_tokens":
-        logger.warning("Data chat reply hit max_tokens")
-    text = _final_text(final)
-    if not text:
-        return (
-            "I couldn't finish answering that. Try asking a narrower question, "
-            "for example about one gene or one dataset."
-        )
-    return text
+    if response.prompt_feedback and response.prompt_feedback.block_reason:
+        return BLOCKED_MESSAGE
+    candidate = response.candidates[0] if response.candidates else None
+    if candidate and candidate.finish_reason in _BLOCKED_FINISH_REASONS:
+        return BLOCKED_MESSAGE
+    if candidate and candidate.finish_reason == types.FinishReason.MAX_TOKENS:
+        logger.warning("Data chat reply hit the output token limit")
+    text = (response.text or "").strip()
+    return text or INCOMPLETE_MESSAGE

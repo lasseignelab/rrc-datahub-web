@@ -6,6 +6,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-17
 
+### Switch the data chat from Claude to the Gemini free tier (branch `feature/add-ai-chat`)
+- `components/chat_assistant.py`: Rewritten on the Google Gen AI SDK (`google-genai==3.4.0`) with model `gemini-3.8-flash` (free tier). Tools are plain Python functions run by the SDK's automatic function calling (max 8 calls per question). Filters are a Pydantic `SampleFilters` model and age bounds an `AgeRange` model: the SDK gives a bare `dict` parameter no properties, refuses an int for a `float | None` parameter, and cannot invoke a function with a `Literal` parameter, so field names are typed `str` and validated by `db/chat_tools.py`. Quota (429) and overload (503) errors show a "try again" message; a rejected key shows the not-configured message; safety blocks show a polite refusal.
+- Env var is now `GEMINI_API_KEY` (`.env.example`, `AGENTS.md`). `requirements.txt`: removed `anthropic`, `docstring_parser`, `jiter`, `opentelemetry-api`; added `google-genai` and its dependencies.
+- `components/data_chat.py`: Disclaimer names Google Gemini and warns that free-tier questions may be used by Google to improve its products.
+- `tests/test_chat_assistant.py`: Rewritten for the Gemini client, plus checks that tool argument models unpack correctly and match the DB field whitelist. (Agent: Claude Opus 5.5)
+
 ### Chat links open the charts page filtered to the answer's datasets (branch `feature/add-ai-chat`)
 - `components/chat_assistant.py`: New `chart_link` tool (backed by `build_chart_link`) that builds the URL-encoded `/charts` link: `gene`, `datasets` (comma-separated, answer order), and repeatable `scientific_name`, `sex`, `underlying_variant`, `sample_type` plus `min_age_days`/`max_age_days`. The system prompt now requires every charts link to come from this tool, so the model never hand-writes URLs.
 - `pages/charts.py`: New `apply_url_filters` callback reads those parameters on load and sets the matching dataset filters (case-insensitive match against dropdown options; unmatched values leave the filter at its default; a named filter unticks its "not provided" box). A new `url-datasets` store limits the Found Dataset(s) table to the answer's datasets, and the first one the answer named is selected. A notice with a "Show all datasets" button clears the limit. Helpers `_parse_url_filters`, `_match_options`, `_limit_rows`, `_choose_selected`.
