@@ -42,8 +42,8 @@ layout = html.Div(
                             className="hero-title",
                         ),
                         html.P(
-                            "A shared resource for polycystic kidney disease "
-                            "(PKD) transcriptomic data.",
+                            "A shared home for polycystic kidney disease "
+                            "(PKD) research data.",
                             className="hero-tagline",
                         ),
                     ],

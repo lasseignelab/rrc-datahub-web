@@ -15,7 +15,6 @@ def logo(src, alt, extra_class=""):
         className=css_class,
     )
 
-
 def footer():
     """Return the shared site footer."""
 
@@ -57,12 +56,14 @@ def footer():
                         "logo-lab",
                     ),
                     logo(
-                        "logos/uab_logo.png",
-                        "University of Alabama at Birmingham logo",
-                    ),
-                    logo(
                         "logos/rrc_logo.png",
                         "PKD Research Resource Consortium logo",
+                        "logo-rrc",
+                    ),
+                    logo(
+                        "logos/uab_logo.png",
+                        "University of Alabama at Birmingham logo",
+                        "logo-uab",
                     ),
                 ],
             ),

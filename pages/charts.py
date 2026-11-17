@@ -12,6 +12,7 @@ import pandas as pd
 from dash import Input, Output, State, callback, clientside_callback, dcc, html
 from sqlalchemy import and_, func, or_
 
+from components.page_header import create_page_header
 from components.section_header import section_header
 from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -827,21 +828,14 @@ layout = html.Div(
         dbc.Container(
             [
                 dcc.Location(id="url"),
-                html.Section(
-                    [
-                        html.H1("TPM Expression"),
-                        html.P(
-                            (
-                                "Explore gene expression across datasets. Use the "
-                                "filters to select a dataset, then choose a gene "
-                                "and one or more genotype groups to generate a "
-                                "violin plot and summary statistics table of "
-                                "log₁₀(TPM + 1) values."
-                            ),
-                            style={"marginBottom": "16px"},
-                        ),
-                    ],
-                    className="section-card",
+                create_page_header(
+                    title="Gene Expression Explorer",
+                    description=(
+                        "Explore gene expression across PKD datasets by "
+                        "filtering for key research characteristics, then choose a"
+                        " gene and one or more genotype groups to view violin "
+                        "plots and a summary table of log₁₀(TPM + 1) values."   
+                    ),
                 ),
                 html.Section(
                     [

@@ -166,6 +166,36 @@ Custom Components
     color: #FFFFFF;
 }
 
+/* Page Header Component */
+
+.page-header {
+    background-color: #dfedea;
+    padding: 2rem 3rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(218, 226, 216, 0.5);
+}
+
+.page-header-content {
+    border-left: 12px solid #2b6363;
+    padding-left: 1.25rem;
+}
+
+.page-header-title {
+    color: #14212C;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-header-description {
+    color: #263A3A;
+    font-size: 1.05rem;
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+
 /* ==========================================================================
 Accessibility
 ========================================================================== */
@@ -795,13 +825,6 @@ Home page
     box-sizing: border-box;
 }
 
-.contact-col,
-.footer-logos,
-.meta-col {
-    min-width: 0;
-    box-sizing: border-box;
-}
-
 /* Contact information */
 .contact-col {
     min-width: 0;
@@ -838,6 +861,13 @@ color:#000000;
 }
 
 /* Centered partner logos */
+.contact-col,
+.footer-logos,
+.meta-col {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
 .footer-logos {
     display: flex;
     flex-direction: row;
@@ -857,12 +887,21 @@ color:#000000;
     object-fit: contain;
 }
 
+/* PKD RRC logo - primary logo */
+.info-panel .footer-logos img.logo-rrc {
+    height: 90px !important;
+    max-width: 38% !important;
+    object-fit: contain !important;
+}
+
+/* Lasseigne Lab logo */
 .info-panel .footer-logos img.logo-lab {
     flex: 0 1 auto;
-    width: 160px !important;
-    height: 160px !important;
+    width: 130px !important;
+    height: 130px !important;
     max-width: 32% !important;
     object-fit: contain !important;
+    transform: translateY(9px);
 }
 
 /* ==========================================================================
