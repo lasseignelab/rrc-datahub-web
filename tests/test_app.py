@@ -1,4 +1,5 @@
 """Tests for the main Dash app layout, rendering, and gene search."""
+
 from app import app
 
 
@@ -10,6 +11,7 @@ def test_server_is_flask_app():
 def test_layout_contains_h1():
     """Home page layout includes exactly one H1 element."""
     from dash import html
+
     from pages import home
 
     def find_all(node, component_type):
@@ -60,8 +62,9 @@ class TestGeneSearch:
     """
 
     def test_empty_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        from components import landing_search
         from dash import no_update
+
+        from components import landing_search
 
         feedback, redirect = landing_search.handle_gene_search(1, "")
 
@@ -69,8 +72,9 @@ class TestGeneSearch:
         assert redirect is no_update
 
     def test_none_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        from components import landing_search
         from dash import no_update
+
+        from components import landing_search
 
         feedback, redirect = landing_search.handle_gene_search(1, None)
 
@@ -114,8 +118,9 @@ class TestGeneSearch:
         assert redirect == f"{landing_search.EXISTING_TAB_PATH}?gene=Pkd1"
 
     def test_no_match_shows_error_and_no_redirect(self, monkeypatch):
-        from components import landing_search
         from dash import no_update
+
+        from components import landing_search
         from db.gene_search import GeneSearchResult
 
         monkeypatch.setattr(
@@ -138,6 +143,7 @@ class TestGeneSearch:
         """Accessibility: gene-search-input must have a <label for=...>
         pointing at its id (regression check for the Pa11y fix)."""
         from dash import html
+
         from components import landing_search
 
         def find_all(node, component_type):

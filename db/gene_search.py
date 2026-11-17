@@ -4,6 +4,7 @@ tolerance for casing/typos -- same approach as validate.py from the
 NL-query prototype, pulled out here since this feature doesn't need
 the rest of that module (no LLM extraction step at all).
 """
+
 from dataclasses import dataclass
 from difflib import get_close_matches
 from functools import lru_cache
@@ -30,11 +31,7 @@ def get_valid_genes() -> set[str]:
     """
     session = SessionLocal()
     try:
-        rows = (
-            session.query(Gene.gene_name)
-            .filter(Gene.gene_name.isnot(None))
-            .all()
-        )
+        rows = session.query(Gene.gene_name).filter(Gene.gene_name.isnot(None)).all()
         return {r[0] for r in rows}
     finally:
         session.close()
