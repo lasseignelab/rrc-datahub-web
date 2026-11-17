@@ -1,15 +1,45 @@
-from dash import Dash, html
-from dash.dcc.Graph import Graph
-import plotly.express as px
+import dash_bootstrap_components as dbc
+from dash import Dash, html, page_container
 
-app = Dash(__name__)
+from components.navbar import navbar
 
-fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+app = Dash(
+    __name__,
+    use_pages=True,
+    external_stylesheets=[
+        dbc.themes.FLATLY,
+        (
+            "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/"
+            "font/bootstrap-icons.min.css"
+        ),
+    ],
+)
 
-app.layout = html.Div([
-    html.H1("Hello World"),
-    Graph(figure=fig)
-])
+app.index_string = """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>"""
+
+app.layout = html.Div(
+    [
+        html.A("Skip to main content", href="#main-content", className="skip-nav"),
+        navbar(),
+        html.Main(page_container, id="main-content"),
+    ]
+)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, dev_tools_ui=False)
