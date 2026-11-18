@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### About page: future directions additions
+- `content/about/future-directions.md`: Added transfer learning (e.g. relating findings across species) and an "And more!" bullet.
+- (Agent: Claude Opus 5.5)
+
 ### About page: team titles and roles
 - `content/about/contact.md`: Core team now listed as name, degree, job title — role(s): Soelter (Computational Biologist — Project Manager, Team Lead, and Developer), Crumley (Computational Scientist — Team Lead and Software Architect), Casper and Okunbor (Research Assistant — Developer, data pipeline / web application). Dropped "Undergraduate".
 - (Agent: Claude Opus 5.5)

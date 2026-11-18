@@ -9,5 +9,8 @@ Planned additions, roughly in priority order:
   bar.
 - **Quality-control (QC) filtering** to include or exclude datasets and samples
   based on QC metrics.
+- **Transfer learning** approaches, for example to relate findings across
+  species.
+- And more!
 
 Have a feature request? See Feedback and issues.
