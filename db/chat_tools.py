@@ -2,7 +2,7 @@
 Read-only database queries used as tools by the home-page data chat.
 
 Each function returns plain JSON-serializable data so the chat assistant can
-hand the result straight to Claude. Column names that callers may filter or
+hand the result straight to the model. Column names that callers may filter or
 group by are whitelisted in SAMPLE_FIELDS; nothing here builds SQL from free
 text, and nothing writes to the database.
 """

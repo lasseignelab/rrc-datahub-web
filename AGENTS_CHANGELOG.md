@@ -4,6 +4,14 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-18
+
+### OpenAI version of the data chat (branch `feature/add-ai-chat-openai`, from `feature/add-ai-chat`)
+- `components/chat_assistant.py`: Rewritten on the OpenAI SDK (`openai==3.55.1`) with Chat Completions function calling. Default model `gpt-5.4-mini`, overridable with `OPENAI_MODEL`. The module runs the tool loop itself (max 8 tool rounds; the last request sets `tool_choice="none"` so the model must answer). Tools are JSON-schema definitions dispatched to `db/chat_tools.py` and `build_chart_link`; bad tool arguments are returned to the model as an error result instead of raised. Rejected keys show the not-configured message, rate limits/quota show "busy", network errors show "couldn't be reached", refusals and content filtering show a polite refusal.
+- Env var is now `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) in `.env.example` and `AGENTS.md`. `requirements.txt`: replaced `anthropic` with `openai`; removed `docstring_parser` and `opentelemetry-api` (only `anthropic` used them). Verified with a dry-run install into a clean venv.
+- `components/data_chat.py`: Disclaimer names OpenAI. `db/chat_tools.py`: docstring no longer names Claude.
+- `tests/test_chat_assistant.py`: Rewritten for a fake Chat Completions client: tool dispatch and result round trip, loop cap, bad arguments, refusal, empty reply, auth/rate-limit/connection errors, model override, field whitelist and tool/function parity. (Agent: Claude Opus 5.5)
+
 ## 2026-11-17
 
 ### Fix unresolvable pins in requirements.txt (branch `feature/add-ai-chat`)

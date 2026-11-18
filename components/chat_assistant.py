@@ -1,31 +1,29 @@
 """
-Claude-backed assistant that answers questions about the DataHub's data.
+OpenAI-backed assistant that answers questions about the DataHub's data.
 
 The assistant gets read-only tools over the sample metadata and gene
-expression tables (see db/chat_tools.py) and runs them through the Anthropic
-SDK's tool runner. Conversation history between turns is kept as plain text
-only: dropping every earlier thinking/tool block is always valid for the API,
-and it keeps the browser-side history store small.
+expression tables (see db/chat_tools.py) through OpenAI Chat Completions
+function calling. This module runs the tool loop itself: each tool call the
+model makes is dispatched to a Python function and its JSON result is sent
+back until the model writes its answer. Conversation history between turns
+is kept as plain text only, which keeps the browser-side history store small.
 
-Requires ANTHROPIC_API_KEY in the environment (loaded from .env).
+Requires OPENAI_API_KEY in the environment (loaded from .env). OPENAI_MODEL
+optionally overrides the default model.
 """
 
 import json
 import logging
 import os
-from typing import Literal
+from collections.abc import Callable
 from urllib.parse import urlencode
 
-import anthropic
-from anthropic import beta_tool
-from anthropic.lib.tools import BetaFunctionTool
-from anthropic.types import AnthropicBetaParam
-from anthropic.types.beta import (
-    BetaCacheControlEphemeralParam,
-    BetaMessageParam,
-    BetaOutputConfigParam,
-)
+import openai
 from dotenv import load_dotenv
+from openai.types.chat import (
+    ChatCompletionFunctionToolParam,
+    ChatCompletionMessageParam,
+)
 
 from db import chat_tools
 
@@ -33,7 +31,9 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-opus-5-5"
+DEFAULT_MODEL = "gpt-5.4-mini"
+API_KEY_ENV = "OPENAI_API_KEY"
+MODEL_ENV = "OPENAI_MODEL"
 # Caps how many tool round-trips one question may take, bounding cost and
 # latency if the model keeps searching.
 MAX_TOOL_ITERATIONS = 8
@@ -44,8 +44,17 @@ MAX_HISTORY_MESSAGES = 20
 NOT_CONFIGURED_MESSAGE = (
     "The data assistant isn't configured yet (missing or invalid API key)."
 )
+BUSY_MESSAGE = "The data assistant is busy right now. Please try again in a minute."
+ERROR_MESSAGE = "Sorry, the data assistant hit an error. Please try again."
+UNREACHABLE_MESSAGE = "The data assistant couldn't be reached. Please try again later."
+REFUSAL_MESSAGE = "Sorry, I can't help with that question."
+INCOMPLETE_MESSAGE = (
+    "I couldn't finish answering that. Try asking a narrower question, "
+    "for example about one gene or one dataset."
+)
 
-SampleField = Literal[
+# Must match the whitelist in db/chat_tools.SAMPLE_FIELDS (a test checks).
+SAMPLE_FIELD_NAMES = (
     "scientific_name",
     "sample_type",
     "sex",
@@ -59,7 +68,7 @@ SampleField = Literal[
     "treatment_group",
     "library_layout",
     "platform",
-]
+)
 
 SYSTEM_PROMPT = """\
 You are the data assistant for the PKD RRC DataHub, a public portal of \
@@ -75,6 +84,8 @@ scope: say briefly that you can only help with the DataHub's datasets.
 About the data:
 - Each dataset is a GEO BioProject (e.g. PRJNA285844); each sample is one \
 sequencing run.
+- Each dataset was reprocessed with the same pipeline for the DataHub, so \
+expression values are more comparable across datasets.
 - Metadata values are often "Not provided" or "Not applicable". Values are \
 not fully standardized (e.g. "kidney" vs "whole kidney"), so call \
 list_field_values to see the real values before filtering on a field.
@@ -95,81 +106,6 @@ Keep answers short and readable: lead with the direct answer, then a \
 compact table or list when there are several datasets or groups. Report \
 sample counts so readers can judge how much data supports a number.\
 """
-
-
-def _as_json(payload: dict) -> str:
-    """Serialize a tool result for Claude."""
-    return json.dumps(payload, default=str)
-
-
-@beta_tool
-def list_field_values(field: SampleField) -> str:
-    """List the distinct values of one sample metadata field, with counts.
-
-    Call this before filtering on a field, because values are not
-    standardized across datasets.
-
-    Args:
-        field: The sample metadata field to list.
-    """
-    return _as_json(chat_tools.list_field_values(field))
-
-
-@beta_tool
-def find_datasets(
-    filters: dict[str, str] | None = None,
-    min_age_days: float | None = None,
-    max_age_days: float | None = None,
-) -> str:
-    """Find datasets that have samples matching all the given filters.
-
-    Returns each matching BioProject with its count of matching samples.
-
-    Args:
-        filters: Map of sample field name to the exact value to match
-            (case-insensitive), e.g. {"sex": "female", "underlying_variant":
-            "Pkd1"}. Field names are the same as for list_field_values.
-        min_age_days: Keep samples whose age range reaches at least this
-            many days.
-        max_age_days: Keep samples whose age range starts at or below this
-            many days.
-    """
-    return _as_json(chat_tools.find_datasets(filters, min_age_days, max_age_days))
-
-
-@beta_tool
-def describe_dataset(bioproject: str) -> str:
-    """Describe one dataset: total samples and value counts for each field.
-
-    Args:
-        bioproject: The dataset's BioProject accession, e.g. PRJNA285844.
-    """
-    return _as_json(chat_tools.describe_dataset(bioproject))
-
-
-@beta_tool
-def gene_expression_summary(
-    gene: str,
-    group_by: SampleField = "genotype",
-    bioproject: str | None = None,
-    filters: dict[str, str] | None = None,
-) -> str:
-    """Summarize a gene's expression (TPM) per dataset and sample group.
-
-    Returns sample count, mean, median, min and max TPM for each
-    dataset/group pair. Gene names are matched case-insensitively with
-    typo tolerance.
-
-    Args:
-        gene: Gene symbol, e.g. Pkd1.
-        group_by: Sample field to split each dataset's samples by.
-        bioproject: Limit to one dataset's BioProject accession.
-        filters: Map of sample field name to exact value, as in
-            find_datasets, to restrict which samples are included.
-    """
-    return _as_json(
-        chat_tools.gene_expression_summary(gene, group_by, bioproject, filters)
-    )
 
 
 def build_chart_link(
@@ -208,88 +144,268 @@ def build_chart_link(
         ("max_age_days", max_age_days),
     ):
         if number is not None:
-            params.append((name, f"{number:g}"))
+            params.append((name, f"{float(number):g}"))
     return "/charts?" + urlencode(params) if params else "/charts"
 
 
-@beta_tool
-def chart_link(
-    datasets: list[str],
-    gene: str | None = None,
-    scientific_name: list[str] | None = None,
-    sex: list[str] | None = None,
-    underlying_variant: list[str] | None = None,
-    sample_type: list[str] | None = None,
-    min_age_days: float | None = None,
-    max_age_days: float | None = None,
-) -> str:
-    """Build the link to the charts page for an answer.
+def _chart_link(**arguments) -> dict:
+    """Tool wrapper: return the charts URL as a JSON-ready dict."""
+    return {"url": build_chart_link(**arguments)}
 
-    The charts page opens with its dataset table limited to `datasets`, the
-    first of them selected for plotting, `gene` selected, and its dataset
-    filters set to the values given here. Only these filters exist on the
-    charts page; leave out others (e.g. genotype or tissue). Use exact
-    values as returned by list_field_values.
 
-    Args:
-        datasets: BioProject accessions the answer names, most relevant first.
-        gene: Gene symbol to plot, e.g. Pkd1.
-        scientific_name: Species values to select, e.g. ["Mus musculus"].
-        sex: Sex values to select, e.g. ["female"].
-        underlying_variant: Underlying variant values to select.
-        sample_type: Sample type values to select.
-        min_age_days: Lower bound of the age filter, in days.
-        max_age_days: Upper bound of the age filter, in days.
-    """
-    return _as_json(
+# Each tool name maps to the Python function that runs it. The model's
+# arguments are passed as keyword arguments, so names must match the
+# "properties" in the schemas below.
+TOOL_FUNCTIONS: dict[str, Callable[..., dict]] = {
+    "list_field_values": chat_tools.list_field_values,
+    "find_datasets": chat_tools.find_datasets,
+    "describe_dataset": chat_tools.describe_dataset,
+    "gene_expression_summary": chat_tools.gene_expression_summary,
+    "chart_link": _chart_link,
+}
+
+_FIELD_SCHEMA = {"type": "string", "enum": list(SAMPLE_FIELD_NAMES)}
+_FILTERS_SCHEMA = {
+    "type": "object",
+    "description": (
+        "Map of sample field name to the exact value to match "
+        '(case-insensitive), e.g. {"sex": "female", "underlying_variant": '
+        '"Pkd1"}. Field names are the same as for list_field_values.'
+    ),
+    "properties": {name: {"type": "string"} for name in SAMPLE_FIELD_NAMES},
+    "additionalProperties": False,
+}
+_VALUE_LIST_SCHEMA = {"type": "array", "items": {"type": "string"}}
+
+
+def _tool(name: str, description: str, properties: dict, required=()):
+    """Build one function-tool definition in the Chat Completions format."""
+    tool: ChatCompletionFunctionToolParam = {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": list(required),
+                "additionalProperties": False,
+            },
+        },
+    }
+    return tool
+
+
+TOOLS: list[ChatCompletionFunctionToolParam] = [
+    _tool(
+        "list_field_values",
+        "List the distinct values of one sample metadata field, with counts. "
+        "Call this before filtering on a field, because values are not "
+        "standardized across datasets.",
+        {"field": _FIELD_SCHEMA},
+        required=["field"],
+    ),
+    _tool(
+        "find_datasets",
+        "Find datasets that have samples matching all the given filters. "
+        "Returns each matching BioProject with its count of matching samples.",
         {
-            "url": build_chart_link(
-                datasets,
-                gene,
-                scientific_name,
-                sex,
-                underlying_variant,
-                sample_type,
-                min_age_days,
-                max_age_days,
-            )
-        }
-    )
-
-
-TOOLS: list[BetaFunctionTool] = [
-    list_field_values,
-    find_datasets,
-    describe_dataset,
-    gene_expression_summary,
-    chart_link,
+            "filters": _FILTERS_SCHEMA,
+            "min_age_days": {
+                "type": "number",
+                "description": "Keep samples whose age range reaches at "
+                "least this many days.",
+            },
+            "max_age_days": {
+                "type": "number",
+                "description": "Keep samples whose age range starts at or "
+                "below this many days.",
+            },
+        },
+    ),
+    _tool(
+        "describe_dataset",
+        "Describe one dataset: total samples and value counts for each field.",
+        {
+            "bioproject": {
+                "type": "string",
+                "description": "The dataset's BioProject accession, "
+                "e.g. PRJNA285844.",
+            }
+        },
+        required=["bioproject"],
+    ),
+    _tool(
+        "gene_expression_summary",
+        "Summarize a gene's expression (TPM) per dataset and sample group. "
+        "Returns sample count, mean, median, min and max TPM for each "
+        "dataset/group pair. Gene names are matched case-insensitively with "
+        "typo tolerance.",
+        {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. Pkd1."},
+            "group_by": {
+                **_FIELD_SCHEMA,
+                "description": "Sample field to split each dataset's samples "
+                "by (default genotype).",
+            },
+            "bioproject": {
+                "type": "string",
+                "description": "Limit to one dataset's BioProject accession.",
+            },
+            "filters": _FILTERS_SCHEMA,
+        },
+        required=["gene"],
+    ),
+    _tool(
+        "chart_link",
+        "Build the link to the charts page for an answer. The charts page "
+        "opens with its dataset table limited to `datasets`, the first of "
+        "them selected for plotting, `gene` selected, and its dataset filters "
+        "set to the values given here. Only these filters exist on the charts "
+        "page; leave out others (e.g. genotype or tissue). Use exact values "
+        "as returned by list_field_values.",
+        {
+            "datasets": {
+                **_VALUE_LIST_SCHEMA,
+                "description": "BioProject accessions the answer names, most "
+                "relevant first.",
+            },
+            "gene": {"type": "string", "description": "Gene symbol to plot."},
+            "scientific_name": {
+                **_VALUE_LIST_SCHEMA,
+                "description": 'Species values to select, e.g. ["Mus musculus"].',
+            },
+            "sex": {**_VALUE_LIST_SCHEMA, "description": "Sex values to select."},
+            "underlying_variant": {
+                **_VALUE_LIST_SCHEMA,
+                "description": "Underlying variant values to select.",
+            },
+            "sample_type": {
+                **_VALUE_LIST_SCHEMA,
+                "description": "Sample type values to select.",
+            },
+            "min_age_days": {
+                "type": "number",
+                "description": "Lower bound of the age filter, in days.",
+            },
+            "max_age_days": {
+                "type": "number",
+                "description": "Upper bound of the age filter, in days.",
+            },
+        },
+        required=["datasets"],
+    ),
 ]
 
-# Request settings, typed with the SDK's own param types so the
-# tool_runner overloads type-check in every linter environment.
-OUTPUT_CONFIG: BetaOutputConfigParam = {"effort": "medium"}
-# Stable system prompt + tools: cache them across questions.
-CACHE_CONTROL: BetaCacheControlEphemeralParam = {"type": "ephemeral"}
-# If a safety classifier declines, the API retries on a fallback model it
-# chooses instead of failing the question.
-BETAS: list[AnthropicBetaParam] = ["server-side-fallback-2026-07-01"]
-
-_client: anthropic.Anthropic | None = None
+_client: openai.OpenAI | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
-    """Return a shared Anthropic client, created on first use."""
+def _get_client() -> openai.OpenAI:
+    """Return a shared OpenAI client, created on first use."""
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        _client = openai.OpenAI()
     return _client
 
 
-def _final_text(message) -> str:
-    """Join the text blocks of a response into one string."""
-    return "\n\n".join(
-        block.text for block in message.content if block.type == "text"
-    ).strip()
+def run_tool(name: str, arguments_json: str) -> str:
+    """Run one tool call and return its result as a JSON string.
+
+    Bad arguments are reported back to the model as an error result rather
+    than raised, so it can correct itself on the next round.
+    """
+    function = TOOL_FUNCTIONS.get(name)
+    if function is None:
+        result: dict = {"error": f"Unknown tool '{name}'."}
+    else:
+        try:
+            arguments = json.loads(arguments_json or "{}")
+            if not isinstance(arguments, dict):
+                raise ValueError("Tool arguments must be a JSON object.")
+            # Models sometimes send explicit nulls for optional fields; the
+            # Python defaults already mean "not given".
+            arguments = {k: v for k, v in arguments.items() if v is not None}
+            result = function(**arguments)
+        except (ValueError, TypeError) as error:
+            result = {"error": str(error)}
+    return json.dumps(result, default=str)
+
+
+def _build_messages(history: list[dict], question: str):
+    """Turn the text-only history plus the new question into API messages."""
+    messages: list[ChatCompletionMessageParam] = [
+        {"role": "system", "content": SYSTEM_PROMPT}
+    ]
+    turns: list[ChatCompletionMessageParam] = []
+    for turn in history[-MAX_HISTORY_MESSAGES:]:
+        content = str(turn.get("content") or "")
+        if not content:
+            continue
+        if turn.get("role") == "user":
+            turns.append({"role": "user", "content": content})
+        elif turn.get("role") == "assistant":
+            turns.append({"role": "assistant", "content": content})
+    # Trimming can leave an assistant turn first; start with a question.
+    while turns and turns[0]["role"] != "user":
+        turns.pop(0)
+    messages.extend(turns)
+    messages.append({"role": "user", "content": question})
+    return messages
+
+
+def _complete(messages, model: str, allow_tools: bool):
+    """Make one Chat Completions request and return its first choice."""
+    response = _get_client().chat.completions.create(
+        model=model,
+        messages=messages,
+        tools=TOOLS,
+        # On the last round tools are switched off so the model has to
+        # answer with what it has found instead of searching again.
+        tool_choice="auto" if allow_tools else "none",
+    )
+    return response.choices[0]
+
+
+def _run_conversation(messages, model: str) -> str:
+    """Run the tool loop until the model answers; return its reply."""
+    for iteration in range(MAX_TOOL_ITERATIONS + 1):
+        choice = _complete(messages, model, iteration < MAX_TOOL_ITERATIONS)
+        message = choice.message
+        if message.refusal or choice.finish_reason == "content_filter":
+            return REFUSAL_MESSAGE
+        tool_calls = [
+            call for call in message.tool_calls or [] if call.type == "function"
+        ]
+        if not tool_calls:
+            if choice.finish_reason == "length":
+                logger.warning("Data chat reply hit the token limit")
+            return (message.content or "").strip() or INCOMPLETE_MESSAGE
+        messages.append(
+            {
+                "role": "assistant",
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": call.id,
+                        "type": "function",
+                        "function": {
+                            "name": call.function.name,
+                            "arguments": call.function.arguments,
+                        },
+                    }
+                    for call in tool_calls
+                ],
+            }
+        )
+        for call in tool_calls:
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call.id,
+                    "content": run_tool(call.function.name, call.function.arguments),
+                }
+            )
+    return INCOMPLETE_MESSAGE
 
 
 def answer_question(history: list[dict], question: str) -> str:
@@ -304,67 +420,24 @@ def answer_question(history: list[dict], question: str) -> str:
         short user-facing message rather than raised, so the page never
         shows a stack trace.
     """
-    messages: list[BetaMessageParam] = []
-    for turn in history[-MAX_HISTORY_MESSAGES:]:
-        content = str(turn.get("content") or "")
-        if not content:
-            continue
-        if turn.get("role") == "user":
-            messages.append({"role": "user", "content": content})
-        elif turn.get("role") == "assistant":
-            messages.append({"role": "assistant", "content": content})
-    # The API requires the first message to come from the user.
-    while messages and messages[0]["role"] != "user":
-        messages.pop(0)
-    messages.append({"role": "user", "content": question})
-
-    # With no credentials the SDK raises a TypeError at request time rather
-    # than an API error, so check up front and answer politely instead.
-    if not (
-        os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
-    ):
+    # Without a key the SDK raises when the client is created; check up
+    # front and answer politely instead.
+    if not os.environ.get(API_KEY_ENV):
         return NOT_CONFIGURED_MESSAGE
-
+    model = os.environ.get(MODEL_ENV) or DEFAULT_MODEL
+    messages = _build_messages(history, question)
     try:
-        # The MegaLinter image bundles anthropic 0.84, which predates
-        # `fallbacks`; against the pinned SDK in requirements.txt this call
-        # type-checks cleanly, so silence only that stale-stub mismatch.
-        runner = (
-            _get_client().beta.messages.tool_runner(  # pyright: ignore[reportCallIssue]
-                model=MODEL,
-                max_tokens=16000,
-                system=SYSTEM_PROMPT,
-                tools=TOOLS,
-                messages=messages,
-                max_iterations=MAX_TOOL_ITERATIONS,
-                output_config=OUTPUT_CONFIG,
-                cache_control=CACHE_CONTROL,
-                betas=BETAS,
-                fallbacks="default",
-            )
-        )
-        final = runner.until_done()
-    except anthropic.AuthenticationError:
-        logger.exception("Anthropic authentication failed")
+        return _run_conversation(messages, model)
+    except (openai.AuthenticationError, openai.PermissionDeniedError):
+        logger.exception("OpenAI rejected the API key")
         return NOT_CONFIGURED_MESSAGE
-    except anthropic.RateLimitError:
-        logger.warning("Anthropic rate limit hit")
-        return "The data assistant is busy right now. Please try again in a minute."
-    except anthropic.APIStatusError as error:
-        logger.exception("Anthropic API error %s", error.status_code)
-        return "Sorry, the data assistant hit an error. Please try again."
-    except anthropic.APIConnectionError:
-        logger.exception("Could not reach the Anthropic API")
-        return "The data assistant couldn't be reached. Please try again later."
-
-    if final.stop_reason == "refusal":
-        return "Sorry, I can't help with that question."
-    if final.stop_reason == "max_tokens":
-        logger.warning("Data chat reply hit max_tokens")
-    text = _final_text(final)
-    if not text:
-        return (
-            "I couldn't finish answering that. Try asking a narrower question, "
-            "for example about one gene or one dataset."
-        )
-    return text
+    except openai.RateLimitError:
+        # Also raised when the account is out of credit (insufficient_quota).
+        logger.warning("OpenAI rate limit or quota hit")
+        return BUSY_MESSAGE
+    except openai.APIConnectionError:
+        logger.exception("Could not reach the OpenAI API")
+        return UNREACHABLE_MESSAGE
+    except openai.APIError:
+        logger.exception("OpenAI API error")
+        return ERROR_MESSAGE
