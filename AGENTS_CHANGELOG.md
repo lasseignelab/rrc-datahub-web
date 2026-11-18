@@ -6,6 +6,31 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### About page: header layout and sample-count alignment
+- `pages/about.py`: Header card gets `about-header`; release date in the version tile kept on one line (`text-nowrap`).
+- `assets/style.css`: Header split layout at >=1200px (title/subtitle left, stat tiles right); below that the tiles sit in one row under the subtitle, sized by content, with smaller tiles under 576px (wraps 2 + 1 on phones). Datasets "Samples (n)" column centered instead of right-aligned.
+- Verified at 1288, 1000, 768, and 375px: no horizontal overflow; axe 0 violations at 1288px and 320px; 19/19 tests; linters clean.
+- (Agent: Claude Opus 5.5)
+
+### About page: visual polish, header stats, group headings
+- `pages/about.py`: Header stat tiles (datasets, samples, version/release date) via `_stat_tiles()` as a labelled list; group H2 headings now show the shared icons (`GROUP_ICONS`, from `components.navbar.ABOUT_MENU`); "Back to top" link at the end of each group card (targets the H1, now `id="about-title"`); Known limitations rendered as a callout (`CALLOUT_SLUGS`).
+- `config.py`: `DATASET_COUNT` (14) and `SAMPLE_COUNT` (249) for the header tiles; update per release alongside `VERSION` (also stated in `content/about/datasets.md`).
+- `assets/style.css`: Larger group headings with icon and divider; stat tiles; back-to-top link; amber callout; Datasets table with monospace accessions, right-aligned tabular sample counts, zebra rows; Glossary as a two-column term/definition grid (stacks below 576px).
+- `content/about/limitations.md`: Removed the blank line that split the list (extra gap above "Sex is rarely reported").
+- `tests/test_about.py`: Anchor test also accepts H1 ids (back-to-top target).
+- Verified: axe 0 violations at 1288px and 320px; no horizontal page scroll at 320px; back-to-top lands on and focuses the H1; 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright, bandit clean.
+- (Agent: Claude Opus 5.5)
+
+### About page: scroll-spy keeps clicked section highlighted
+- `assets/toc-scrollspy.js`: A clicked sidebar link stays the active one until the user scrolls themselves (wheel, touch, or scroll keys). Fixes sections near the end of the page (e.g. Feedback and issues), which cannot scroll up to the active line and were highlighting a neighbouring section. Verified: all 10 tested links stay highlighted after the pointer leaves; wheel scrolling releases the pin; keyboard Enter works.
+- (Agent: Claude Opus 5.5)
+
+### About page: sidebar scroll-spy
+- `assets/toc-scrollspy.js` (new): Sets `aria-current="location"` on the sidebar link for the section currently in view (last H3 above 120px from the top; last section when scrolled to the bottom). Never moves focus, no live-region announcements, and only scrolls the sidebar (not the page) to keep the active link visible on short screens. rAF-throttled scroll/resize listeners plus a MutationObserver for Dash's async rendering; no-op on other pages.
+- `assets/style.css`: The current section keeps the hover look (light teal background + dark left bar) while it is in view; the left bar is the non-color cue (WCAG 1.4.1).
+- Verified in headless Chrome with Flatly loaded: correct section highlighted when scrolled to User guide / Research methodology / Funding, at the top and bottom of the page, and after clicking a sidebar link; focus unchanged by scrolling; no JS errors on /, /charts, /about; axe 0 violations.
+- (Agent: Claude Opus 5.5)
+
 ### About page: sidebar restyle
 - `pages/about.py`: Sidebar group links now show the same Bootstrap icons as the navbar About dropdown (looked up from `components.navbar.ABOUT_MENU` by anchor id, so both stay in sync); group/item links get `about-toc-group` / `about-toc-item` classes.
 - `assets/style.css`: Replaced default list styling (bullets, underlines, large heading) with a small uppercase "On this page" label, icon + bold group links, and sub-items on a thin guide line with a teal hover bar. Keyboard focus ring unchanged. axe: 0 violations at 1288px and 320px.
