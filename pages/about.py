@@ -12,6 +12,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+from components.navbar import ABOUT_MENU
 from config import UPDATED, VERSION
 
 dash.register_page(
@@ -109,17 +110,35 @@ def _group_section(group_title: str, items: list[tuple[str, str]]) -> html.Secti
 
 def _table_of_contents() -> html.Nav:
     """In-page navigation listing every group and its subsections."""
+    # Same icons as the navbar About dropdown, looked up by group anchor id.
+    icons = {anchor: icon for _, anchor, icon in ABOUT_MENU}
     group_items = []
     for group_title, items in SECTIONS:
+        anchor = _group_id(group_title)
         group_items.append(
             html.Li(
                 [
-                    html.A(group_title, href=f"#{_group_id(group_title)}"),
+                    html.A(
+                        [
+                            html.I(
+                                className=f"bi {icons.get(anchor, 'bi-dot')}",
+                                **{"aria-hidden": "true"},
+                            ),
+                            html.Span(group_title),
+                        ],
+                        href=f"#{anchor}",
+                        className="about-toc-group",
+                    ),
                     html.Ul(
                         [
-                            html.Li(html.A(title, href=f"#{slug}"))
+                            html.Li(
+                                html.A(
+                                    title, href=f"#{slug}", className="about-toc-item"
+                                )
+                            )
                             for slug, title in items
-                        ]
+                        ],
+                        className="about-toc-sublist",
                     ),
                 ]
             )

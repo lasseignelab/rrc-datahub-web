@@ -693,7 +693,6 @@ height: 84px;
 About page
 ========================================================================== */
 
-.about-toc-title,
 .about-group-heading {
 scroll-margin-top: 1rem;
 font-size: 1.5rem;
@@ -701,9 +700,70 @@ font-weight: 600;
 margin-bottom: 1rem;
 }
 
-.about-toc-list {
-margin-bottom: 0;
-padding-left: 1.25rem;
+/* ---- "On this page" sidebar ---- */
+
+.about-toc-title {
+font-size: 0.8rem;
+font-weight: 600;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+color: var(--meta);
+margin-bottom: 0.75rem;
+}
+
+.about-toc-list,
+.about-toc-sublist {
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+.about-toc-list > li + li {
+margin-top: 0.9rem;
+}
+
+.about-toc a {
+text-decoration: none;
+border-radius: 4px;
+}
+
+.about-toc-group {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+font-weight: 600;
+color: var(--ink);
+}
+
+.about-toc-group .bi {
+font-size: 1rem;
+color: var(--teal-deep);
+}
+
+/* Sub-items hang off a thin guide line aligned under the group icon. */
+.about-toc-sublist {
+margin: 0.35rem 0 0 0.45rem;
+border-left: 1px solid var(--line);
+}
+
+.about-toc-item {
+display: block;
+margin-left: -1px;
+padding: 0.2rem 0 0.2rem 0.9rem;
+border-left: 2px solid transparent;
+color: var(--meta);
+font-size: 0.92rem;
+line-height: 1.4;
+}
+
+.about-toc-group:hover,
+.about-toc-item:hover {
+color: var(--teal-deep);
+}
+
+.about-toc-item:hover {
+border-left-color: var(--teal-deep);
+background: var(--teal-pale);
 }
 
 /* Sidebar "On this page" stays in view while scrolling on wide screens. */
@@ -714,17 +774,6 @@ padding-left: 1.25rem;
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
   }
-}
-
-.about-toc-list > li {
-break-inside: avoid;
-margin-bottom: 0.75rem;
-font-weight: 600;
-}
-
-.about-toc-list ul {
-font-weight: 400;
-padding-left: 1.25rem;
 }
 
 .about-item + .about-item {
