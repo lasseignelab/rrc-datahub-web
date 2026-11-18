@@ -4,6 +4,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-18
+
+### About page: team degree
+- `content/about/contact.md`: Added Anthony B. Crumley's degree (BS).
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-17
 
 ### About page: future directions finalized

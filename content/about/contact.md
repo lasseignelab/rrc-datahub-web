@@ -5,7 +5,7 @@ For questions about the DataHub, email
 
 - **Brittany N. Lasseigne, PhD**, Principal Investigator
 - **Tabea M. Soelter, PhD**, Project Manager and Team Lead
-- **Anthony B. Crumley**, Team Lead
+- **Anthony B. Crumley, BS**, Team Lead
 - **Kieran J. Casper**, Undergraduate Research Assistant (data pipeline)
 - **Elizabeth Okunbor**, Undergraduate Research Assistant (web application)
 
