@@ -6,8 +6,11 @@ Flow:
     -> submit_question() appends the question to the history store, clears
        the input, and records it as pending (so it shows up immediately)
     -> answer_pending() sends the history to components.chat_assistant and
-       appends the reply; while it runs, the button is disabled and a
-       role="status" message tells screen readers the assistant is working
+       appends the reply; while it runs, a role="status" message tells
+       screen readers the assistant is working
+    -> a question asked while an answer is on its way is queued (shown as
+       "Up next") and ask_next_queued() sends it once that answer arrives,
+       so Enter or Ask always leads to an answer and turns never interleave
     -> render_log() redraws the conversation from the history store
     -> assets/data_chat_scroll.js scrolls the log to the newest exchange
 
@@ -15,13 +18,17 @@ The history store uses session storage, so the conversation survives page
 changes and reloads in the same browser tab.
 """
 
+import logging
 from typing import Any
 
 from dash import Input, Output, State, callback, dcc, html, no_update
 
 from components.chat_assistant import answer_question
 
+logger = logging.getLogger(__name__)
+
 EXAMPLE_QUESTION = "e.g. Which datasets include female mice?"
+ERROR_REPLY = "Sorry, the data assistant hit an error. Please try again."
 
 # Hyphenated ARIA props can't be Python keywords; typed as Any so the
 # ** spread type-checks against html.Div's keyword arguments.
@@ -81,6 +88,12 @@ layout = html.Div(
             className="data-chat-form",
         ),
         html.Div(id="data-chat-status", className="data-chat-status", role="status"),
+        html.P(
+            id="data-chat-queued",
+            className="data-chat-queued",
+            role="status",
+            hidden=True,
+        ),
         # Session storage keeps the conversation when the user follows a
         # link to the charts page and comes back, or reloads, within the same
         # tab; it is cleared when the tab closes and never shared across tabs.
@@ -88,6 +101,13 @@ layout = html.Div(
         # Stays in memory: if it were restored after a reload mid-answer, the
         # chat would treat that question as still running and ignore new ones.
         dcc.Store(id="data-chat-pending", data=None),
+        # Questions asked while an answer is on its way, oldest first.
+        dcc.Store(id="data-chat-queue", data=[]),
+        # Runs only while questions are queued. Dash won't start a callback
+        # again from changes its own run set off, so "answer arrived -> ask
+        # the next question -> answer it" can't be a plain callback chain;
+        # each tick is a fresh event that can start the next answer.
+        dcc.Interval(id="data-chat-queue-timer", interval=500, disabled=True),
     ],
     className="data-chat",
 )
@@ -97,22 +117,26 @@ layout = html.Div(
     Output("data-chat-history", "data"),
     Output("data-chat-pending", "data"),
     Output("data-chat-input", "value"),
+    Output("data-chat-queue", "data"),
     Input("data-chat-submit", "n_clicks"),
     Input("data-chat-input", "n_submit"),
     State("data-chat-input", "value"),
     State("data-chat-history", "data"),
     State("data-chat-pending", "data"),
+    State("data-chat-queue", "data"),
     prevent_initial_call=True,
 )
-def submit_question(_n_clicks, _n_submit, question, history, pending):
-    """Append the typed question to the history and mark it pending."""
+def submit_question(_n_clicks, _n_submit, question, history, pending, queue):
+    """Send the typed question, or queue it if an answer is on its way."""
     question = (question or "").strip()
-    # Enter still fires while the button is disabled; ignore it until the
-    # current answer arrives so turns cannot interleave.
-    if not question or pending:
-        return no_update, no_update, no_update
+    if not question:
+        return no_update, no_update, no_update, no_update
+    if pending:
+        # Asking now would interleave two answers; ask_next_queued() sends
+        # it as soon as the current answer arrives.
+        return no_update, no_update, "", (queue or []) + [question]
     history = (history or []) + [{"role": "user", "content": question}]
-    return history, question, ""
+    return history, question, "", no_update
 
 
 @callback(
@@ -122,7 +146,6 @@ def submit_question(_n_clicks, _n_submit, question, history, pending):
     State("data-chat-history", "data"),
     prevent_initial_call=True,
     running=[
-        (Output("data-chat-submit", "disabled"), True, False),
         (
             Output("data-chat-status", "children"),
             "Searching the data, this can take a few seconds…",
@@ -137,8 +160,50 @@ def answer_pending(pending, history):
     history = history or []
     # submit_question already appended the pending question as the last
     # entry; pass only the turns before it as context.
-    reply = answer_question(history[:-1], pending)
+    try:
+        reply = answer_question(history[:-1], pending)
+    except Exception:  # pylint: disable=broad-exception-caught
+        # answer_question already turns API errors into messages; this
+        # catches anything else (e.g. a database failure in a tool) so the
+        # question is always finished. Otherwise it would stay pending and
+        # every later question would wait in the queue forever.
+        logger.exception("Data chat failed to answer a question")
+        reply = ERROR_REPLY
     return history + [{"role": "assistant", "content": reply}], None
+
+
+@callback(
+    Output("data-chat-history", "data", allow_duplicate=True),
+    Output("data-chat-pending", "data", allow_duplicate=True),
+    Output("data-chat-queue", "data", allow_duplicate=True),
+    Input("data-chat-queue-timer", "n_intervals"),
+    State("data-chat-history", "data"),
+    State("data-chat-pending", "data"),
+    State("data-chat-queue", "data"),
+    prevent_initial_call=True,
+)
+def ask_next_queued(_n_intervals, history, pending, queue):
+    """Once an answer has arrived, send the oldest queued question."""
+    if pending or not queue:
+        return no_update, no_update, no_update
+    question, rest = queue[0], queue[1:]
+    history = (history or []) + [{"role": "user", "content": question}]
+    return history, question, rest
+
+
+@callback(
+    Output("data-chat-queued", "children"),
+    Output("data-chat-queued", "hidden"),
+    Output("data-chat-queue-timer", "disabled"),
+    Input("data-chat-queue", "data"),
+)
+def render_queue(queue):
+    """Show the questions waiting for the current answer, and run the queue
+    timer only while there are any."""
+    queue = queue or []
+    if not queue:
+        return "", True, True
+    return "Up next: " + " · ".join(queue), False, False
 
 
 @callback(

@@ -6,6 +6,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### Enter (or Ask) during an answer queues the question instead of ignoring it (branch `feature/add-ai-chat-openai`)
+- Enter already submitted a question, but while an answer was on its way it was silently ignored (the typed text stayed in the box). Real OpenAI answers take several seconds, so typing a follow-up and pressing Enter looked broken.
+- `components/data_chat.py`: `submit_question` now queues a question asked during an answer (new `data-chat-queue` store) and clears the box; an "Up next: …" line (`data-chat-queued`, `role="status"`) shows the queue. `ask_next_queued` sends the oldest queued question once the current answer has arrived. It is driven by a `dcc.Interval` that runs only while questions are queued: Dash won't start a callback again from changes its own run set off, so "answer arrived → ask next → answer it" can't be a plain callback chain (tried triggering on the pending store, the history store, and a separate request store; none started the second answer). The Ask button is no longer disabled during an answer, since a click now queues too. `answer_pending` catches any unexpected error and replies with an error message, so a question can never stay pending and block the queue.
+- `assets/style.css`: Style for the "Up next" line.
+- `tests/test_data_chat.py`: Unit tests for queuing, dequeuing, the queue line/timer and the error fallback; browser test that a question entered with Enter during a slow answer is answered next, in order. (Agent: Claude Opus 5.5)
+
 ### Smaller hero title; AI disclaimer under the answers (branch `feature/add-ai-chat-openai`)
 - `assets/style.css`: Hero title halved from 6rem to 3rem. Log bottom margin 16px → 6px and disclaimer margin moved below it (0 0 16px) so the disclaimer sits tight under the answers.
 - `components/data_chat.py`: The disclaimer (now `id="data-chat-disclaimer"`) moved to directly under the conversation log and starts `hidden`; `render_log` also outputs its `hidden` prop, so it shows only once a question has been asked, together with the log.

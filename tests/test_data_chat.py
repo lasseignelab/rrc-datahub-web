@@ -43,26 +43,62 @@ def test_log_and_status_are_announced():
 
 def test_submit_appends_question_and_clears_input():
     """A typed question is added to history, marked pending, input cleared."""
-    history, pending, value = data_chat.submit_question(
-        1, None, "  Which genes?  ", [], None
+    history, pending, value, queue = data_chat.submit_question(
+        1, None, "  Which genes?  ", [], None, []
     )
     assert history == [{"role": "user", "content": "Which genes?"}]
     assert pending == "Which genes?"
     assert value == ""
+    assert queue is no_update
 
 
-def test_submit_ignores_blank_and_in_flight_questions():
-    """Blank input, or a new question while one is pending, does nothing."""
-    assert data_chat.submit_question(1, None, "   ", [], None) == (
+def test_submit_ignores_blank_input():
+    """Pressing Enter or Ask with nothing typed does nothing."""
+    assert data_chat.submit_question(1, None, "   ", [], None, []) == (
+        no_update,
         no_update,
         no_update,
         no_update,
     )
-    assert data_chat.submit_question(1, None, "Next?", [], "First?") == (
-        no_update,
-        no_update,
-        no_update,
+
+
+def test_submit_queues_a_question_asked_during_an_answer():
+    """Enter while an answer is on its way queues the question and clears it."""
+    history, pending, value, queue = data_chat.submit_question(
+        None, 2, "Next?", [{"role": "user", "content": "First?"}], "First?", ["A?"]
     )
+    assert history is no_update and pending is no_update
+    assert value == ""
+    assert queue == ["A?", "Next?"]
+
+
+def test_ask_next_queued_sends_the_oldest_question_after_an_answer():
+    """When the answer arrives, the first queued question becomes pending."""
+    earlier = [
+        {"role": "user", "content": "First?"},
+        {"role": "assistant", "content": "One."},
+    ]
+    history, pending, queue = data_chat.ask_next_queued(
+        1, earlier, None, ["Second?", "Third?"]
+    )
+    assert history == earlier + [{"role": "user", "content": "Second?"}]
+    assert pending == "Second?"
+    assert queue == ["Third?"]
+
+
+def test_ask_next_queued_waits_while_an_answer_is_on_its_way():
+    """Nothing is sent while a question is still pending or the queue is empty."""
+    nothing = (no_update, no_update, no_update)
+    assert data_chat.ask_next_queued(1, [], "First?", ["Second?"]) == nothing
+    assert data_chat.ask_next_queued(1, [], None, []) == nothing
+
+
+def test_render_queue_shows_waiting_questions():
+    """Queued questions are listed; line and timer are off when there are none."""
+    assert data_chat.render_queue([]) == ("", True, True)
+    text, hidden, timer_disabled = data_chat.render_queue(["Second?", "Third?"])
+    assert hidden is False and timer_disabled is False
+    assert "Second?" in text and "Third?" in text
 
 
 def test_answer_pending_passes_earlier_turns_and_appends_reply(monkeypatch):
@@ -86,6 +122,21 @@ def test_answer_pending_passes_earlier_turns_and_appends_reply(monkeypatch):
     assert seen["question"] == "Second?"
     assert seen["history"] == history[:-1]
     assert new_history[-1] == {"role": "assistant", "content": "Answer."}
+    assert pending is None
+
+
+def test_answer_pending_always_finishes_the_question(monkeypatch):
+    """An unexpected error still clears pending, so the queue keeps moving."""
+
+    def broken_answer(_history, _question):
+        raise RuntimeError("database went away")
+
+    monkeypatch.setattr(data_chat, "answer_question", broken_answer)
+    history = [{"role": "user", "content": "First?"}]
+
+    new_history, pending = data_chat.answer_pending("First?", history)
+
+    assert new_history[-1] == {"role": "assistant", "content": data_chat.ERROR_REPLY}
     assert pending is None
 
 
@@ -280,3 +331,31 @@ def test_disclaimer_sits_right_under_the_answers_and_starts_hidden():
     log_index = ids.index("data-chat-log")
     assert ids[log_index + 1] == "data-chat-disclaimer"
     assert children[log_index + 1].hidden is True
+
+
+def test_enter_during_an_answer_is_answered_next(dash_duo, monkeypatch):
+    """Typing ahead and pressing Enter while waiting still gets an answer."""
+    from app import app
+
+    def slow_answer(_history, question):
+        time.sleep(1.5)
+        return f"Answer to {question}"
+
+    monkeypatch.setattr(data_chat, "answer_question", slow_answer)
+    dash_duo.start_server(app)
+
+    box = dash_duo.wait_for_element("#data-chat-input")
+    box.send_keys("First?", Keys.ENTER)
+    dash_duo.wait_for_contains_text("#data-chat-log", "First?")
+    box.send_keys("Second?", Keys.ENTER)
+    dash_duo.wait_for_contains_text("#data-chat-queued", "Second?")
+
+    dash_duo.wait_for_contains_text("#data-chat-log", "Answer to Second?", timeout=10)
+    answers = [
+        element.text for element in dash_duo.find_elements(".data-chat-assistant")
+    ]
+    assert [answer.splitlines()[-1] for answer in answers] == [
+        "Answer to First?",
+        "Answer to Second?",
+    ]
+    assert not dash_duo.find_element("#data-chat-queued").is_displayed()

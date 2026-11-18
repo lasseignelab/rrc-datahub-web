@@ -741,6 +741,14 @@ text-align: left;
   color: var(--meta);
 }
 
+/* Questions waiting for the current answer (data_chat.render_queue). */
+.data-chat-queued {
+  margin: 0;
+  text-align: center;
+  color: var(--meta);
+  font-style: italic;
+}
+
 .data-chat-disclaimer {
   margin: 0 0 16px;
   font-size: 0.85rem;
