@@ -1,4 +1,3 @@
-
 import dash_bootstrap_components as dbc
 from dash import html
 
@@ -16,9 +15,7 @@ def section_header(
 
     if tooltip_text is not None:
         if not header_id:
-            raise ValueError(
-                "header_id is required when tooltip_text is provided"
-            )
+            raise ValueError("header_id is required when tooltip_text is provided")
 
         icon_id = f"{header_id}-info-icon"
         tooltip_id = f"{icon_id}-tooltip"
