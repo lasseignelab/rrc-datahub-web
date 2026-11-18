@@ -13,7 +13,6 @@
   expression across all cells in a sample.
 - **Mouse models.** v0.1.0 contains mouse data only; findings may not translate
   directly to human PKD.
-
 - **Sex is rarely reported.** Only 1 of the 14 datasets in v0.1.0
   (PRJNA857739) reports sample sex, so filtering by sex excludes most
   datasets.
