@@ -695,9 +695,174 @@ About page
 
 .about-group-heading {
 scroll-margin-top: 1rem;
-font-size: 1.5rem;
+display: flex;
+align-items: center;
+gap: 0.6rem;
+font-size: 1.75rem;
 font-weight: 600;
-margin-bottom: 1rem;
+margin-bottom: 1.25rem;
+padding-bottom: 0.75rem;
+border-bottom: 2px solid var(--line);
+}
+
+.about-group-heading .bi {
+font-size: 1.5rem;
+color: var(--teal-deep);
+}
+
+/* ---- Header stat tiles (pages/about.py _stat_tiles) ---- */
+
+/* Wide screens: title and subtitle on the left, stat tiles on the right.
+   Narrower screens: tiles sit in one row below the subtitle. */
+@media (max-width: 1199px) {
+  .about-stats .about-stat {
+  flex: 1 1 auto;
+  min-width: 0;
+  }
+}
+
+@media (max-width: 575px) {
+  .about-stats {
+  gap: 0.5rem;
+  }
+
+  .about-stats .about-stat {
+  padding: 0.6rem 0.7rem;
+  }
+
+  .about-stat-value {
+  font-size: 1.2rem;
+  }
+
+  .about-stat-label {
+  font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .about-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 2rem;
+  align-items: center;
+  }
+
+  .about-header h1,
+  .about-header p {
+  grid-column: 1;
+  }
+
+  .about-header p {
+  margin-bottom: 0;
+  }
+
+  .about-header .about-stats {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  flex-wrap: nowrap;
+  margin: 0;
+  }
+}
+
+.about-stats {
+display: flex;
+flex-wrap: wrap;
+gap: 0.75rem;
+list-style: none;
+margin: 1.25rem 0 0;
+padding: 0;
+}
+
+.about-stat {
+display: flex;
+flex-direction: column;
+min-width: 9rem;
+padding: 0.75rem 1rem;
+background: var(--teal-pale);
+border-radius: 8px;
+}
+
+.about-stat-value {
+font-size: 1.6rem;
+font-weight: 600;
+line-height: 1.2;
+color: var(--teal-deep);
+}
+
+.about-stat-label {
+font-size: 0.85rem;
+color: var(--meta);
+}
+
+/* ---- Back to top (end of each group card) ---- */
+
+.about-back-to-top {
+display: inline-flex;
+align-items: center;
+gap: 0.35rem;
+margin-top: 1.5rem;
+font-size: 0.9rem;
+text-decoration: none;
+color: var(--meta);
+}
+
+.about-back-to-top:hover {
+color: var(--teal-deep);
+text-decoration: underline;
+}
+
+/* ---- Known limitations callout ---- */
+
+.about-callout {
+padding: 1rem 1.25rem;
+background: #FFF8E6;
+border-left: 4px solid #C98A00;
+border-radius: 0 6px 6px 0;
+}
+
+.about-callout ul {
+margin-bottom: 0;
+}
+
+/* ---- Datasets table ---- */
+
+#datasets ~ .about-markdown td:first-child a {
+font-family: "IBM Plex Mono", var(--bs-font-monospace);
+font-size: 0.9em;
+}
+
+#datasets ~ .about-markdown td:last-child {
+text-align: center;
+font-variant-numeric: tabular-nums;
+}
+
+#datasets ~ .about-markdown tbody tr:nth-child(even) {
+background-color: #F7F9F8;
+}
+
+/* ---- Glossary (FAQ): term column beside definition ---- */
+
+#faq ~ .about-markdown h4 + ul {
+list-style: none;
+padding-left: 0;
+}
+
+#faq ~ .about-markdown h4 + ul > li {
+display: grid;
+grid-template-columns: 13rem 1fr;
+column-gap: 1rem;
+padding: 0.4rem 0;
+border-bottom: 1px solid var(--line);
+}
+
+#faq ~ .about-markdown h4 + ul > li:last-child {
+border-bottom: 0;
+}
+
+@media (max-width: 575px) {
+  #faq ~ .about-markdown h4 + ul > li {
+  grid-template-columns: 1fr;
+  }
 }
 
 /* ---- "On this page" sidebar ---- */
@@ -761,7 +926,12 @@ line-height: 1.4;
 color: var(--teal-deep);
 }
 
-.about-toc-item:hover {
+/* Hover, and the current section (aria-current, set by
+   assets/toc-scrollspy.js) which keeps the highlight while in view. The left
+   bar marks it without relying on color alone (WCAG 1.4.1). */
+.about-toc-item:hover,
+.about-toc-item[aria-current="location"] {
+color: var(--teal-deep);
 border-left-color: var(--teal-deep);
 background: var(--teal-pale);
 }
