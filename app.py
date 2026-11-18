@@ -41,5 +41,8 @@ app.layout = html.Div(
     ]
 )
 
+# The underlying Flask app, which `gunicorn app:server` serves in production.
+server = app.server
+
 if __name__ == "__main__":
     app.run(debug=True, dev_tools_ui=False)

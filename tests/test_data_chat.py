@@ -1,6 +1,10 @@
 """Tests for the home-page chat box callbacks and layout (components/data_chat.py)."""
 
+import time
+
 from dash import dcc, html, no_update
+from dash.testing.wait import until
+from selenium.webdriver.common.keys import Keys
 
 from components import data_chat
 
@@ -110,3 +114,127 @@ def test_home_page_renders_chat_box(dash_duo):
     dash_duo.wait_for_element("#data-chat-input")
     dash_duo.wait_for_element("#data-chat-submit")
     assert not dash_duo.find_elements("#gene-search-input")
+
+
+def test_history_is_kept_for_the_tab_but_pending_is_not():
+    """The conversation persists per tab; the in-flight flag never does."""
+    stores = {
+        getattr(store, "id", None): store
+        for store in _find_all(data_chat.layout, dcc.Store)
+    }
+    assert stores["data-chat-history"].storage_type == "session"
+    assert getattr(stores["data-chat-pending"], "storage_type", "memory") == "memory"
+
+
+def test_conversation_survives_a_page_reload(dash_duo, monkeypatch):
+    """A reload in the same tab shows the earlier conversation again."""
+    from app import app
+
+    monkeypatch.setattr(
+        data_chat, "answer_question", lambda history, question: "Saved answer."
+    )
+    dash_duo.start_server(app)
+    # Enter submits the question (n_submit); a click on the button can be
+    # intercepted while the page is still laying out.
+    dash_duo.wait_for_element("#data-chat-input").send_keys(
+        "Which datasets?", Keys.ENTER
+    )
+    dash_duo.wait_for_contains_text("#data-chat-log", "Saved answer.")
+
+    dash_duo.driver.refresh()
+
+    dash_duo.wait_for_contains_text("#data-chat-log", "Which datasets?")
+    dash_duo.wait_for_contains_text("#data-chat-log", "Saved answer.")
+
+
+# Distance (px) from the top of the log's visible area to the top of the last
+# element matching a selector; 0 means it sits at the top of the box.
+_OFFSET_IN_LOG_JS = """
+var log = document.getElementById("data-chat-log");
+var items = log.querySelectorAll(arguments[0]);
+var item = items[items.length - 1];
+return item.getBoundingClientRect().top - log.getBoundingClientRect().top;
+"""
+
+
+def _ask(dash_duo, question, expected_count):
+    """Type a question, press Enter and wait for its answer to be drawn."""
+    dash_duo.wait_for_element("#data-chat-input").send_keys(question, Keys.ENTER)
+    until(
+        lambda: len(dash_duo.find_elements(".data-chat-message")) == expected_count,
+        timeout=10,
+    )
+
+
+def _offset_in_log(dash_duo, selector):
+    """Return how far below the top of the log box the element sits."""
+    return dash_duo.driver.execute_script(_OFFSET_IN_LOG_JS, selector)
+
+
+def test_long_answer_is_scrolled_to_its_start(dash_duo, monkeypatch):
+    """A long new answer is shown from its first line, not its end."""
+    from app import app
+
+    long_answer = "\n\n".join(f"Line {number}" for number in range(40))
+    monkeypatch.setattr(data_chat, "answer_question", lambda h, q: long_answer)
+    dash_duo.start_server(app)
+
+    _ask(dash_duo, "First?", 2)
+    _ask(dash_duo, "Second?", 4)
+
+    until(
+        lambda: 0 <= _offset_in_log(dash_duo, ".data-chat-assistant") <= 20,
+        timeout=5,
+    )
+
+
+def test_newest_question_and_short_answer_are_in_view(dash_duo, monkeypatch):
+    """After many short exchanges the newest question and answer are visible."""
+    from app import app
+
+    monkeypatch.setattr(data_chat, "answer_question", lambda h, q: f"Answer to {q}")
+    dash_duo.start_server(app)
+
+    for number in range(1, 9):
+        _ask(dash_duo, f"Question {number}?", number * 2)
+
+    def newest_exchange_visible():
+        """True when the last question and answer are both inside the box."""
+        return dash_duo.driver.execute_script("""
+            var log = document.getElementById("data-chat-log");
+            var box = log.getBoundingClientRect();
+            var q = log.querySelectorAll(".data-chat-user");
+            var a = log.querySelectorAll(".data-chat-assistant");
+            var top = q[q.length - 1].getBoundingClientRect().top;
+            var bottom = a[a.length - 1].getBoundingClientRect().bottom;
+            return log.scrollTop > 0 && top >= box.top && bottom <= box.bottom;
+            """)
+
+    until(newest_exchange_visible, timeout=5)
+
+
+def test_first_answer_scrolls_on_a_slow_browser(dash_duo, monkeypatch):
+    """A slow first answer with a Markdown table is still scrolled into view.
+
+    The Markdown component loads on demand and a slow machine draws it late;
+    scrolling must wait for the drawn answer, not the Dash update.
+    """
+    from app import app
+
+    rows = "\n".join(f"| PRJNA{number} | {number} |" for number in range(25))
+    answer = f"Several datasets match.\n\n| Dataset | Samples |\n|---|---|\n{rows}"
+
+    def slow_answer(_history, _question):
+        time.sleep(1)
+        return answer
+
+    monkeypatch.setattr(data_chat, "answer_question", slow_answer)
+    dash_duo.start_server(app)
+    dash_duo.driver.execute_cdp_cmd("Emulation.setCPUThrottlingRate", {"rate": 6})
+
+    _ask(dash_duo, "Which datasets?", 2)
+
+    until(
+        lambda: 0 <= _offset_in_log(dash_duo, ".data-chat-assistant") <= 20,
+        timeout=5,
+    )

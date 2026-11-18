@@ -50,3 +50,10 @@ def test_lang_attribute(dash_duo):
     dash_duo.start_server(app)
     lang = dash_duo.driver.execute_script("return document.documentElement.lang")
     assert lang == "en"
+
+
+def test_exposes_flask_server_for_gunicorn():
+    """`gunicorn app:server` needs a module-level `server` (the Flask app)."""
+    import app as app_module
+
+    assert app_module.server is app_module.app.server

@@ -9,6 +9,10 @@ Flow:
        appends the reply; while it runs, the button is disabled and a
        role="status" message tells screen readers the assistant is working
     -> render_log() redraws the conversation from the history store
+    -> assets/data_chat_scroll.js scrolls the log to the newest exchange
+
+The history store uses session storage, so the conversation survives page
+changes and reloads in the same browser tab.
 """
 
 from typing import Any
@@ -72,7 +76,12 @@ layout = html.Div(
             role="log",
             **LOG_ARIA,
         ),
-        dcc.Store(id="data-chat-history", data=[]),
+        # Session storage keeps the conversation when the user follows a
+        # link to the charts page and comes back, or reloads, within the same
+        # tab; it is cleared when the tab closes and never shared across tabs.
+        dcc.Store(id="data-chat-history", data=[], storage_type="session"),
+        # Stays in memory: if it were restored after a reload mid-answer, the
+        # chat would treat that question as still running and ignore new ones.
         dcc.Store(id="data-chat-pending", data=None),
     ],
     className="data-chat",

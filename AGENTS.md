@@ -47,6 +47,7 @@ Dash + Plotly web application for the RRC DataHub. Built in Python, served via F
 
 ```
 app.py              # Dash app entry point
+gunicorn.conf.py    # Production server settings (workers, threads, timeout)
 config.py           # App configuration (env vars, constants)
 pages/              # Multi-page Dash pages (one file per page)
 components/         # Reusable layout components (charts, filters, navbar, data chat)
@@ -280,6 +281,8 @@ For production:
 ```bash
 gunicorn app:server
 ```
+
+Gunicorn reads its settings from [gunicorn.conf.py](gunicorn.conf.py) automatically: 3 worker processes with 4 threads each (`gthread`) and a 120-second timeout, so a slow data-chat answer doesn't block other visitors. Override with `WEB_CONCURRENCY`, `GUNICORN_THREADS` and `GUNICORN_TIMEOUT`. The listen address is gunicorn's default (`127.0.0.1:8000`, or `0.0.0.0:$PORT` when `PORT` is set); pass `-b` to change it.
 
 ## Linting (MegaLinter)
 
