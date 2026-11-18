@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### About page: team titles and roles
+- `content/about/contact.md`: Core team now listed as name, degree, job title — role(s): Soelter (Computational Biologist — Project Manager, Team Lead, and Developer), Crumley (Computational Scientist — Team Lead and Software Architect), Casper and Okunbor (Research Assistant — Developer, data pipeline / web application). Dropped "Undergraduate".
+- (Agent: Claude Opus 5.5)
+
 ### About page: header layout and sample-count alignment
 - `pages/about.py`: Header card gets `about-header`; release date in the version tile kept on one line (`text-nowrap`).
 - `assets/style.css`: Header split layout at >=1200px (title/subtitle left, stat tiles right); below that the tiles sit in one row under the subtitle, sized by content, with smaller tiles under 576px (wraps 2 + 1 on phones). Datasets "Samples (n)" column centered instead of right-aligned.

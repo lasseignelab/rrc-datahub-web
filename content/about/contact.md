@@ -4,10 +4,12 @@ For questions about the DataHub, email
 #### Core team
 
 - **Brittany N. Lasseigne, PhD**, Principal Investigator
-- **Tabea M. Soelter, PhD**, Project Manager and Team Lead
-- **Anthony B. Crumley, BS**, Team Lead
-- **Kieran J. Casper**, Undergraduate Research Assistant (data pipeline)
-- **Elizabeth Okunbor**, Undergraduate Research Assistant (web application)
+- **Tabea M. Soelter, PhD**, Computational Biologist — Project Manager, Team
+  Lead, and Developer
+- **Anthony B. Crumley, BS**, Computational Scientist — Team Lead and Software
+  Architect
+- **Kieran J. Casper**, Research Assistant — Developer (data pipeline)
+- **Elizabeth Okunbor**, Research Assistant — Developer (web application)
 
 With support from the other members of the
 [Lasseigne Lab](https://www.lasseigne.org/), Department of Cell,
