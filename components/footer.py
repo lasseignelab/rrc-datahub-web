@@ -15,6 +15,7 @@ def logo(src, alt, extra_class=""):
         className=css_class,
     )
 
+
 def footer():
     """Return the shared site footer."""
 
@@ -45,7 +46,6 @@ def footer():
                     ),
                 ],
             ),
-
             # Center: Partner logos
             html.Div(
                 className="info-col footer-logos",
@@ -67,7 +67,6 @@ def footer():
                     ),
                 ],
             ),
-
             # Right: Version information
             html.Div(
                 className="info-col meta-col",

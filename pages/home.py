@@ -2,9 +2,8 @@ import dash
 from dash import html
 
 from components import landing_search
-from components.footer import footer
 from components.feature_card import feature_card
-
+from components.footer import footer
 
 dash.register_page(__name__, path="/", name="Home")
 
@@ -27,10 +26,7 @@ layout = html.Div(
         # ---- Hero ----
         html.Section(
             [
-                html.Div(
-                    className="hero-motif",
-                    **{"aria-hidden": "true"}
-                ),
+                html.Div(className="hero-motif", **{"aria-hidden": "true"}),
                 html.Section(
                     className="hero",
                     children=[
@@ -46,7 +42,7 @@ layout = html.Div(
                             "(PKD) research datasets.",
                             className="hero-tagline",
                         ),
-                    ],  
+                    ],
                 ),
                 # ---- Gene search ----
                 html.Section(
@@ -56,7 +52,6 @@ layout = html.Div(
             ],
             className="section-card-full-width hero-section",
         ),
-
         # ---- About ----
         html.Section(
             className="about-card",
@@ -69,23 +64,30 @@ layout = html.Div(
                             children=[
                                 html.H2("About the DataHub"),
                                 html.H3(
-                                    "A simpler way to explore PKD gene expression data.",
+                                    "A simpler way to explore PKD gene"
+                                    "expression data.",
                                     className="about-title",
                                 ),
                                 html.P(
-                                    "The PKD RRC DataHub is a free, web-based platform " 
-                                    "that makes public polycystic kidney disease (PKD) gene "
-                                    "expression data easier "
-                                    "to access and analyze. The Datahub's standardized "
-                                    "data processing pipeline and user-friendly tools " 
-                                    "help researchers find and evaluate datasets without " 
-                                    "requiring programming skills or specialized " 
-                                    "bioinformatics knowledge.",
+                                    "The PKD RRC DataHub is a free, "
+                                    "web-based platform "
+                                    "that makes public polycystic "
+                                    "kidney disease (PKD) "
+                                    "gene expression data easier to "
+                                    "access and analyze. "
+                                    "The DataHub's standardized data "
+                                    "processing pipeline "
+                                    "and user-friendly tools help "
+                                    "researchers find and "
+                                    "evaluate datasets without "
+                                    "requiring programming "
+                                    "skills or specialized bioinformatics"
+                                    " knowledge.",
                                     className="about-text",
                                 ),
                             ],
                         ),
-                        html.Div(className="about-divider"),  
+                        html.Div(className="about-divider"),
                         html.Div(
                             className="about-features",
                             children=[
@@ -101,7 +103,8 @@ layout = html.Div(
                                 ),
                                 feature_card(
                                     "Visualize",
-                                    "Explore expression patterns with charts and tables",
+                                    "Explore expression patterns with "
+                                    "charts and tables",
                                     "lucide:chart-no-axes-column-increasing",
                                 ),
                                 feature_card(
@@ -111,7 +114,6 @@ layout = html.Div(
                                 ),
                             ],
                         ),
-
                     ],
                 ),
             ],

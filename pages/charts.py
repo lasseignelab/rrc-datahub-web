@@ -12,12 +12,12 @@ import pandas as pd
 from dash import Input, Output, State, callback, clientside_callback, dcc, html
 from sqlalchemy import and_, func, or_
 
+from components.footer import footer
 from components.page_header import create_page_header
 from components.section_header import section_header
 from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
-from components.footer import footer
 
 dash.register_page(__name__, path="/charts")
 
@@ -34,6 +34,7 @@ GITHUB_URL = "https://github.com/lasseignelab/rrc-datahub"
 def logo(src, alt, extra_class=""):
     css_class = f"logo {extra_class}".strip()
     return html.Img(src=f"/assets/{src}", alt=alt, className=css_class)
+
 
 _GENE_SEARCH_LIMIT = 50
 _WILDTYPE_VALUE = "wild-type"
@@ -834,7 +835,7 @@ layout = html.Div(
                         "Explore gene expression across PKD datasets by "
                         "filtering for key research characteristics, then choose a"
                         " gene and one or more genotype groups to view violin "
-                        "plots and a summary table of log₁₀(TPM + 1) values."   
+                        "plots and a summary table of log₁₀(TPM + 1) values."
                     ),
                 ),
                 html.Section(

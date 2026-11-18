@@ -32,17 +32,13 @@ def navbar():
                         className="hamburger-button",
                     ),
                     html.Div(
-                        [
-                            nav_link(label, href)
-                            for label, href in links
-                        ],
+                        [nav_link(label, href) for label, href in links],
                         className="mobile-menu-links",
                     ),
                 ],
                 id="mobile-menu",
                 className="mobile-menu",
             ),
-
             # Brand / wordmark
             dcc.Link(
                 [
@@ -58,13 +54,9 @@ def navbar():
                 href="/",
                 className="site-brand",
             ),
-
             # Desktop navigation
             html.Div(
-                [
-                    nav_link(label, href)
-                    for label, href in links
-                ],
+                [nav_link(label, href) for label, href in links],
                 className="nav-links desktop-nav-links",
             ),
         ],
