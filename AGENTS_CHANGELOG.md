@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### About page: PI title and developer role
+- `content/about/contact.md`: Lasseigne listed as Associate Professor — Principal Investigator; Developer added to Crumley's roles.
+- (Agent: Claude Opus 5.5)
+
 ### About page: future directions additions
 - `content/about/future-directions.md`: Added transfer learning (e.g. relating findings across species) and an "And more!" bullet.
 - (Agent: Claude Opus 5.5)

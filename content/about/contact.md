@@ -3,11 +3,11 @@ For questions about the DataHub, email
 
 #### Core team
 
-- **Brittany N. Lasseigne, PhD**, Principal Investigator
+- **Brittany N. Lasseigne, PhD**, Associate Professor — Principal Investigator
 - **Tabea M. Soelter, PhD**, Computational Biologist — Project Manager, Team
   Lead, and Developer
-- **Anthony B. Crumley, BS**, Computational Scientist — Team Lead and Software
-  Architect
+- **Anthony B. Crumley, BS**, Computational Scientist — Team Lead, Software
+  Architect, and Developer
 - **Kieran J. Casper**, Research Assistant — Developer (data pipeline)
 - **Elizabeth Okunbor**, Research Assistant — Developer (web application)
 
