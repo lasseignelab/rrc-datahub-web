@@ -6,6 +6,11 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### About page: sidebar restyle
+- `pages/about.py`: Sidebar group links now show the same Bootstrap icons as the navbar About dropdown (looked up from `components.navbar.ABOUT_MENU` by anchor id, so both stay in sync); group/item links get `about-toc-group` / `about-toc-item` classes.
+- `assets/style.css`: Replaced default list styling (bullets, underlines, large heading) with a small uppercase "On this page" label, icon + bold group links, and sub-items on a thin guide line with a teal hover bar. Keyboard focus ring unchanged. axe: 0 violations at 1288px and 320px.
+- (Agent: Claude Opus 5.5)
+
 ### About page: team degree
 - `content/about/contact.md`: Added Anthony B. Crumley's degree (BS).
 - (Agent: Claude Opus 5.5)
