@@ -167,8 +167,12 @@ def test_home_page_renders_chat_box(dash_duo):
 
     dash_duo.start_server(app)
     dash_duo.wait_for_element("#data-chat-input")
-    dash_duo.wait_for_element("#data-chat-submit")
     assert not dash_duo.find_elements("#gene-search-input")
+    # Enter sends the question; there is no Ask button.
+    assert not dash_duo.find_elements("#data-chat-submit")
+    dash_duo.wait_for_text_to_equal(
+        "#data-chat-input-hint", "Press Enter to ask, or Shift+Enter for a new line."
+    )
 
 
 def test_history_is_kept_for_the_tab_but_pending_is_not():
@@ -363,23 +367,16 @@ def test_enter_during_an_answer_is_answered_next(dash_duo, monkeypatch):
     assert not dash_duo.find_element("#data-chat-queued").is_displayed()
 
 
-def test_new_conversation_clears_history_and_queue():
-    """Starting over empties the conversation and anything queued."""
-    history, queue, status = data_chat.start_new_conversation(1, None)
-    assert history == [] and queue == []
-    assert status == "Started a new conversation."
+def test_new_chat_clears_history_queue_and_pending():
+    """Starting over empties the conversation, the queue and any stuck question."""
+    history, queue, pending, status = data_chat.start_new_conversation(1, "Stuck?")
+    assert history == [] and queue == [] and pending is None
+    assert status == "Started a new chat."
+    # With nothing pending, pending is left alone.
+    assert data_chat.start_new_conversation(1, None)[2] is no_update
 
 
-def test_new_conversation_waits_for_an_answer_in_progress():
-    """A clear while a question is pending would be undone, so it is ignored."""
-    assert data_chat.start_new_conversation(1, "First?") == (
-        no_update,
-        no_update,
-        no_update,
-    )
-
-
-def test_new_conversation_button_clears_the_chat(dash_duo, monkeypatch):
+def test_new_chat_button_clears_the_chat(dash_duo, monkeypatch):
     """The button appears with a conversation, clears it, and refocuses."""
     from app import app
 
@@ -397,7 +394,7 @@ def test_new_conversation_button_clears_the_chat(dash_duo, monkeypatch):
     until(lambda: not dash_duo.find_elements(".data-chat-message"), timeout=5)
     until(lambda: not new_button.is_displayed(), timeout=5)
     assert not dash_duo.find_element("#data-chat-log").is_displayed()
-    dash_duo.wait_for_text_to_equal("#data-chat-status", "Started a new conversation.")
+    dash_duo.wait_for_text_to_equal("#data-chat-status", "Started a new chat.")
     assert (
         dash_duo.driver.execute_script("return document.activeElement.id")
         == "data-chat-input"
@@ -448,13 +445,12 @@ def test_question_field_grows_and_shift_enter_adds_a_line(dash_duo, monkeypatch)
 
 def test_question_field_describes_its_keys():
     """Screen readers are told how Enter and Shift+Enter behave."""
-    spans = {
-        getattr(span, "id", None): span
-        for span in _find_all(data_chat.layout, html.Span)
+    paragraphs = {
+        getattr(paragraph, "id", None): paragraph
+        for paragraph in _find_all(data_chat.layout, html.P)
     }
-    hint = spans["data-chat-input-hint"]
+    hint = paragraphs["data-chat-input-hint"]
     assert "Enter" in hint.children and "Shift" in hint.children
-    assert "visually-hidden" in hint.className
 
 
 def test_question_field_is_linked_to_its_hint(dash_duo):

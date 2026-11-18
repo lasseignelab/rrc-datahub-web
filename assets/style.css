@@ -675,7 +675,8 @@ text-align: left;
 .data-chat-user {
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--teal-pale);
+  /* Light grey, the same as other light-grey fills on the site. */
+  background: #f0f0f0;
   color: var(--ink);
 }
 
@@ -738,16 +739,19 @@ textarea.data-chat-input:focus-visible {
   outline-offset: 1px;
 }
 
-.data-chat-submit,
 .data-chat-new {
   flex-shrink: 0;
   height: 40px;
-  padding: 0 24px;
+  padding: 0 16px;
   font-size: 16px;
 }
 
-.data-chat-new {
-  padding: 0 16px;
+/* How to send a question, under the field (there is no Ask button). */
+.data-chat-hint {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--meta);
 }
 
 /* `hidden` would otherwise lose to Bootstrap's .btn display rule. */

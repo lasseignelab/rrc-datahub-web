@@ -2,7 +2,8 @@
 Home-page chat box for asking questions about the DataHub's data.
 
 Flow:
-  type question (the field grows as it fills) -> [Ask] or Enter
+  type question (the field grows as it fills) -> Enter
+    -> assets/data_chat_input.js sets the data-chat-send store
     -> submit_question() appends the question to the history store, clears
        the input, and records it as pending (so it shows up immediately)
     -> answer_pending() sends the history to components.chat_assistant and
@@ -10,9 +11,9 @@ Flow:
        screen readers the assistant is working
     -> a question asked while an answer is on its way is queued (shown as
        "Up next") and ask_next_queued() sends it once that answer arrives,
-       so Enter or Ask always leads to an answer and turns never interleave
+       so Enter always leads to an answer and turns never interleave
     -> render_log() redraws the conversation from the history store
-    -> [New conversation] -> start_new_conversation() clears the history
+    -> [New chat] -> start_new_conversation() clears the history
        and queue (disabled while an answer is on its way)
     -> assets/data_chat_scroll.js scrolls the log to the newest exchange
 
@@ -88,15 +89,9 @@ layout = html.Div(
                             rows=1,
                             className="data-chat-input",
                         ),
-                        html.Button(
-                            "Ask",
-                            id="data-chat-submit",
-                            n_clicks=0,
-                            className="btn btn-primary data-chat-submit",
-                        ),
                         # Shown once there is a conversation to clear.
                         html.Button(
-                            "New conversation",
+                            "New chat",
                             id="data-chat-new",
                             n_clicks=0,
                             className="btn btn-outline-primary data-chat-new",
@@ -105,10 +100,11 @@ layout = html.Div(
                     ],
                     className="data-chat-input-row",
                 ),
-                html.Span(
-                    "Press Enter to ask. Press Shift and Enter for a new line.",
+                # Visible, since there is no Ask button to show how to send.
+                html.P(
+                    "Press Enter to ask, or Shift+Enter for a new line.",
                     id="data-chat-input-hint",
-                    className="visually-hidden",
+                    className="data-chat-hint",
                 ),
             ],
             className="data-chat-form",
@@ -127,6 +123,9 @@ layout = html.Div(
         # Stays in memory: if it were restored after a reload mid-answer, the
         # chat would treat that question as still running and ignore new ones.
         dcc.Store(id="data-chat-pending", data=None),
+        # Set by assets/data_chat_input.js (a fresh timestamp) when Enter is
+        # pressed in the question field; it starts submit_question().
+        dcc.Store(id="data-chat-send", data=None),
         # Questions asked while an answer is on its way, oldest first.
         dcc.Store(id="data-chat-queue", data=[]),
         # Runs only while questions are queued. Dash won't start a callback
@@ -144,15 +143,14 @@ layout = html.Div(
     Output("data-chat-pending", "data"),
     Output("data-chat-input", "value"),
     Output("data-chat-queue", "data"),
-    # Enter in the question field clicks Ask (assets/data_chat_input.js).
-    Input("data-chat-submit", "n_clicks"),
+    Input("data-chat-send", "data"),
     State("data-chat-input", "value"),
     State("data-chat-history", "data"),
     State("data-chat-pending", "data"),
     State("data-chat-queue", "data"),
     prevent_initial_call=True,
 )
-def submit_question(_n_clicks, question, history, pending, queue):
+def submit_question(_sent_at, question, history, pending, queue):
     """Send the typed question, or queue it if an answer is on its way."""
     question = (question or "").strip()
     if not question:
@@ -275,18 +273,23 @@ def render_log(history):
 @callback(
     Output("data-chat-history", "data", allow_duplicate=True),
     Output("data-chat-queue", "data", allow_duplicate=True),
+    Output("data-chat-pending", "data", allow_duplicate=True),
     Output("data-chat-status", "children", allow_duplicate=True),
     Input("data-chat-new", "n_clicks"),
     State("data-chat-pending", "data"),
     prevent_initial_call=True,
 )
 def start_new_conversation(_n_clicks, pending):
-    """Clear the conversation and any queued questions."""
-    # The button is disabled while an answer runs; this also covers the
-    # moment between a question being sent and its answer starting.
-    if pending:
-        return no_update, no_update, no_update
-    return [], [], "Started a new conversation."
+    """Clear the conversation, any queued questions and the pending one.
+
+    The button is disabled while an answer runs (answer_pending's
+    `running`), so this never discards an answer that is on its way.
+    Clearing pending too means New chat always gets the chat going again,
+    even if a question was left pending without an answer running.
+    """
+    # Only write pending when something is pending: any write starts
+    # answer_pending, whose `running` would blank this status message.
+    return [], [], None if pending else no_update, "Started a new chat."
 
 
 # The button hides itself once the conversation is cleared, which would

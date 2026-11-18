@@ -6,6 +6,15 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### Chat questions on light grey (branch `feature/add-ai-chat-openai`)
+- `assets/style.css`: `.data-chat-user` background changed from light green (`--teal-pale`, #E6F2F0) to light grey (#f0f0f0, already used elsewhere on the site). (Agent: Claude Opus 5.5)
+
+### Remove the Ask button; "New conversation" becomes "New chat" (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: Ask button removed. Enter now sends by setting a new `data-chat-send` store (a fresh timestamp) through `dash_clientside.set_props`, which starts `submit_question`. The Enter/Shift+Enter hint is now visible text under the field (`data-chat-hint`), since there is no button to show how to send. Button relabelled "New chat"; its status message is "Started a new chat."
+- `start_new_conversation` now also clears the pending question when one is set. In one of about 20 full test runs a queued question was sent but never answered, and I couldn't reproduce it to find the cause; a question stuck as pending would make every later question wait in the queue. New chat now always gets the chat going again. It is still disabled while an answer is running, and it only writes pending when something is pending, because any write starts `answer_pending`, whose `running` would blank the status message.
+- `assets/data_chat_input.js`: Enter calls `set_props` instead of clicking Ask. `assets/style.css`: Ask styles removed; hint style added.
+- `tests/test_data_chat.py`: Checks there is no Ask button and the hint is shown; New chat tests updated, including clearing a stuck pending question. (Agent: Claude Opus 5.5)
+
 ### Question field grows as the user types (branch `feature/add-ai-chat-openai`)
 - `components/data_chat.py`: The question field is now a one-row `dcc.Textarea` instead of a single-line `dcc.Input`. A textarea has no `n_submit`, so `submit_question` is triggered by Ask's `n_clicks` only and Enter is handled in JS. A visually hidden hint (`data-chat-input-hint`) tells screen-reader users that Enter asks and Shift+Enter adds a line.
 - `assets/data_chat_input.js` (new): Grows the field with its text up to 200px, then it scrolls; shrinks it back once the server clears it after a question is sent (that change fires no input event, so it watches briefly after Ask). Enter clicks Ask; Shift+Enter adds a line; Enter during IME composition is left alone. Sets `aria-describedby` to the hint, which `dcc.Textarea` has no prop for. Listeners are on the document so they survive page navigation.

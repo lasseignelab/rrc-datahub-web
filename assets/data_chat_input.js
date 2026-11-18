@@ -2,11 +2,13 @@
 // components/data_chat.py):
 //
 // - Grows with its text, one line at first, up to MAX_HEIGHT_PX, then scrolls.
-// - Enter asks the question (clicks Ask); Shift+Enter adds a new line. Enter
-//   while an input method is composing text (e.g. Japanese or Chinese) is
-//   left alone so it can finish the character.
-// - Links the visually hidden "Press Enter to ask" hint with
-//   aria-describedby, which dcc.Textarea has no prop for.
+// - Enter asks the question: it sets the data-chat-send store to a fresh
+//   timestamp, which starts submit_question() (there is no Ask button).
+//   Shift+Enter adds a new line. Enter while an input method is composing
+//   text (e.g. Japanese or Chinese) is left alone so it can finish the
+//   character.
+// - Links the "Press Enter to ask" hint with aria-describedby, which
+//   dcc.Textarea has no prop for.
 //
 // Listeners are attached to the document, so they keep working when Dash
 // re-creates the field after navigating between pages.
@@ -15,7 +17,7 @@
 
     var FIELD_ID = "data-chat-input";
     var HINT_ID = "data-chat-input-hint";
-    var ASK_ID = "data-chat-submit";
+    var SEND_STORE_ID = "data-chat-send";
     var MAX_HEIGHT_PX = 200;
     // How long to watch for the server clearing the field after a question
     // is sent, so the box shrinks back to one line.
@@ -63,17 +65,9 @@
             return;
         }
         event.preventDefault();
-        var ask = document.getElementById(ASK_ID);
-        if (ask && !ask.disabled) {
-            // The click listener below watches for the field being cleared.
-            ask.click();
-        }
-    });
-
-    document.addEventListener("click", function (event) {
-        var field = document.getElementById(FIELD_ID);
-        if (field && event.target && event.target.closest &&
-                event.target.closest("#" + ASK_ID)) {
+        var clientside = window.dash_clientside;
+        if (clientside && clientside.set_props) {
+            clientside.set_props(SEND_STORE_ID, {data: Date.now()});
             shrinkWhenCleared(field);
         }
     });
