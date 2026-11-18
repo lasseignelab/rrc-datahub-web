@@ -13,7 +13,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from components.navbar import ABOUT_MENU
-from config import UPDATED, VERSION
+from config import DATASET_COUNT, SAMPLE_COUNT, UPDATED, VERSION
 
 dash.register_page(
     __name__, path="/about", name="About", title="About | PKD RRC DataHub"
@@ -63,6 +63,13 @@ SECTIONS = [
 ]
 
 
+# Sections whose body is shown as a highlighted callout box.
+CALLOUT_SLUGS = {"limitations"}
+
+# Group heading icons, shared with the navbar About dropdown and the sidebar.
+GROUP_ICONS = {anchor: icon for _, anchor, icon in ABOUT_MENU}
+
+
 def _group_id(group_title: str) -> str:
     """Return a stable HTML id for a group heading, e.g. 'about-group-overview'."""
     slug = group_title.lower().replace(" ", "-")
@@ -93,25 +100,64 @@ def _item_block(slug: str, title: str) -> html.Div:
     # The release history section also shows the live version from config.
     if slug == "release-history":
         children.append(_version_badge())
-    children.append(dcc.Markdown(_load_markdown(slug), className="about-markdown"))
+    markdown_class = "about-markdown"
+    if slug in CALLOUT_SLUGS:
+        markdown_class += " about-callout"
+    children.append(dcc.Markdown(_load_markdown(slug), className=markdown_class))
     return html.Div(children, className="about-item")
 
 
 def _group_section(group_title: str, items: list[tuple[str, str]]) -> html.Section:
     """Render one H2 group as a section card containing its subsections."""
     heading_id = _group_id(group_title)
+    heading = html.H2(
+        [
+            html.I(
+                className=f"bi {GROUP_ICONS.get(heading_id, 'bi-dot')}",
+                **{"aria-hidden": "true"},
+            ),
+            html.Span(group_title),
+        ],
+        id=heading_id,
+        className="about-group-heading",
+    )
+    back_to_top = html.A(
+        [html.I(className="bi bi-arrow-up", **{"aria-hidden": "true"}), "Back to top"],
+        href="#about-title",
+        className="about-back-to-top",
+    )
     return html.Section(
-        [html.H2(group_title, id=heading_id, className="about-group-heading")]
-        + [_item_block(slug, title) for slug, title in items],
+        [heading] + [_item_block(slug, title) for slug, title in items] + [back_to_top],
         className="section-card about-group",
         **{"aria-labelledby": heading_id},
     )
 
 
+def _stat_tiles() -> html.Ul:
+    """Key facts about the current release, shown in the page header."""
+    stats = [
+        (f"{DATASET_COUNT}", "datasets"),
+        (f"{SAMPLE_COUNT}", "samples"),
+        (f"v{VERSION}", ["released ", html.Span(UPDATED, className="text-nowrap")]),
+    ]
+    return html.Ul(
+        [
+            html.Li(
+                [
+                    html.Span(value, className="about-stat-value"),
+                    html.Span(label, className="about-stat-label"),
+                ],
+                className="about-stat",
+            )
+            for value, label in stats
+        ],
+        className="about-stats",
+        **{"aria-label": "Current release at a glance"},
+    )
+
+
 def _table_of_contents() -> html.Nav:
     """In-page navigation listing every group and its subsections."""
-    # Same icons as the navbar About dropdown, looked up by group anchor id.
-    icons = {anchor: icon for _, anchor, icon in ABOUT_MENU}
     group_items = []
     for group_title, items in SECTIONS:
         anchor = _group_id(group_title)
@@ -121,7 +167,7 @@ def _table_of_contents() -> html.Nav:
                     html.A(
                         [
                             html.I(
-                                className=f"bi {icons.get(anchor, 'bi-dot')}",
+                                className=f"bi {GROUP_ICONS.get(anchor, 'bi-dot')}",
                                 **{"aria-hidden": "true"},
                             ),
                             html.Span(group_title),
@@ -161,14 +207,15 @@ layout = html.Div(
             [
                 html.Section(
                     [
-                        html.H1("About the PKD RRC DataHub"),
+                        html.H1("About the PKD RRC DataHub", id="about-title"),
                         html.P(
                             "Background, methods, usage instructions, citation "
                             "details, and contact information for the PKD RRC "
                             "DataHub.",
                         ),
+                        _stat_tiles(),
                     ],
-                    className="section-card",
+                    className="section-card about-header",
                 ),
                 # Wide screens: sticky "On this page" sidebar beside the
                 # content. Narrow screens: the columns stack.
