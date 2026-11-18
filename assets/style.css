@@ -727,11 +727,32 @@ text-align: left;
   outline-offset: 1px;
 }
 
-.data-chat-submit {
+.data-chat-submit,
+.data-chat-new {
   flex-shrink: 0;
   height: 40px;
   padding: 0 24px;
   font-size: 16px;
+}
+
+.data-chat-new {
+  padding: 0 16px;
+}
+
+/* `hidden` would otherwise lose to Bootstrap's .btn display rule. */
+.data-chat-new[hidden] {
+  display: none;
+}
+
+/* On phones the question field gets its own line, buttons under it. */
+@media (max-width: 640px) {
+  .data-chat-input-row {
+    flex-wrap: wrap;
+  }
+
+  .data-chat-input {
+    flex-basis: 100%;
+  }
 }
 
 .data-chat-status {

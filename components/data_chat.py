@@ -12,6 +12,8 @@ Flow:
        "Up next") and ask_next_queued() sends it once that answer arrives,
        so Enter or Ask always leads to an answer and turns never interleave
     -> render_log() redraws the conversation from the history store
+    -> [New conversation] -> start_new_conversation() clears the history
+       and queue (disabled while an answer is on its way)
     -> assets/data_chat_scroll.js scrolls the log to the newest exchange
 
 The history store uses session storage, so the conversation survives page
@@ -21,7 +23,16 @@ changes and reloads in the same browser tab.
 import logging
 from typing import Any
 
-from dash import Input, Output, State, callback, dcc, html, no_update
+from dash import (
+    Input,
+    Output,
+    State,
+    callback,
+    clientside_callback,
+    dcc,
+    html,
+    no_update,
+)
 
 from components.chat_assistant import answer_question
 
@@ -80,6 +91,14 @@ layout = html.Div(
                             id="data-chat-submit",
                             n_clicks=0,
                             className="btn btn-primary data-chat-submit",
+                        ),
+                        # Shown once there is a conversation to clear.
+                        html.Button(
+                            "New conversation",
+                            id="data-chat-new",
+                            n_clicks=0,
+                            className="btn btn-outline-primary data-chat-new",
+                            hidden=True,
                         ),
                     ],
                     className="data-chat-input-row",
@@ -151,6 +170,9 @@ def submit_question(_n_clicks, _n_submit, question, history, pending, queue):
             "Searching the data, this can take a few seconds…",
             "",
         ),
+        # Clearing mid-answer would be undone when the answer arrives (it
+        # is appended to the history read when the answer started).
+        (Output("data-chat-new", "disabled"), True, False),
     ],
 )
 def answer_pending(pending, history):
@@ -210,6 +232,7 @@ def render_queue(queue):
     Output("data-chat-log", "children"),
     Output("data-chat-log", "className"),
     Output("data-chat-disclaimer", "hidden"),
+    Output("data-chat-new", "hidden"),
     Input("data-chat-history", "data"),
 )
 def render_log(history):
@@ -239,4 +262,37 @@ def render_log(history):
             )
         )
     class_name = "data-chat-log" + ("" if entries else " data-chat-log-empty")
-    return entries, class_name, not entries
+    return entries, class_name, not entries, not entries
+
+
+@callback(
+    Output("data-chat-history", "data", allow_duplicate=True),
+    Output("data-chat-queue", "data", allow_duplicate=True),
+    Output("data-chat-status", "children", allow_duplicate=True),
+    Input("data-chat-new", "n_clicks"),
+    State("data-chat-pending", "data"),
+    prevent_initial_call=True,
+)
+def start_new_conversation(_n_clicks, pending):
+    """Clear the conversation and any queued questions."""
+    # The button is disabled while an answer runs; this also covers the
+    # moment between a question being sent and its answer starting.
+    if pending:
+        return no_update, no_update, no_update
+    return [], [], "Started a new conversation."
+
+
+# The button hides itself once the conversation is cleared, which would
+# leave keyboard focus nowhere; put it back in the question field instead.
+clientside_callback(
+    """
+    function(nClicks) {
+        var field = document.getElementById("data-chat-input");
+        if (nClicks && field) { field.focus(); }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("data-chat-input", "className"),
+    Input("data-chat-new", "n_clicks"),
+    prevent_initial_call=True,
+)

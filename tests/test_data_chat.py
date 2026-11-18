@@ -142,12 +142,13 @@ def test_answer_pending_always_finishes_the_question(monkeypatch):
 
 def test_render_log_hides_empty_log_and_renders_markdown_replies():
     """The log and disclaimer are hidden until used; replies are Markdown."""
-    children, class_name, disclaimer_hidden = data_chat.render_log([])
+    children, class_name, disclaimer_hidden, new_hidden = data_chat.render_log([])
     assert children == []
     assert "data-chat-log-empty" in class_name
     assert disclaimer_hidden is True
+    assert new_hidden is True
 
-    children, class_name, disclaimer_hidden = data_chat.render_log(
+    children, class_name, disclaimer_hidden, new_hidden = data_chat.render_log(
         [
             {"role": "user", "content": "Q"},
             {"role": "assistant", "content": "**A**"},
@@ -156,6 +157,7 @@ def test_render_log_hides_empty_log_and_renders_markdown_replies():
     assert len(children) == 2
     assert "data-chat-log-empty" not in class_name
     assert disclaimer_hidden is False
+    assert new_hidden is False
     assert _find_all(children[1], dcc.Markdown)
 
 
@@ -359,3 +361,47 @@ def test_enter_during_an_answer_is_answered_next(dash_duo, monkeypatch):
         "Answer to Second?",
     ]
     assert not dash_duo.find_element("#data-chat-queued").is_displayed()
+
+
+def test_new_conversation_clears_history_and_queue():
+    """Starting over empties the conversation and anything queued."""
+    history, queue, status = data_chat.start_new_conversation(1, None)
+    assert history == [] and queue == []
+    assert status == "Started a new conversation."
+
+
+def test_new_conversation_waits_for_an_answer_in_progress():
+    """A clear while a question is pending would be undone, so it is ignored."""
+    assert data_chat.start_new_conversation(1, "First?") == (
+        no_update,
+        no_update,
+        no_update,
+    )
+
+
+def test_new_conversation_button_clears_the_chat(dash_duo, monkeypatch):
+    """The button appears with a conversation, clears it, and refocuses."""
+    from app import app
+
+    monkeypatch.setattr(data_chat, "answer_question", lambda h, q: "An answer.")
+    dash_duo.start_server(app)
+    assert not dash_duo.find_element("#data-chat-new").is_displayed()
+
+    _ask(dash_duo, "Which datasets?", 2)
+    new_button = dash_duo.find_element("#data-chat-new")
+    until(new_button.is_displayed, timeout=5)
+    new_button.click()
+
+    until(lambda: not dash_duo.find_elements(".data-chat-message"), timeout=5)
+    until(lambda: not new_button.is_displayed(), timeout=5)
+    assert not dash_duo.find_element("#data-chat-log").is_displayed()
+    dash_duo.wait_for_text_to_equal("#data-chat-status", "Started a new conversation.")
+    assert (
+        dash_duo.driver.execute_script("return document.activeElement.id")
+        == "data-chat-input"
+    )
+
+    # Cleared for good: a reload doesn't bring the old conversation back.
+    dash_duo.driver.refresh()
+    dash_duo.wait_for_element("#data-chat-input")
+    assert not dash_duo.find_elements(".data-chat-message")
