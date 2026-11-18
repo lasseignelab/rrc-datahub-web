@@ -504,47 +504,101 @@ def _get_datasets() -> list[str]:
     finally:
         session.close()
 
-
-def _search_genes(search: str) -> list[str]:
-    """Return up to 50 gene names matching the search prefix.
-
-    All datasets share the same Ensembl annotation, so no dataset filter is
-    needed. Querying the gene table directly avoids an expensive join against
-    the 21M-row sample_gene table.
+def _search_genes(
+    search: str,
+    scientific_names: list[str],
+    bioproject: str | None = None,
+) -> list[str]:
+    """Return genes with expression data for the selected species
+    and, optionally, the selected BioProject.
     """
+    if not scientific_names:
+        return []
+
     session = SessionLocal()
     try:
-        query = session.query(Gene.gene_name).filter(Gene.gene_name.isnot(None))
+        query = (
+            session.query(Gene.gene_name)
+            .join(SampleGene, SampleGene.gene_id == Gene.id)
+            .join(Sample, Sample.id == SampleGene.sample_id)
+            .join(Dataset, Dataset.id == Sample.dataset_id)
+            .filter(
+                Sample.scientific_name.in_(scientific_names),
+                Gene.gene_name.isnot(None),
+            )
+        )
+
+        if bioproject:
+            query = query.filter(Dataset.bioproject == bioproject)
+
         if search:
             query = query.filter(Gene.gene_name.ilike(f"{search}%"))
+
         return [
-            r[0] for r in query.order_by(Gene.gene_name).limit(_GENE_SEARCH_LIMIT).all()
+            row[0]
+            for row in (
+                query.distinct()
+                .order_by(Gene.gene_name)
+                .limit(_GENE_SEARCH_LIMIT)
+                .all()
+            )
         ]
     finally:
         session.close()
 
-
-def _resolve_url_gene(url_search: str | None) -> str | None:
-    """Return the gene name from a '?gene=...' URL query string if it
-    matches a real gene in the database (case-insensitive exact match),
-    else None. Used to let the landing-page search box pre-select a gene
-    when it redirects here.
+def _resolve_url_gene(
+    url_search: str | None,
+    scientific_names: list[str],
+    bioproject: str | None = None,
+) -> str | None:
+    """Return the URL gene if it has expression data
+    for the selected scientific names and BioProject.
     """
-    if not url_search:
+    if not url_search or not scientific_names:
         return None
-    candidate = parse_qs(url_search.lstrip("?")).get("gene", [None])[0]
+
+    params = parse_qs(url_search.lstrip("?"))
+    candidate = params.get("gene", [None])[0]
+
     if not candidate:
         return None
+
     session = SessionLocal()
     try:
-        match = (
+        query = (
             session.query(Gene.gene_name)
-            .filter(func.lower(Gene.gene_name) == candidate.lower())
-            .first()
+            .join(SampleGene, SampleGene.gene_id == Gene.id)
+            .join(Sample, Sample.id == SampleGene.sample_id)
+            .join(Dataset, Dataset.id == Sample.dataset_id)
+            .filter(
+                func.lower(Gene.gene_name) == candidate.lower(),
+                Sample.scientific_name.in_(scientific_names),
+            )
         )
+
+        if bioproject:
+            query = query.filter(Dataset.bioproject == bioproject)
+
+        match = query.first()
+
         return match[0] if match else None
+
     finally:
         session.close()
+
+def _resolve_url_scientific_name(url_search: str | None) -> str | None:
+    """Return the scientific name from the URL if it exists in the database."""
+    if not url_search:
+        return None
+
+    candidate = parse_qs(url_search.lstrip("?")).get(
+        "scientific_name", [None]
+    )[0]
+
+    if candidate and candidate in _all_scientific_names:
+        return candidate
+
+    return None
 
 
 def _get_genotypes(bioproject: str) -> list[str]:
@@ -803,7 +857,6 @@ except Exception as exc:
     log.warning("Could not load datasets from database: %s", exc)
     _datasets = []
 
-_initial_genes: list[str] = []
 _initial_genotypes: list[str] = []
 _initial_sample_types_for_plot: list[str] = []
 _initial_sexes_for_plot: list[str] = []
@@ -811,14 +864,18 @@ _initial_age_ranges_for_plot: list[dict] = []
 
 if _datasets:
     try:
-        _initial_genes = _search_genes("")
         _initial_genotypes = _get_genotypes(_datasets[0])
-        _initial_sample_types_for_plot = _get_sample_types_for_dataset(_datasets[0])
+        _initial_sample_types_for_plot = _get_sample_types_for_dataset(
+            _datasets[0]
+        )
         _initial_sexes_for_plot = _get_sexes_for_dataset(_datasets[0])
-        _initial_age_ranges_for_plot = _get_age_ranges_for_dataset(_datasets[0])
+        _initial_age_ranges_for_plot = _get_age_ranges_for_dataset(
+            _datasets[0]
+        )
     except Exception as exc:
-        log.warning("Could not load initial plot parameter options: %s", exc)
-
+        log.warning(
+            "Could not load initial plot parameter options: %s", exc
+        )
 
 # ---------------------------------------------------------------------------
 # Layout
@@ -1210,15 +1267,8 @@ layout = html.Div(
                                                 ),
                                                 dcc.Dropdown(
                                                     id="gene-select",
-                                                    options=[
-                                                        {"label": g, "value": g}
-                                                        for g in _initial_genes
-                                                    ],
-                                                    value=(
-                                                        _initial_genes[0]
-                                                        if _initial_genes
-                                                        else None
-                                                    ),
+                                                    options=[],
+                                                    value=None,
                                                     clearable=False,
                                                 ),
                                             ],
@@ -1601,42 +1651,56 @@ def _update_age_days_store(min_val, max_val, unit, age_days):
 # Callback 2: search value -> gene options (server-side filtered)
 # ---------------------------------------------------------------------------
 
-
 @callback(
     Output("gene-select", "options"),
     Input("gene-select", "search_value"),
+    Input("scientific-name-select", "value"),
+    Input("dataset-selected", "data"),
     State("gene-select", "value"),
     State("url", "search"),
 )
-def filter_gene_options(search, current_gene, url_search):
-    """Return matching genes while keeping the selected gene visible.
+def filter_gene_options(
+    search,
+    scientific_names,
+    bioproject,
+    current_gene,
+    url_search,):
 
-    The gene supplied in the URL is also included so that a gene selected
-    from the landing-page search remains visible in the dropdown when the
-    charts page loads.
-    """
-    genes = _search_genes(search or "")
+    """Return genes associated with the selected species and dataset."""
 
-    url_gene = _resolve_url_gene(url_search)
+    scientific_names = scientific_names or []
+
+    genes = _search_genes(
+        search or "",
+        scientific_names,
+        bioproject,
+    )
+
+    url_gene = _resolve_url_gene(
+        url_search,
+        scientific_names,
+        bioproject,
+    )
 
     genes_to_keep = []
-    if current_gene:
+
+    if current_gene and current_gene in genes:
         genes_to_keep.append(current_gene)
 
     if url_gene and url_gene not in genes_to_keep:
         genes_to_keep.append(url_gene)
 
-    genes = genes_to_keep + [gene for gene in genes if gene not in genes_to_keep]
+    genes = genes_to_keep + [
+        gene for gene in genes if gene not in genes_to_keep
+    ]
 
     return [{"label": gene, "value": gene} for gene in genes]
-
 
 # ---------------------------------------------------------------------------
 # Callback 4: dataset -> reset group/sample-type/sex/age selections;
 # gene selection is preserved across dataset changes (except on first load,
 # where a valid ?gene=<name> URL param takes priority)
 # ---------------------------------------------------------------------------
-
 
 @callback(
     Output("gene-select", "value"),
@@ -1650,42 +1714,65 @@ def filter_gene_options(search, current_gene, url_search):
     Output("plot-age-select", "value"),
     Output("url-gene-applied", "data"),
     Input("dataset-selected", "data"),
+    Input("scientific-name-select", "value"),
     State("gene-select", "value"),
     State("url", "search"),
     State("url-gene-applied", "data"),
 )
-def update_selectors(bioproject, current_gene, url_search, url_gene_applied):
-    """Reset group, sample type, sex, and age selections when the dataset
-    changes. The gene selection is handled specially:
+def update_selectors(
+    bioproject,
+    scientific_names,
+    current_gene,
+    url_search,
+    url_gene_applied,
+):
+    """Reset plot parameter selections when the dataset changes.
 
-    - On the very first load, a valid ?gene=<name> URL param (from the
-      landing-page search box) takes priority as the default.
-    - On every subsequent dataset change, whatever gene the user currently
-      has selected is preserved, rather than resetting to the first
-      alphabetical gene or re-applying the original URL param.
+    Preserve the current gene when it belongs to the selected species.
+    Apply the URL gene on the first load when it is valid.
     """
     if not bioproject:
         return None, [], [], [], [], [], [], [], [], url_gene_applied
 
-    genes = _search_genes("")
+    scientific_names = scientific_names or []
+
+    genes = _search_genes("", scientific_names, bioproject)
+
     genotypes = _get_genotypes(bioproject)
     sample_types = _get_sample_types_for_dataset(bioproject)
     sexes = _get_sexes_for_dataset(bioproject)
     age_range_opts = _get_age_ranges_for_dataset(bioproject)
 
+    valid_current_gene = (
+        current_gene if current_gene in genes else None
+    )
+
     if not url_gene_applied:
-        url_gene = _resolve_url_gene(url_search)
-        default_gene = url_gene or current_gene or (genes[0] if genes else None)
+        url_gene = _resolve_url_gene(
+            url_search,
+            scientific_names,
+            bioproject,
+        )
+        default_gene = (
+            url_gene
+            or valid_current_gene
+            or (genes[0] if genes else None)
+        )
         gene_applied = True
     else:
-        default_gene = current_gene or (genes[0] if genes else None)
+        default_gene = valid_current_gene or (
+            genes[0] if genes else None
+        )
         gene_applied = url_gene_applied
 
     return (
         default_gene,
         [{"label": g, "value": g} for g in genotypes],
         genotypes,
-        [{"label": _readable_sample_type(st), "value": st} for st in sample_types],
+        [
+            {"label": _readable_sample_type(st), "value": st}
+            for st in sample_types
+        ],
         sample_types,
         [{"label": s, "value": s} for s in sexes],
         sexes,
@@ -1693,7 +1780,6 @@ def update_selectors(bioproject, current_gene, url_search, url_gene_applied):
         [opt["value"] for opt in age_range_opts],
         gene_applied,
     )
-
 
 # ---------------------------------------------------------------------------
 # Callback 5: gene + groups + stat test -> render plot
@@ -1919,3 +2005,23 @@ def update_table(
             ]
         ),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Callback 7: URL search -> select scientific name
+# ---------------------------------------------------------------------------
+@callback(
+    Output("scientific-name-select", "value"),
+    Input("url", "search"),
+)
+def set_scientific_name_from_url(url_search):
+    """Select the scientific name passed from the Home page."""
+    if not url_search:
+        return _all_scientific_names
+
+    scientific_name = _resolve_url_scientific_name(url_search)
+
+    if scientific_name:
+        return [scientific_name]
+
+    return _all_scientific_names

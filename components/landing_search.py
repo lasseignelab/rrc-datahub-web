@@ -5,7 +5,7 @@ Flow:
   type gene -> [Search]
     -> resolve_gene() checks it against the real gene list (typo-tolerant)
     -> on success: redirect to the existing metadata-selection tab's route,
-       with ?gene=<resolved gene> in the URL
+    with ?gene=<resolved gene> in the URL
     -> on failure: show an inline error, no redirect
 """
 
@@ -120,5 +120,11 @@ def handle_gene_search(n_clicks, query):
     note = f" (matched from '{result.query}')" if result.corrected else ""
     feedback = f"Found {result.resolved_gene}{note} -- redirecting..."
 
-    redirect_url = f"{EXISTING_TAB_PATH}?{urlencode({'gene': result.resolved_gene})}"
+    params = urlencode({
+        "gene": result.resolved_gene,
+        "scientific_name": result.scientific_name,
+    })
+
+    redirect_url = f"{EXISTING_TAB_PATH}?{params}"
+
     return feedback, redirect_url
