@@ -25,10 +25,9 @@ def logo(src, alt, extra_class=""):
 # Layout
 # ---------------------------------------------------------------------------
 
-layout = html.Div([
-    # Dataset Library components will go here
-    dbc.Container(
-        [
+layout = html.Div(
+    [
+        html.Div(
             create_page_header(
                 title="Dataset Library",
                 description=(
@@ -37,13 +36,19 @@ layout = html.Div([
                     "organism, variant, sample type, and more."
                 ),
             ),
-            # Placeholder for dataset library content
+            className="library-header-wrapper",
+        ),
 
-    ]),
+        # Main page content - contained
+        dbc.Container(
+            [
+                # Dataset Library components will go here
+            ],
+            fluid=True,
+        ),
 
-    
-    # ---- Contact, partner logos, and version footer ----
-    footer(),
+        # Footer
+        footer(),
     ],
     className="library-page",
 )

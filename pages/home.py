@@ -43,10 +43,10 @@ layout = html.Div(
                         ),
                         html.P(
                             "A shared home for polycystic kidney disease "
-                            "(PKD) research data.",
+                            "(PKD) research datasets.",
                             className="hero-tagline",
                         ),
-                    ],
+                    ],  
                 ),
                 # ---- Gene search ----
                 html.Section(
