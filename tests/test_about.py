@@ -52,7 +52,7 @@ def test_toc_links_point_to_existing_ids():
     """Every 'On this page' link targets an element id present in the layout."""
     ids = {
         component.id
-        for component_type in (html.H2, html.H3)
+        for component_type in (html.H1, html.H2, html.H3)
         for component in find_all(about.layout, component_type)
         if getattr(component, "id", None)
     }
