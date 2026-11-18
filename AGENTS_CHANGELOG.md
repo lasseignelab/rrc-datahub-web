@@ -6,6 +6,17 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### Smaller hero title; AI disclaimer under the answers (branch `feature/add-ai-chat-openai`)
+- `assets/style.css`: Hero title halved from 6rem to 3rem. Log bottom margin 16px → 6px and disclaimer margin moved below it (0 0 16px) so the disclaimer sits tight under the answers.
+- `components/data_chat.py`: The disclaimer (now `id="data-chat-disclaimer"`) moved to directly under the conversation log and starts `hidden`; `render_log` also outputs its `hidden` prop, so it shows only once a question has been asked, together with the log.
+- `tests/test_data_chat.py`: `render_log` tests check the disclaimer's visibility; new test checks it follows the log and starts hidden. (Agent: Claude Opus 5.5)
+
+### Chat results above the question box; compact hero (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: The conversation log now comes first, with the question field, status line and disclaimer under it, as in a typical chat. The log is a fixed-height scroll box, so the field doesn't move down the page as the conversation grows.
+- `assets/style.css`: Hero padding reduced from 64px/48px to 24px/20px and the title's bottom margin from 0.75rem to 0.25rem, so the chat has more room on the first screen. The log's gap moved from above it to below it.
+- `assets/data_chat_scroll.js`: When a message is added, the page scroll now brings the log's top and the question field and status line under it into view (the log's top wins if both don't fit).
+- `tests/test_data_chat.py`: Tests for the log coming before the question field and for both staying on screen after an answer. (Agent: Claude Opus 5.5)
+
 ### Chat log scrolls to the newest exchange (branch `feature/add-ai-chat-openai`)
 - `assets/data_chat_scroll.js` (new): A MutationObserver keeps the fixed-height chat log scrolled to the newest exchange: the newest question at the top of the box with its answer under it, or the start of the answer when the two don't fit together. When a message is added it also scrolls the page just enough to bring the log into view; restoring a saved conversation on load doesn't move the page. The scroll is re-applied for 1.5 s while the answer finishes drawing and stops as soon as the user scrolls, clicks or types. Smooth scrolling is skipped under `prefers-reduced-motion`; focus is never moved.
 - A first version used a Dash clientside callback that measured two animation frames after the log update. It didn't scroll in real use: the answer's Markdown (loaded on demand) is drawn later than that on a normal machine, so it measured the old content. Reproduced with Chrome CPU throttling; the observer approach scrolls once the answer is actually drawn.

@@ -16,9 +16,10 @@
 // scrolling by the user during that period stops it, so it never fights them.
 //
 // When a message was just added, the page also scrolls just enough to bring
-// the box into view; restoring a saved conversation on page load does not
-// move the page. Smooth scrolling is skipped under prefers-reduced-motion,
-// and focus is never moved (the log's aria-live region announces replies).
+// the box and the question field under it into view; restoring a saved
+// conversation on page load does not move the page. Smooth scrolling is
+// skipped under prefers-reduced-motion, and focus is never moved (the log's
+// aria-live region announces replies).
 (function () {
     "use strict";
 
@@ -61,8 +62,30 @@
         }
         var behavior = scrollBehavior();
         log.scrollTo({top: scrollTopFor(target), behavior: behavior});
-        if (revealPage) {
-            log.scrollIntoView({block: "nearest", behavior: behavior});
+        if (revealPage) { revealChat(behavior); }
+    }
+
+    // Scroll the page just enough to show the log and, under it, the question
+    // box and status line. If they don't all fit in the window, the top of
+    // the log wins, because that is where the newest exchange starts.
+    function revealChat(behavior) {
+        // The status line ("Searching the data…") sits under the question
+        // field and should be visible while an answer is on its way.
+        var form = document.getElementById("data-chat-status") ||
+            document.querySelector(".data-chat-form");
+        var margin = 8;
+        var top = log.getBoundingClientRect().top;
+        var bottom = form ? form.getBoundingClientRect().bottom
+            : log.getBoundingClientRect().bottom;
+        var delta = 0;
+        if (bottom > window.innerHeight - margin) {
+            delta = bottom - window.innerHeight + margin;
+        }
+        if (top - delta < margin) {
+            delta = top - margin;
+        }
+        if (Math.abs(delta) >= 1) {
+            window.scrollBy({top: delta, behavior: behavior});
         }
     }
 

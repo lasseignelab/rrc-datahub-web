@@ -421,7 +421,8 @@ Home page
 
 .hero {
 position: relative;
-padding: 64px 16px 48px;
+/* Kept compact so the data chat below has room on the first screen. */
+padding: 24px 16px 20px;
 text-align: center;
 overflow: hidden;
 }
@@ -456,9 +457,9 @@ overflow: hidden;
 }
 
 .hero-title {
-  font-size: 6rem;
+  font-size: 3rem;
   font-weight: 600;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.25rem;
   text-align: center;
 }
 
@@ -639,7 +640,7 @@ text-align: left;
 .data-chat-log {
   max-height: 420px;
   overflow-y: auto;
-  margin-top: 12px;
+  margin-bottom: 6px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -741,7 +742,7 @@ text-align: left;
 }
 
 .data-chat-disclaimer {
-  margin: 4px 0 0;
+  margin: 0 0 16px;
   font-size: 0.85rem;
   text-align: center;
   color: var(--meta);

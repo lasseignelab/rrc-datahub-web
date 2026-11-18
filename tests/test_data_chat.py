@@ -90,12 +90,13 @@ def test_answer_pending_passes_earlier_turns_and_appends_reply(monkeypatch):
 
 
 def test_render_log_hides_empty_log_and_renders_markdown_replies():
-    """The log is hidden until used; assistant replies render as Markdown."""
-    children, class_name = data_chat.render_log([])
+    """The log and disclaimer are hidden until used; replies are Markdown."""
+    children, class_name, disclaimer_hidden = data_chat.render_log([])
     assert children == []
     assert "data-chat-log-empty" in class_name
+    assert disclaimer_hidden is True
 
-    children, class_name = data_chat.render_log(
+    children, class_name, disclaimer_hidden = data_chat.render_log(
         [
             {"role": "user", "content": "Q"},
             {"role": "assistant", "content": "**A**"},
@@ -103,6 +104,7 @@ def test_render_log_hides_empty_log_and_renders_markdown_replies():
     )
     assert len(children) == 2
     assert "data-chat-log-empty" not in class_name
+    assert disclaimer_hidden is False
     assert _find_all(children[1], dcc.Markdown)
 
 
@@ -238,3 +240,43 @@ def test_first_answer_scrolls_on_a_slow_browser(dash_duo, monkeypatch):
         lambda: 0 <= _offset_in_log(dash_duo, ".data-chat-assistant") <= 20,
         timeout=5,
     )
+
+
+def test_results_come_before_the_question_box():
+    """The conversation is shown above the question field, as in a chat."""
+    ids_in_order = [
+        getattr(child, "id", None) or getattr(child, "className", None)
+        for child in data_chat.layout.children
+    ]
+    assert ids_in_order.index("data-chat-log") < ids_in_order.index("data-chat-form")
+
+
+def test_answer_keeps_log_and_question_box_on_screen(dash_duo, monkeypatch):
+    """After an answer the page shows the log's top and the question field."""
+    from app import app
+
+    monkeypatch.setattr(data_chat, "answer_question", lambda h, q: "Short answer.")
+    dash_duo.start_server(app)
+    dash_duo.driver.set_window_size(1200, 900)
+
+    _ask(dash_duo, "Which datasets?", 2)
+
+    def chat_on_screen():
+        """True when the log's top and the input's bottom are in the window."""
+        return dash_duo.driver.execute_script("""
+            var log = document.getElementById("data-chat-log");
+            var input = document.getElementById("data-chat-input");
+            return log.getBoundingClientRect().top >= 0
+                && input.getBoundingClientRect().bottom <= window.innerHeight;
+            """)
+
+    until(chat_on_screen, timeout=5)
+
+
+def test_disclaimer_sits_right_under_the_answers_and_starts_hidden():
+    """The AI disclaimer follows the log directly and is hidden at first."""
+    children = data_chat.layout.children
+    ids = [getattr(child, "id", None) for child in children]
+    log_index = ids.index("data-chat-log")
+    assert ids[log_index + 1] == "data-chat-disclaimer"
+    assert children[log_index + 1].hidden is True
