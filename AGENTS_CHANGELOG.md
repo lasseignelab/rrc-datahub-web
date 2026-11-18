@@ -6,6 +6,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-18
 
+### Question field grows as the user types (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: The question field is now a one-row `dcc.Textarea` instead of a single-line `dcc.Input`. A textarea has no `n_submit`, so `submit_question` is triggered by Ask's `n_clicks` only and Enter is handled in JS. A visually hidden hint (`data-chat-input-hint`) tells screen-reader users that Enter asks and Shift+Enter adds a line.
+- `assets/data_chat_input.js` (new): Grows the field with its text up to 200px, then it scrolls; shrinks it back once the server clears it after a question is sent (that change fires no input event, so it watches briefly after Ask). Enter clicks Ask; Shift+Enter adds a line; Enter during IME composition is left alone. Sets `aria-describedby` to the hint, which `dcc.Textarea` has no prop for. Listeners are on the document so they survive page navigation.
+- `assets/style.css`: Textarea styling (40px one-line height matching the buttons, no resize handle), focus outline moved to the textarea, buttons aligned to the field's bottom edge, and user messages keep their line breaks (`white-space: pre-wrap`).
+- `tests/test_data_chat.py`: Browser tests that Shift+Enter adds lines and grows the field, Enter asks the multi-line question (shown with its line breaks) and the field shrinks back, and the hint is linked; the New conversation test presses Enter on the button instead of clicking, because a click could land mid-scroll. (Agent: Claude Opus 5.5)
+
 ### New conversation button (branch `feature/add-ai-chat-openai`)
 - `components/data_chat.py`: "New conversation" button (`data-chat-new`, `btn-outline-primary`) next to Ask, shown only when there is a conversation (`render_log` outputs its `hidden`). `start_new_conversation` clears the history (session storage, so it stays cleared after a reload) and the question queue, and announces "Started a new conversation." in the status line. The button is disabled while an answer runs (via `answer_pending`'s `running`), and the callback also ignores clicks while a question is pending, because the arriving answer is appended to the history read when it started and would bring the old conversation back. A clientside callback moves focus to the question field, since the button hides itself after clearing.
 - `assets/style.css`: Button sizing, `[hidden]` override for Bootstrap's `.btn` display, and on screens ≤640px the question field takes its own line with the buttons under it.

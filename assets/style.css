@@ -679,6 +679,11 @@ text-align: left;
   color: var(--ink);
 }
 
+/* Keep the line breaks of a question typed on several lines. */
+.data-chat-user p {
+  white-space: pre-wrap;
+}
+
 .data-chat-assistant table {
   margin: 8px 0;
   border-collapse: collapse;
@@ -701,7 +706,8 @@ text-align: left;
 .data-chat-input-row {
   display: flex;
   gap: 10px;
-  align-items: center;
+  /* Buttons stay level with the last line as the question field grows. */
+  align-items: flex-end;
 }
 
 .data-chat-input {
@@ -709,20 +715,25 @@ text-align: left;
   min-width: 0;
 }
 
-/* dcc.Input renders a wrapper div around the real <input>; style the
-   inner element so it fills the row. */
-.data-chat-input .dash-input-element {
-  width: 100%;
+/* A one-line textarea that assets/data_chat_input.js grows as the user
+   types (up to 200px, then it scrolls). 40px matches the buttons. */
+textarea.data-chat-input {
+  display: block;
+  box-sizing: border-box;
   height: 40px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 6px 12px;
   font-size: 18px;
+  line-height: 26px;
   color: var(--ink);
   background: var(--bs-body-bg);
   border: 1px solid var(--line);
   border-radius: 6px;
+  resize: none;
+  overflow-y: hidden;
 }
 
-.data-chat-input .dash-input-element:focus-visible {
+textarea.data-chat-input:focus-visible {
   outline: 2px solid var(--uab-green);
   outline-offset: 1px;
 }

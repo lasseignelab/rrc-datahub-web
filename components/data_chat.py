@@ -2,7 +2,7 @@
 Home-page chat box for asking questions about the DataHub's data.
 
 Flow:
-  type question -> [Ask] or Enter
+  type question (the field grows as it fills) -> [Ask] or Enter
     -> submit_question() appends the question to the history store, clears
        the input, and records it as pending (so it shows up immediately)
     -> answer_pending() sends the history to components.chat_assistant and
@@ -78,12 +78,14 @@ layout = html.Div(
                 ),
                 html.Div(
                     [
-                        dcc.Input(
+                        # Grows with the question as it is typed; Enter asks
+                        # and Shift+Enter adds a line (assets/
+                        # data_chat_input.js, which also links the hint).
+                        dcc.Textarea(
                             id="data-chat-input",
-                            type="text",
                             placeholder=EXAMPLE_QUESTION,
-                            autoComplete="off",
                             maxLength=1000,
+                            rows=1,
                             className="data-chat-input",
                         ),
                         html.Button(
@@ -102,6 +104,11 @@ layout = html.Div(
                         ),
                     ],
                     className="data-chat-input-row",
+                ),
+                html.Span(
+                    "Press Enter to ask. Press Shift and Enter for a new line.",
+                    id="data-chat-input-hint",
+                    className="visually-hidden",
                 ),
             ],
             className="data-chat-form",
@@ -137,15 +144,15 @@ layout = html.Div(
     Output("data-chat-pending", "data"),
     Output("data-chat-input", "value"),
     Output("data-chat-queue", "data"),
+    # Enter in the question field clicks Ask (assets/data_chat_input.js).
     Input("data-chat-submit", "n_clicks"),
-    Input("data-chat-input", "n_submit"),
     State("data-chat-input", "value"),
     State("data-chat-history", "data"),
     State("data-chat-pending", "data"),
     State("data-chat-queue", "data"),
     prevent_initial_call=True,
 )
-def submit_question(_n_clicks, _n_submit, question, history, pending, queue):
+def submit_question(_n_clicks, question, history, pending, queue):
     """Send the typed question, or queue it if an answer is on its way."""
     question = (question or "").strip()
     if not question:

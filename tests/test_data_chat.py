@@ -44,7 +44,7 @@ def test_log_and_status_are_announced():
 def test_submit_appends_question_and_clears_input():
     """A typed question is added to history, marked pending, input cleared."""
     history, pending, value, queue = data_chat.submit_question(
-        1, None, "  Which genes?  ", [], None, []
+        1, "  Which genes?  ", [], None, []
     )
     assert history == [{"role": "user", "content": "Which genes?"}]
     assert pending == "Which genes?"
@@ -54,7 +54,7 @@ def test_submit_appends_question_and_clears_input():
 
 def test_submit_ignores_blank_input():
     """Pressing Enter or Ask with nothing typed does nothing."""
-    assert data_chat.submit_question(1, None, "   ", [], None, []) == (
+    assert data_chat.submit_question(1, "   ", [], None, []) == (
         no_update,
         no_update,
         no_update,
@@ -65,7 +65,7 @@ def test_submit_ignores_blank_input():
 def test_submit_queues_a_question_asked_during_an_answer():
     """Enter while an answer is on its way queues the question and clears it."""
     history, pending, value, queue = data_chat.submit_question(
-        None, 2, "Next?", [{"role": "user", "content": "First?"}], "First?", ["A?"]
+        2, "Next?", [{"role": "user", "content": "First?"}], "First?", ["A?"]
     )
     assert history is no_update and pending is no_update
     assert value == ""
@@ -390,7 +390,9 @@ def test_new_conversation_button_clears_the_chat(dash_duo, monkeypatch):
     _ask(dash_duo, "Which datasets?", 2)
     new_button = dash_duo.find_element("#data-chat-new")
     until(new_button.is_displayed, timeout=5)
-    new_button.click()
+    # Pressed from the keyboard: a mouse click can land while the page is
+    # still smooth-scrolling the chat into view.
+    new_button.send_keys(Keys.ENTER)
 
     until(lambda: not dash_duo.find_elements(".data-chat-message"), timeout=5)
     until(lambda: not new_button.is_displayed(), timeout=5)
@@ -405,3 +407,66 @@ def test_new_conversation_button_clears_the_chat(dash_duo, monkeypatch):
     dash_duo.driver.refresh()
     dash_duo.wait_for_element("#data-chat-input")
     assert not dash_duo.find_elements(".data-chat-message")
+
+
+def _field_height(dash_duo):
+    """Return the question field's rendered height in pixels."""
+    return dash_duo.driver.execute_script(
+        'return document.getElementById("data-chat-input").offsetHeight;'
+    )
+
+
+def test_question_field_grows_and_shift_enter_adds_a_line(dash_duo, monkeypatch):
+    """Shift+Enter adds lines and grows the field; Enter asks and shrinks it."""
+    from app import app
+
+    asked = []
+
+    def record(_history, question):
+        asked.append(question)
+        return "An answer."
+
+    monkeypatch.setattr(data_chat, "answer_question", record)
+    dash_duo.start_server(app)
+    field = dash_duo.wait_for_element("#data-chat-input")
+    until(lambda: _field_height(dash_duo) > 0, timeout=5)
+    one_line = _field_height(dash_duo)
+
+    field.send_keys("Which datasets")
+    for line in ("include female mice", "and male mice?"):
+        field.send_keys(Keys.SHIFT, Keys.ENTER, Keys.SHIFT, line)
+    until(lambda: _field_height(dash_duo) > one_line * 2, timeout=5)
+    assert not dash_duo.find_elements(".data-chat-message")
+
+    field.send_keys(Keys.ENTER)
+    dash_duo.wait_for_contains_text("#data-chat-log", "An answer.")
+    assert asked == ["Which datasets\ninclude female mice\nand male mice?"]
+    question = dash_duo.find_element(".data-chat-user p")
+    assert question.text == "Which datasets\ninclude female mice\nand male mice?"
+    until(lambda: _field_height(dash_duo) == one_line, timeout=5)
+
+
+def test_question_field_describes_its_keys():
+    """Screen readers are told how Enter and Shift+Enter behave."""
+    spans = {
+        getattr(span, "id", None): span
+        for span in _find_all(data_chat.layout, html.Span)
+    }
+    hint = spans["data-chat-input-hint"]
+    assert "Enter" in hint.children and "Shift" in hint.children
+    assert "visually-hidden" in hint.className
+
+
+def test_question_field_is_linked_to_its_hint(dash_duo):
+    """The hint is attached to the field with aria-describedby."""
+    from app import app
+
+    dash_duo.start_server(app)
+    dash_duo.wait_for_element("#data-chat-input")
+    until(
+        lambda: dash_duo.find_element("#data-chat-input").get_attribute(
+            "aria-describedby"
+        )
+        == "data-chat-input-hint",
+        timeout=5,
+    )
