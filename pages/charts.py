@@ -22,6 +22,8 @@ from dash import (
 )
 from sqlalchemy import and_, func, or_
 
+from components.footer import footer
+from components.page_header import create_page_header
 from components.section_header import section_header
 from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
 from db.connection import SessionLocal
@@ -30,6 +32,19 @@ from db.models import Dataset, Gene, Sample, SampleGene
 dash.register_page(__name__, path="/charts")
 
 log = logging.getLogger(__name__)
+
+# --- Update these two values whenever a new version ships ---
+VERSION = "0.1"
+UPDATED = "2026-08-24"
+# --------------------------------------------------------------
+
+GITHUB_URL = "https://github.com/lasseignelab/rrc-datahub"
+
+
+def logo(src, alt, extra_class=""):
+    css_class = f"logo {extra_class}".strip()
+    return html.Img(src=f"/assets/{src}", alt=alt, className=css_class)
+
 
 _GENE_SEARCH_LIMIT = 50
 _WILDTYPE_VALUE = "wild-type"
@@ -902,21 +917,14 @@ layout = html.Div(
         dbc.Container(
             [
                 dcc.Location(id="url"),
-                html.Section(
-                    [
-                        html.H1("TPM Expression"),
-                        html.P(
-                            (
-                                "Explore gene expression across datasets. Use the "
-                                "filters to select a dataset, then choose a gene "
-                                "and one or more genotype groups to generate a "
-                                "violin plot and summary statistics table of "
-                                "log₁₀(TPM + 1) values."
-                            ),
-                            style={"marginBottom": "16px"},
-                        ),
-                    ],
-                    className="section-card",
+                create_page_header(
+                    title="Gene Expression Explorer",
+                    description=(
+                        "Explore gene expression across PKD datasets by "
+                        "filtering for key research characteristics, then choose a"
+                        " gene and one or more genotype groups to view violin "
+                        "plots and a summary table of log₁₀(TPM + 1) values."
+                    ),
                 ),
                 html.Section(
                     [
@@ -1292,10 +1300,11 @@ layout = html.Div(
                             [
                                 section_header(
                                     title="Edit Plot Parameters",
-                                    tooltip_text=
-                                    "Customize how your selected dataset "
-                                    "is displayed by adjusting the plotting" 
-                                    " options below.",
+                                    tooltip_text=(
+                                        "Customize how your selected dataset "
+                                        "is displayed by adjusting the plotting"
+                                        " options below."
+                                    ),
                                     header_id="edit-plot-parameters",
                                     heading_id="edit-plot-parameters-title",
                                 ),
@@ -1529,7 +1538,10 @@ layout = html.Div(
             fluid=True,
             className="py-4 narrow-margins",
         ),
-    ]
+        # ---- Contact, partner logos, and version footer ----
+        footer(),
+    ],
+    className="charts-page",
 )
 
 
@@ -1732,18 +1744,46 @@ def _convert_age_inputs_on_unit_change(unit, age_days):
     return _from_days(int(min_days), unit), _from_days(int(max_days), unit)
 
 
+def _parse_age_input(raw, default: float) -> float:
+    """Parse an age input value to a non-negative float.
+
+    The inputs are ``type="text"`` (for accessibility), so Dash delivers
+    strings; blank or non-numeric entries fall back to ``default``.
+    """
+    if raw is None:
+        return default
+    try:
+        value = float(str(raw).strip().replace(",", ""))
+    except ValueError:
+        return default
+    return max(value, 0.0)
+
+
 @callback(
     Output("age-range-days", "data"),
     Input("age-min-input", "value"),
     Input("age-max-input", "value"),
     State("age-unit", "value"),
+    State("age-range-days", "data"),
     prevent_initial_call=True,
 )
-def _update_age_days_store(min_val, max_val, unit):
+def _update_age_days_store(min_val, max_val, unit, age_days):
     """Convert the entered min/max to days and persist in the Store."""
     effective_unit = unit or "days"
-    lo = _to_days(min_val if min_val is not None else 0, effective_unit)
-    hi = _to_days(max_val if max_val is not None else _age_max, effective_unit)
+    lo_val = _parse_age_input(min_val, 0.0)
+    hi_val = _parse_age_input(max_val, _from_days(_age_max, effective_unit))
+
+    # A unit change rewrites the inputs with rounded values; converting those
+    # back would drift the stored day range, so keep the exact stored days.
+    if age_days:
+        stored_lo, stored_hi = int(age_days[0]), int(age_days[1])
+        if lo_val == _from_days(stored_lo, effective_unit) and hi_val == _from_days(
+            stored_hi, effective_unit
+        ):
+            return dash.no_update
+
+    lo = _to_days(lo_val, effective_unit)
+    hi = _to_days(hi_val, effective_unit)
     return [min(lo, hi), max(lo, hi)]
 
 

@@ -29,7 +29,10 @@ def test_layout_contains_h1():
 
     h1_elements = find_all(home.layout, html.H1)
     assert len(h1_elements) == 1
-    assert h1_elements[0].children == "PKD RRC DataHub"
+    assert (
+        "".join(child.children for child in h1_elements[0].children)
+        == "PKD RRC DataHub"
+    )
 
 
 def test_heading_renders(dash_duo):

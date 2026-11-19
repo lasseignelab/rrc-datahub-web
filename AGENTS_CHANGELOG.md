@@ -6,6 +6,9 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Merge `develop` into `feature/add-ai-chat-openai`
+- Resolved conflicts from develop's new home page, library page, navbar and footer. `pages/home.py` takes develop's layout (two-colour title, "About the DataHub" with feature cards, `footer()`) with `data_chat.layout` in place of the gene search box. `components/landing_search.py` stays removed (develop had only restyled it), and so do its `TestGeneSearch` tests and the `.gene-search-input` CSS. `assets/style.css` takes develop's `.hero`/`.hero-section` and title styles, keeping this branch's compact hero padding (24px 16px 20px) and halving develop's new title size (5.5rem → 2.75rem). The chat styles follow develop's footer media query. The changelog keeps both sides. (Agent: Claude Opus 5.5)
+
 ### Searching message moves into the conversation (branch `feature/add-ai-chat-openai`)
 - `components/data_chat.py`: "Searching the data, this can take a few seconds…" is no longer shown in the status line under the question field, where it was easy to miss. `render_log()` now also takes the pending store and, while a question is pending, adds a "Data assistant" entry with that message at the bottom of the log; the answer replaces it in the same redraw. `answer_pending`'s `running` now only disables New chat. The log's aria-live region announces the message. (Agent: Claude Opus 5.5)
 - `assets/data_chat_scroll.js`: the answer replacing the searching message leaves the message count unchanged, so the scroll now also starts when the searching message goes away. (Agent: Claude Opus 5.5)
@@ -90,6 +93,14 @@ A log of changes made by AI agents in this project, newest first.
 - `pages/home.py`: Renders `data_chat.layout` in place of the search box. `assets/style.css`: chat styles using existing color tokens; the inner `.dash-input-element` is styled because Dash 4 wraps `dcc.Input` in a container div.
 - `requirements.txt`: Added `anthropic==2.9.0` and its pinned dependencies. `.env.example` and `AGENTS.md`: documented `ANTHROPIC_API_KEY`; added the new files to the project layout.
 - Tests: `tests/test_chat_tools.py`, `tests/test_chat_assistant.py` (Anthropic client mocked), `tests/test_data_chat.py` (callbacks, ARIA roles, label association, and a `dash_duo` check that the chat renders on the home page). No test needs a database or API key. (Agent: Claude Opus 5.5)
+
+## 2026-11-11
+
+### Clear outstanding black/isort MegaLinter findings
+- Applied black to `components/section_header.py`, `db/gene_search.py`, `pages/charts.py`, and `tests/test_app.py`, and isort (MegaLinter's `--profile black` args) to `tests/test_app.py`. In `pages/charts.py`, wrapped the "Edit Plot Parameters" tooltip string in parentheses so the implicit concatenation reads cleanly. Formatting only; no behavior change. MegaLinter now reports zero errors for every Python linter, including the non-blocking black and isort. (Agent: Claude Opus 5.5)
+
+### Fix: age range filter not filtering, and wrong values after unit change
+- `pages/charts.py`: Commit `7c4e47f` changed `age-min-input`/`age-max-input` from `type="number"` to `type="text"`, so Dash delivers strings and `_update_age_days_store` raised `TypeError` (`str * float`). The `age-range-days` store never updated, so the dataset filter ignored typed ages, and a unit change converted the stale store instead of the typed values. Added `_parse_age_input()` to parse text (blank/non-numeric falls back to defaults, negatives clamp to 0). `_update_age_days_store` now also reads the store as State and returns `no_update` when the inputs equal the store re-expressed in the current unit, so a unit change no longer round-trips through 1-decimal rounding and drifts the stored day range. (Agent: Claude Opus 5.5)
 
 ## 2026-09-10
 
