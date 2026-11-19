@@ -791,3 +791,32 @@ textarea.data-chat-input:focus-visible {
   text-align: center;
   color: var(--meta);
 }
+
+/* Stands in for the answer while it is on its way (data_chat.render_log);
+   the answer replaces it. The text stays at full contrast; only the
+   decorative dot in front of it pulses. */
+.data-chat-searching p {
+  font-style: italic;
+}
+
+.data-chat-searching p::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background: var(--bs-primary);
+  vertical-align: middle;
+  animation: data-chat-searching-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes data-chat-searching-pulse {
+  50% { opacity: 0.25; transform: scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-chat-searching p::before {
+    animation: none;
+  }
+}

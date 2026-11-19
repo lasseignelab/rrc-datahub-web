@@ -161,6 +161,47 @@ def test_render_log_hides_empty_log_and_renders_markdown_replies():
     assert _find_all(children[1], dcc.Markdown)
 
 
+def test_render_log_shows_searching_message_while_pending():
+    """A pending question gets a searching message at the bottom of the
+    log, which the answer replaces."""
+    question = [{"role": "user", "content": "Q"}]
+    children, _, _, _ = data_chat.render_log(question, "Q")
+    assert len(children) == 2
+    assert "data-chat-searching" in children[-1].className
+    assert data_chat.SEARCHING_MESSAGE in str(children[-1])
+
+    answered = question + [{"role": "assistant", "content": "A"}]
+    children, _, _, _ = data_chat.render_log(answered, None)
+    assert len(children) == 2
+    assert "data-chat-searching" not in children[-1].className
+
+
+def test_searching_message_is_replaced_by_the_answer(dash_duo, monkeypatch):
+    """While waiting, the log ends with the searching message; then the
+    answer takes its place and the status line stays empty."""
+    from app import app
+
+    def slow_answer(_history, question):
+        time.sleep(1.5)
+        return f"Answer to {question}"
+
+    monkeypatch.setattr(data_chat, "answer_question", slow_answer)
+    dash_duo.start_server(app)
+
+    box = dash_duo.wait_for_element("#data-chat-input")
+    box.send_keys("Which datasets?", Keys.ENTER)
+    dash_duo.wait_for_contains_text(
+        ".data-chat-message:last-child", "Searching the data"
+    )
+    assert dash_duo.find_element("#data-chat-status").text == ""
+
+    dash_duo.wait_for_contains_text(
+        ".data-chat-message:last-child", "Answer to Which datasets?", timeout=10
+    )
+    assert not dash_duo.find_elements(".data-chat-searching")
+    assert len(dash_duo.find_elements(".data-chat-message")) == 2
+
+
 def test_home_page_renders_chat_box(dash_duo):
     """The chat box replaces the gene search box on the home page."""
     from app import app

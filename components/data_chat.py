@@ -6,9 +6,10 @@ Flow:
     -> assets/data_chat_input.js sets the data-chat-send store
     -> submit_question() appends the question to the history store, clears
        the input, and records it as pending (so it shows up immediately)
-    -> answer_pending() sends the history to components.chat_assistant and
-       appends the reply; while it runs, a role="status" message tells
-       screen readers the assistant is working
+    -> render_log() shows a "Searching the data…" message at the bottom of
+       the log while answer_pending() sends the history to
+       components.chat_assistant; the reply then takes its place (the log's
+       aria-live region announces both)
     -> a question asked while an answer is on its way is queued (shown as
        "Up next") and ask_next_queued() sends it once that answer arrives,
        so Enter always leads to an answer and turns never interleave
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 EXAMPLE_QUESTION = "e.g. Which datasets include female mice?"
 ERROR_REPLY = "Sorry, the data assistant hit an error. Please try again."
+SEARCHING_MESSAGE = "Searching the data, this can take a few seconds…"
 
 # Hyphenated ARIA props can't be Python keywords; typed as Any so the
 # ** spread type-checks against html.Div's keyword arguments.
@@ -170,11 +172,6 @@ def submit_question(_sent_at, question, history, pending, queue):
     State("data-chat-history", "data"),
     prevent_initial_call=True,
     running=[
-        (
-            Output("data-chat-status", "children"),
-            "Searching the data, this can take a few seconds…",
-            "",
-        ),
         # Clearing mid-answer would be undone when the answer arrives (it
         # is appended to the history read when the answer started).
         (Output("data-chat-new", "disabled"), True, False),
@@ -233,37 +230,50 @@ def render_queue(queue):
     return "Up next: " + " · ".join(queue), False, False
 
 
+def _message(speaker: str, body, class_name: str) -> html.Div:
+    """One entry in the conversation log."""
+    return html.Div(
+        [html.Span(speaker, className="data-chat-speaker"), body],
+        className="data-chat-message " + class_name,
+    )
+
+
 @callback(
     Output("data-chat-log", "children"),
     Output("data-chat-log", "className"),
     Output("data-chat-disclaimer", "hidden"),
     Output("data-chat-new", "hidden"),
     Input("data-chat-history", "data"),
+    Input("data-chat-pending", "data"),
 )
-def render_log(history):
+def render_log(history, pending=None):
     """Draw the conversation; the log and its disclaimer are hidden until
-    the first question."""
+    the first question.
+
+    While a question is pending, a "Searching the data…" message sits at
+    the bottom of the log, where the user is looking for the answer.
+    answer_pending() sets the reply and clears pending together, so the
+    reply replaces it in one redraw.
+    """
     history = history or []
     entries = []
     for turn in history:
-        is_user = turn["role"] == "user"
+        if turn["role"] == "user":
+            entries.append(_message("You", html.P(turn["content"]), "data-chat-user"))
+        else:
+            entries.append(
+                _message(
+                    "Data assistant",
+                    dcc.Markdown(turn["content"], link_target="_self"),
+                    "data-chat-assistant",
+                )
+            )
+    if pending and history and history[-1]["role"] == "user":
         entries.append(
-            html.Div(
-                [
-                    html.Span(
-                        "You" if is_user else "Data assistant",
-                        className="data-chat-speaker",
-                    ),
-                    (
-                        html.P(turn["content"])
-                        if is_user
-                        else dcc.Markdown(turn["content"], link_target="_self")
-                    ),
-                ],
-                className=(
-                    "data-chat-message "
-                    + ("data-chat-user" if is_user else "data-chat-assistant")
-                ),
+            _message(
+                "Data assistant",
+                html.P(SEARCHING_MESSAGE),
+                "data-chat-assistant data-chat-searching",
             )
         )
     class_name = "data-chat-log" + ("" if entries else " data-chat-log-empty")

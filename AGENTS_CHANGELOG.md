@@ -4,6 +4,14 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-19
+
+### Searching message moves into the conversation (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: "Searching the data, this can take a few seconds…" is no longer shown in the status line under the question field, where it was easy to miss. `render_log()` now also takes the pending store and, while a question is pending, adds a "Data assistant" entry with that message at the bottom of the log; the answer replaces it in the same redraw. `answer_pending`'s `running` now only disables New chat. The log's aria-live region announces the message. (Agent: Claude Opus 5.5)
+- `assets/data_chat_scroll.js`: the answer replacing the searching message leaves the message count unchanged, so the scroll now also starts when the searching message goes away. (Agent: Claude Opus 5.5)
+- `assets/style.css`: `.data-chat-searching`: italic text at full contrast with a small pulsing dot in front of it (decorative; the pulse is off under prefers-reduced-motion). (Agent: Claude Opus 5.5)
+- `tests/test_data_chat.py`: unit test for the searching entry and a browser test that it shows at the bottom of the log and is replaced by the answer. (Agent: Claude Opus 5.5)
+
 ## 2026-11-18
 
 ### Chat questions on light grey (branch `feature/add-ai-chat-openai`)

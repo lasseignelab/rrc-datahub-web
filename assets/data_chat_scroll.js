@@ -15,6 +15,10 @@
 // message finishes drawing (tables, links) for a short settle period. Any
 // scrolling by the user during that period stops it, so it never fights them.
 //
+// While an answer is on its way, the log ends with a "Searching the data…"
+// message (.data-chat-searching); the answer replaces it, which counts as a
+// new message too.
+//
 // When a message was just added, the page also scrolls just enough to bring
 // the box and the question field under it into view; restoring a saved
 // conversation on page load does not move the page. Smooth scrolling is
@@ -28,6 +32,7 @@
 
     var log = null;
     var messageCount = 0;
+    var searching = false;
     var settleUntil = 0;
     var revealPage = false;
     var frameRequested = false;
@@ -69,8 +74,8 @@
     // box and status line. If they don't all fit in the window, the top of
     // the log wins, because that is where the newest exchange starts.
     function revealChat(behavior) {
-        // The status line ("Searching the data…") sits under the question
-        // field and should be visible while an answer is on its way.
+        // The status line sits under the question field (it shows e.g.
+        // "Started a new chat.").
         var form = document.getElementById("data-chat-status") ||
             document.querySelector(".data-chat-form");
         var margin = 8;
@@ -109,21 +114,26 @@
             return;
         }
         var count = current.querySelectorAll(".data-chat-message").length;
+        var nowSearching = !!current.querySelector(".data-chat-searching");
         if (current !== log) {
             // The log was just mounted (page load or navigation back to the
             // home page): show the newest exchange, but leave the page alone.
             log = current;
             messageCount = count;
+            searching = nowSearching;
             if (count > 0) { startSettling(false); }
             return;
         }
-        if (count > messageCount) {
-            messageCount = count;
+        // The answer taking the searching message's place leaves the count
+        // unchanged, so it is detected by the searching message going away.
+        var answered = searching && !nowSearching && count >= messageCount;
+        if (count > messageCount || answered) {
             startSettling(true);
-        } else {
-            messageCount = count;
-            if (Date.now() < settleUntil) { requestScroll(); }
+        } else if (Date.now() < settleUntil) {
+            requestScroll();
         }
+        messageCount = count;
+        searching = nowSearching;
     }
 
     // The user taking over the scroll ends the settle period.
