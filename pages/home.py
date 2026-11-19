@@ -64,8 +64,7 @@ layout = html.Div(
                             children=[
                                 html.H2("About the DataHub"),
                                 html.H3(
-                                    "A simpler way to explore PKD gene"
-                                    "expression data.",
+                                    "A simpler way to explore PKD datasets.",
                                     className="about-title",
                                 ),
                                 html.P(
@@ -73,7 +72,7 @@ layout = html.Div(
                                     "web-based platform "
                                     "that makes public polycystic "
                                     "kidney disease (PKD) "
-                                    "gene expression data easier to "
+                                    "datasets easier to "
                                     "access and analyze. "
                                     "The DataHub's standardized data "
                                     "processing pipeline "
@@ -103,8 +102,7 @@ layout = html.Div(
                                 ),
                                 feature_card(
                                     "Visualize",
-                                    "Explore expression patterns with "
-                                    "charts and tables",
+                                    "Explore results with charts and tables",
                                     "lucide:chart-no-axes-column-increasing",
                                 ),
                                 feature_card(

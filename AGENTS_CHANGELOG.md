@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Home: fix "geneexpression" typo; modality-neutral wording
+- `pages/home.py`: Fixed the joined "geneexpression" heading, and replaced data-type-specific wording with modality-neutral wording (as on the About page, since future releases add other data types): heading "A simpler way to explore PKD datasets.", description "...makes public polycystic kidney disease (PKD) datasets easier to access and analyze.", Visualize card "Explore results with charts and tables".
+- (Agent: Claude Opus 5.5)
+
 ### Merge develop (Library page, new navbar/footer) into feature/add-about-tab
 - `pages/home.py`: Took develop's version (Home no longer shows version/GitHub; moved to footer).
 - `components/navbar.py`: Took develop's navbar (brand, Library link, mobile hamburger) and re-added the About dropdown on desktop plus an "About" link in the mobile menu; restored the `dash_bootstrap_components` import the dropdown needs.
