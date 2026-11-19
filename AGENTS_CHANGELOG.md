@@ -6,6 +6,14 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Home page: "Search" feature becomes "AI Chat" (branch `feature/add-ai-chat-openai`)
+- `pages/home.py`: the first About feature card now reads "AI Chat" ("Ask questions about the data in plain language") with the `lucide:bot-message-square` icon, in place of "Search" ("Find genes, datasets, and studies", `lucide:search`), since the chat replaced the gene search box. (Agent: Claude Opus 5.5)
+
+### Home page: title and tagline make way for the chat (branch `feature/add-ai-chat-openai`)
+- `pages/home.py`: removed the visible "PKD RRC DataHub" title and the tagline above the chat. The H1 stays for screen readers and the heading order, with the existing `.visually-hidden` class; the navbar already shows the name. The `.hero` wrapper section is gone. (Agent: Claude Opus 5.5)
+- `assets/style.css`: removed the now-unused `.hero`, `.hero-title` and `.hero-tagline` rules. `.data-chat-log` max-height goes from a fixed 420px to `max(320px, calc(100vh - 270px))`, so the conversation fills the window under the navbar while the disclaimer, question field and status line stay on the same screen. `.hero-section .search-section` gets `position: relative; z-index: 1`: without the title section, the absolutely positioned dot pattern was drawn over the chat box and question field. (Agent: Claude Opus 5.5)
+- `tests/test_app.py`: the H1 tests check its text content and `visually-hidden` class, since it no longer has visible text. (Agent: Claude Opus 5.5)
+
 ### Merge `develop` into `feature/add-ai-chat-openai`
 - Resolved conflicts from develop's new home page, library page, navbar and footer. `pages/home.py` takes develop's layout (two-colour title, "About the DataHub" with feature cards, `footer()`) with `data_chat.layout` in place of the gene search box. `components/landing_search.py` stays removed (develop had only restyled it), and so do its `TestGeneSearch` tests and the `.gene-search-input` CSS. `assets/style.css` takes develop's `.hero`/`.hero-section` and title styles, keeping this branch's compact hero padding (24px 16px 20px) and halving develop's new title size (5.5rem → 2.75rem). The chat styles follow develop's footer media query. The changelog keeps both sides. (Agent: Claude Opus 5.5)
 

@@ -29,16 +29,16 @@ def test_layout_contains_h1():
 
     h1_elements = find_all(home.layout, html.H1)
     assert len(h1_elements) == 1
-    assert (
-        "".join(child.children for child in h1_elements[0].children)
-        == "PKD RRC DataHub"
-    )
+    assert h1_elements[0].children == "PKD RRC DataHub"
 
 
 def test_heading_renders(dash_duo):
-    """H1 is visible in the browser after page load."""
+    """The H1 is in the page for screen readers after page load (it is
+    visually hidden so the home-page chat gets the space)."""
     dash_duo.start_server(app)
-    dash_duo.wait_for_text_to_equal("h1", "PKD RRC DataHub")
+    heading = dash_duo.wait_for_element("h1")
+    assert heading.get_attribute("textContent") == "PKD RRC DataHub"
+    assert "visually-hidden" in heading.get_attribute("class")
 
 
 def test_graph_renders(dash_duo):

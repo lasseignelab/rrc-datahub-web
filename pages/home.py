@@ -27,23 +27,10 @@ layout = html.Div(
         html.Section(
             [
                 html.Div(className="hero-motif", **{"aria-hidden": "true"}),
-                html.Section(
-                    className="hero",
-                    children=[
-                        html.H1(
-                            [
-                                html.Span("PKD RRC", className="brand-primary"),
-                                html.Span(" DataHub", className="brand-accent"),
-                            ],
-                            className="hero-title",
-                        ),
-                        html.P(
-                            "A shared home for polycystic kidney disease "
-                            "(PKD) research datasets.",
-                            className="hero-tagline",
-                        ),
-                    ],
-                ),
+                # The page's one H1, for screen readers and the heading
+                # order; hidden from view so the chat gets the space (the
+                # navbar already shows the name).
+                html.H1("PKD RRC DataHub", className="visually-hidden"),
                 # ---- Data chat (replaces the gene search box) ----
                 html.Section(
                     className="search-section",
@@ -92,9 +79,9 @@ layout = html.Div(
                             className="about-features",
                             children=[
                                 feature_card(
-                                    "Search",
-                                    "Find genes, datasets, and studies",
-                                    "lucide:search",
+                                    "AI Chat",
+                                    "Ask questions about the data in plain language",
+                                    "lucide:bot-message-square",
                                 ),
                                 feature_card(
                                     "Filter",
