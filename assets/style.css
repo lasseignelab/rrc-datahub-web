@@ -557,12 +557,14 @@ Navbar
     border-bottom-color: transparent;
 }
 
-/* ---- About dropdown (components/navbar.py) ---- */
+/* ---- About split button (components/navbar.py) ----
+   "About" is a link; the caret beside it is the menu button. */
 
 .about-menu {
 position: relative;
 display: flex;
 align-items: center;
+gap: 2px;
 }
 
 .site-nav .about-menu-toggle {
@@ -572,12 +574,19 @@ border-bottom: 2px solid transparent;
 border-radius: 0;
 box-shadow: none;
 cursor: pointer;
+padding: 2px 4px 0;
+}
+
+/* Hovering either part, or the menu being open, underlines "About". */
+.site-nav .about-menu:hover .about-menu-link,
+.site-nav .about-menu:has(.dropdown-menu.show) .about-menu-link {
+color: var(--teal-deep);
+border-bottom-color: var(--teal-deep);
 }
 
 .site-nav .about-menu-toggle:hover,
-.site-nav .about-menu.show .about-menu-toggle {
+.site-nav .about-menu-toggle:focus-visible {
 color: var(--teal-deep);
-border-bottom-color: var(--teal-deep);
 }
 
 .about-menu .dropdown-menu {
@@ -620,7 +629,7 @@ color: var(--meta);
 @media (hover: hover) {
   /* !important overrides the inline position Popper leaves behind after
   the menu has been opened by click once. */
-  .about-menu:hover > .dropdown-menu:not(.show) {
+  .about-menu:hover .dropdown-menu:not(.show) {
   display: block;
   inset: 100% 0 auto auto !important;
   transform: none !important;

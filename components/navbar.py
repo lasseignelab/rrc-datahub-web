@@ -13,23 +13,35 @@ ABOUT_MENU = [
 
 
 def about_dropdown():
-    """About menu: opens on click (keyboard/touch) and on hover (mouse)."""
-    return dbc.DropdownMenu(
+    """About as a split button.
+
+    "About" is a normal link to /about. The caret next to it is a separate
+    button that opens the section menu for keyboard and touch users; mouse
+    users also get the menu on hover (assets/style.css).
+    """
+    return html.Div(
         [
-            dbc.DropdownMenuItem(
+            dcc.Link("About", href="/about", className="nav-link about-menu-link"),
+            dbc.DropdownMenu(
                 [
-                    html.Span(label),
-                    html.I(className=f"bi {icon}", **{"aria-hidden": "true"}),
+                    dbc.DropdownMenuItem(
+                        [
+                            html.Span(label),
+                            html.I(className=f"bi {icon}", **{"aria-hidden": "true"}),
+                        ],
+                        href=f"/about#{anchor}",
+                        className="about-menu-item",
+                    )
+                    for label, anchor, icon in ABOUT_MENU
                 ],
-                href=f"/about#{anchor}",
-                className="about-menu-item",
-            )
-            for label, anchor, icon in ABOUT_MENU
+                label=html.Span("Show About sections", className="visually-hidden"),
+                id="about-menu",
+                color="link",
+                align_end=True,
+                toggle_class_name="nav-link about-menu-toggle",
+                className="about-menu-dropdown",
+            ),
         ],
-        label="About",
-        id="about-menu",
-        color="link",
-        toggleClassName="nav-link about-menu-toggle",
         className="about-menu",
     )
 

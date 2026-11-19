@@ -6,6 +6,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Navbar: About as a split button
+- `components/navbar.py`: "About" is now a normal link to /about; the caret beside it is a separate button (`dbc.DropdownMenu`, hidden label "Show About sections", `align_end=True`) that opens the section menu. Replaced deprecated `toggleClassName` with `toggle_class_name`.
+- `assets/style.css`: Split-button layout; hovering either part (or the menu being open) underlines "About"; hover-to-open selector updated for the nested menu.
+- Verified: click About -> /about; hover opens menu (also after click use); caret click and keyboard (Tab to caret, Enter, arrows, Escape) work; menu entries jump to sections; mobile menu unchanged; axe 0 violations (menu open/closed); 19/19 tests; linters clean; pa11y 4/4.
+- (Agent: Claude Opus 5.5)
+
 ### Home: fix "geneexpression" typo; modality-neutral wording
 - `pages/home.py`: Fixed the joined "geneexpression" heading, and replaced data-type-specific wording with modality-neutral wording (as on the About page, since future releases add other data types): heading "A simpler way to explore PKD datasets.", description "...makes public polycystic kidney disease (PKD) datasets easier to access and analyze.", Visualize card "Explore results with charts and tables".
 - (Agent: Claude Opus 5.5)
