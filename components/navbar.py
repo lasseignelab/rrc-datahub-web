@@ -35,11 +35,64 @@ def about_dropdown():
 
 
 def navbar():
+    links = [
+        ("Home", "/"),
+        ("Library", "/library"),
+        ("Charts", "/charts"),
+    ]
+
+    def nav_link(label, href):
+        return dcc.Link(
+            label,
+            href=href,
+            className="nav-link",
+        )
+
     return html.Nav(
         [
-            dcc.Link("Home", href="/", className="nav-link"),
-            dcc.Link("Charts", href="/charts", className="nav-link"),
-            about_dropdown(),
+            # Mobile hamburger menu
+            html.Details(
+                [
+                    html.Summary(
+                        html.Span(
+                            [
+                                html.Span(className="hamburger-line"),
+                                html.Span(className="hamburger-line"),
+                                html.Span(className="hamburger-line"),
+                            ],
+                            className="hamburger-icon",
+                        ),
+                        className="hamburger-button",
+                    ),
+                    html.Div(
+                        [nav_link(label, href) for label, href in links]
+                        + [nav_link("About", "/about")],
+                        className="mobile-menu-links",
+                    ),
+                ],
+                id="mobile-menu",
+                className="mobile-menu",
+            ),
+            # Brand / wordmark
+            dcc.Link(
+                [
+                    html.Span(
+                        "PKD RRC",
+                        className="brand-primary",
+                    ),
+                    html.Span(
+                        "DataHub",
+                        className="brand-accent",
+                    ),
+                ],
+                href="/",
+                className="site-brand",
+            ),
+            # Desktop navigation
+            html.Div(
+                [nav_link(label, href) for label, href in links] + [about_dropdown()],
+                className="nav-links desktop-nav-links",
+            ),
         ],
         className="site-nav",
     )

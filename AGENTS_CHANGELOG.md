@@ -6,6 +6,14 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Merge develop (Library page, new navbar/footer) into feature/add-about-tab
+- `pages/home.py`: Took develop's version (Home no longer shows version/GitHub; moved to footer).
+- `components/navbar.py`: Took develop's navbar (brand, Library link, mobile hamburger) and re-added the About dropdown on desktop plus an "About" link in the mobile menu; restored the `dash_bootstrap_components` import the dropdown needs.
+- `components/footer.py`: Imports `VERSION`, `UPDATED`, `GITHUB_URL` from `config.py` instead of its own copies (which still said 0.1 / 2026-08-24).
+- `assets/style.css`: About toggle vertically centered to line up with the new nav links; hover-opened About menu right-aligned so it stays on screen now that About is the last nav item.
+- Verified on the merged tree: 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright, bandit clean; pa11y 0 errors on /, /library, /charts, /about; axe 0 violations on /about (menu open); mobile menu has Home, Library, Charts, About with no horizontal overflow.
+- (Agent: Claude Opus 5.5)
+
 ### About page: release sidebar highlight on other in-page jumps
 - `assets/toc-scrollspy.js`: A clicked sidebar item no longer stays highlighted after Back to top, a sidebar group link, the navbar About menu, or browser back/forward. Clicks on any other in-page link, and URL hash changes to a different section, hand highlighting back to the scroll position. Verified 7 scenarios in headless Chrome (incl. the earlier near-bottom pin); 19/19 tests; pa11y 3/3.
 - (Agent: Claude Opus 5.5)
