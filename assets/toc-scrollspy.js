@@ -86,19 +86,41 @@
     }
   }
 
-  document.addEventListener("click", function (event) {
-    const link = event.target.closest && event.target.closest(".about-toc-item");
-    if (link) {
-      pinnedId = link.getAttribute("href").slice(1);
-      requestUpdate();
-    }
-  });
   function releasePin() {
     if (pinnedId) {
       pinnedId = null;
       requestUpdate();
     }
   }
+
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest) {
+      return;
+    }
+    const item = event.target.closest(".about-toc-item");
+    if (item) {
+      pinnedId = item.getAttribute("href").slice(1);
+      requestUpdate();
+      return;
+    }
+    // Any other in-page jump (Back to top, sidebar group links, navbar About
+    // menu) hands highlighting back to the scroll position.
+    const link = event.target.closest("a[href*='#']");
+    if (link) {
+      releasePin();
+    }
+  });
+
+  // Covers jumps that don't come from a click on this page (browser
+  // back/forward, links typed or pasted with a different #section).
+  function releasePinIfHashMoved() {
+    if (pinnedId && window.location.hash.slice(1) !== pinnedId) {
+      releasePin();
+    }
+  }
+  window.addEventListener("hashchange", releasePinIfHashMoved);
+  window.addEventListener("popstate", releasePinIfHashMoved);
+  window.addEventListener("_dashprivate_pushstate", releasePinIfHashMoved);
   window.addEventListener("wheel", releasePin, { passive: true });
   window.addEventListener("touchmove", releasePin, { passive: true });
   window.addEventListener("keydown", function (event) {
