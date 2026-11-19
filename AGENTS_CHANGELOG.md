@@ -4,6 +4,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-19
+
+### About page: release sidebar highlight on other in-page jumps
+- `assets/toc-scrollspy.js`: A clicked sidebar item no longer stays highlighted after Back to top, a sidebar group link, the navbar About menu, or browser back/forward. Clicks on any other in-page link, and URL hash changes to a different section, hand highlighting back to the scroll position. Verified 7 scenarios in headless Chrome (incl. the earlier near-bottom pin); 19/19 tests; pa11y 3/3.
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-18
 
 ### About page: PI title and developer role
