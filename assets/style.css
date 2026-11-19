@@ -583,7 +583,7 @@ Navbar
 position: relative;
 display: flex;
 align-items: center;
-gap: 2px;
+gap: 6px;
 }
 
 .site-nav .about-menu-toggle {
@@ -606,6 +606,12 @@ border-bottom-color: var(--teal-deep);
 .site-nav .about-menu-toggle:hover,
 .site-nav .about-menu-toggle:focus-visible {
 color: var(--teal-deep);
+}
+
+/* Bootstrap's .btn removes the outline; restore the site focus ring. */
+.site-nav .about-menu-toggle:focus-visible {
+outline: 2px solid var(--uab-green);
+outline-offset: 0;
 }
 
 .about-menu .dropdown-menu {

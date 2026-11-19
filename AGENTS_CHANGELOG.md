@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Navbar: focus ring on the About menu button
+- `assets/style.css`: The About caret button had no visible keyboard focus indicator (Bootstrap `.btn` removes the outline and the toggle also removed its box-shadow). Restored the site focus ring (2px `--uab-green` outline) on `.about-menu-toggle:focus-visible`, and widened the gap between "About" and the caret (2px -> 6px) so the ring doesn't touch the text. About page audit: 42/42 focus stops show a visible indicator; skip link is the first Tab stop; `<html lang="en">`; no form fields or Dash callbacks on the page; axe 0 violations.
+- (Agent: Claude Opus 5.5)
+
 ### Sticky navbar; About header matches Charts/Library
 - `assets/style.css`: `.site-nav` is `position: sticky; top: 0` on every page. `html { scroll-padding-top: calc(68px + 1rem) }` keeps in-page jumps and keyboard focus clear of it (WCAG 2.4.11); removed the per-heading `scroll-margin-top` it replaces. About sidebar sticks below the navbar. Skip link, when focused, is now fixed top-left above the navbar (it previously rendered just above the viewport and was never visible).
 - `assets/toc-scrollspy.js`: Active line measured from the bottom of the sticky navbar (+120px), so group jumps highlight the group's first section.
