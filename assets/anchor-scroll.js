@@ -17,6 +17,19 @@
     return hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
   }
 
+  // True for the About page's first group heading or its first section
+  // heading (e.g. #about-group-overview, #overview).
+  function isPageStart(target) {
+    const firstGroup = document.querySelector(".about-group");
+    if (!firstGroup) {
+      return false;
+    }
+    return (
+      target === firstGroup.querySelector(".about-group-heading") ||
+      target === firstGroup.querySelector(".about-item-heading")
+    );
+  }
+
   function stop() {
     if (active) {
       window.clearTimeout(active.settleTimer);
@@ -36,7 +49,13 @@
     if (!target) {
       return; // Not rendered yet; observers will call again.
     }
-    target.scrollIntoView({ block: "start" });
+    if (isPageStart(target)) {
+      // The first section starts right under the page header (title and
+      // stat tiles); show the whole top of the page instead of cutting it off.
+      window.scrollTo({ top: 0, behavior: "instant" });
+    } else {
+      target.scrollIntoView({ block: "start" });
+    }
     if (!active.focused) {
       // Move keyboard/screen-reader focus to the section (WCAG 2.4.3).
       active.focused = true;

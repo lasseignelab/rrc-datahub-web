@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### About page: Overview jumps show the page header
+- `assets/anchor-scroll.js`: Jumps to the first group heading or its first section (`#about-group-overview`, `#overview`) scroll to the top of the page instead of aligning the heading to the viewport top, so the page header and stat tiles stay visible. Focus still moves to the target heading. Applies to the navbar menu, sidebar links, and direct links. Verified 6 scenarios (incl. other sections unchanged); 19/19 tests.
+- (Agent: Claude Opus 5.5)
+
 ### Navbar: About as a split button
 - `components/navbar.py`: "About" is now a normal link to /about; the caret beside it is a separate button (`dbc.DropdownMenu`, hidden label "Show About sections", `align_end=True`) that opens the section menu. Replaced deprecated `toggleClassName` with `toggle_class_name`.
 - `assets/style.css`: Split-button layout; hovering either part (or the menu being open) underlines "About"; hover-to-open selector updated for the nested menu.
