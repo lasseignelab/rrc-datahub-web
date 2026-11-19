@@ -8,7 +8,7 @@
   "use strict";
 
   // A section counts as "current" once its heading passes this line
-  // (px from the top of the viewport).
+  // (px below the sticky navbar, or below the viewport top without one).
   const ACTIVE_LINE_PX = 120;
   // Keys that scroll the page; used to release a clicked link (see below).
   const SCROLL_KEYS = [
@@ -31,12 +31,16 @@
       return;
     }
 
+    const nav = document.querySelector(".site-nav");
+    const navBottom = nav ? Math.max(0, nav.getBoundingClientRect().bottom) : 0;
+    const activeLine = navBottom + ACTIVE_LINE_PX;
+
     // Last section heading that has scrolled past the active line.
     let activeId = links[0].getAttribute("href").slice(1);
     links.forEach(function (link) {
       const id = link.getAttribute("href").slice(1);
       const heading = document.getElementById(id);
-      if (heading && heading.getBoundingClientRect().top <= ACTIVE_LINE_PX) {
+      if (heading && heading.getBoundingClientRect().top <= activeLine) {
         activeId = id;
       }
     });

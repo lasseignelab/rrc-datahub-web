@@ -13,6 +13,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from components.navbar import ABOUT_MENU
+from components.page_header import create_page_header
 from config import DATASET_COUNT, SAMPLE_COUNT, UPDATED, VERSION
 
 dash.register_page(
@@ -205,17 +206,15 @@ layout = html.Div(
     [
         dbc.Container(
             [
-                html.Section(
-                    [
-                        html.H1("About the PKD RRC DataHub", id="about-title"),
-                        html.P(
-                            "Background, methods, usage instructions, citation "
-                            "details, and contact information for the PKD RRC "
-                            "DataHub.",
-                        ),
-                        _stat_tiles(),
-                    ],
-                    className="section-card about-header",
+                create_page_header(
+                    title="About the PKD RRC DataHub",
+                    description=(
+                        "Background, methods, usage instructions, citation "
+                        "details, and contact information for the PKD RRC "
+                        "DataHub."
+                    ),
+                    title_id="about-title",
+                    aside=_stat_tiles(),
                 ),
                 # Wide screens: sticky "On this page" sidebar beside the
                 # content. Narrow screens: the columns stack.

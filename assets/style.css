@@ -200,6 +200,13 @@ Custom Components
 Accessibility
 ========================================================================== */
 
+/* Keep in-page jumps and keyboard-focused elements clear of the sticky
+   navbar (68px) with a little breathing room (WCAG 2.4.11). */
+html {
+scroll-padding-top: calc(68px + 1rem);
+}
+
+
 /* Visually hidden but still readable by assistive technology. */
 .visually-hidden {
 clip: rect(0 0 0 0);
@@ -222,12 +229,22 @@ height: 1px;
 overflow: hidden;
 }
 
+/* When focused, show in the top-left corner above the sticky navbar,
+   wherever the page is scrolled to. */
 .skip-nav:focus {
-position: static;
+position: fixed;
+top: 0.5rem;
+left: 0.5rem;
+z-index: 200;
 width: auto;
 height: auto;
 overflow: visible;
 padding: 0.5rem 1rem;
+background: #fff;
+color: var(--teal-deep);
+border: 2px solid var(--teal-deep);
+border-radius: 6px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================================================
@@ -420,7 +437,9 @@ Navbar
 
 /* Main navbar */
 .site-nav {
-    position: relative;
+    /* Stays at the top of the screen on every page. */
+    position: sticky;
+    top: 0;
     z-index: 100;
     display: flex;
     align-items: center;
@@ -1004,7 +1023,6 @@ About page
 ========================================================================== */
 
 .about-group-heading {
-scroll-margin-top: 1rem;
 display: flex;
 align-items: center;
 gap: 0.6rem;
@@ -1022,9 +1040,13 @@ color: var(--teal-deep);
 
 /* ---- Header stat tiles (pages/about.py _stat_tiles) ---- */
 
-/* Wide screens: title and subtitle on the left, stat tiles on the right.
-   Narrower screens: tiles sit in one row below the subtitle. */
+/* Tiles sit in the shared page header (components/page_header.py), beside
+   the title on extra-wide screens and below it otherwise. */
 @media (max-width: 1199px) {
+  .page-header-aside {
+  margin-top: 1.25rem;
+  }
+
   .about-stats .about-stat {
   flex: 1 1 auto;
   min-width: 0;
@@ -1049,28 +1071,26 @@ color: var(--teal-deep);
   }
 }
 
+.about-stats {
+  gap: 0.5rem;
+  }
+
+  .about-stats .about-stat {
+  padding: 0.6rem 0.7rem;
+  }
+
+  .about-stat-value {
+  font-size: 1.2rem;
+  }
+
+  .about-stat-label {
+  font-size: 0.75rem;
+  }
+}
+
 @media (min-width: 1200px) {
-  .about-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  column-gap: 2rem;
-  align-items: center;
-  }
-
-  .about-header h1,
-  .about-header p {
-  grid-column: 1;
-  }
-
-  .about-header p {
-  margin-bottom: 0;
-  }
-
-  .about-header .about-stats {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  .page-header .about-stats {
   flex-wrap: nowrap;
-  margin: 0;
   }
 }
 
@@ -1079,7 +1099,7 @@ display: flex;
 flex-wrap: wrap;
 gap: 0.75rem;
 list-style: none;
-margin: 1.25rem 0 0;
+margin: 0;
 padding: 0;
 }
 
@@ -1088,7 +1108,8 @@ display: flex;
 flex-direction: column;
 min-width: 9rem;
 padding: 0.75rem 1rem;
-background: var(--teal-pale);
+background: #fff;
+border: 1px solid rgba(43, 99, 99, 0.15);
 border-radius: 8px;
 }
 
@@ -1250,8 +1271,8 @@ background: var(--teal-pale);
 @media (min-width: 992px) {
   .about-toc {
   position: sticky;
-  top: 1rem;
-  max-height: calc(100vh - 2rem);
+  top: calc(68px + 1rem);
+  max-height: calc(100vh - 68px - 2rem);
   overflow-y: auto;
   }
 }
@@ -1265,8 +1286,6 @@ padding-top: 1.5rem;
 .about-item-heading {
 font-size: 1.2rem;
 font-weight: 600;
-/* Keep anchored headings visible below the top of the viewport. */
-scroll-margin-top: 1rem;
 }
 
 .about-markdown {

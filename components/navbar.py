@@ -75,6 +75,7 @@ def navbar():
                             className="hamburger-icon",
                         ),
                         className="hamburger-button",
+                        **{"aria-label": "Menu"},
                     ),
                     html.Div(
                         [nav_link(label, href) for label, href in links]

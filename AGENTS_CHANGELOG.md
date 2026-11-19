@@ -6,6 +6,15 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-19
 
+### Sticky navbar; About header matches Charts/Library
+- `assets/style.css`: `.site-nav` is `position: sticky; top: 0` on every page. `html { scroll-padding-top: calc(68px + 1rem) }` keeps in-page jumps and keyboard focus clear of it (WCAG 2.4.11); removed the per-heading `scroll-margin-top` it replaces. About sidebar sticks below the navbar. Skip link, when focused, is now fixed top-left above the navbar (it previously rendered just above the viewport and was never visible).
+- `assets/toc-scrollspy.js`: Active line measured from the bottom of the sticky navbar (+120px), so group jumps highlight the group's first section.
+- `components/page_header.py`: Optional `title_id` (H1 id) and `aside` (content beside the title at >=1200px, below it otherwise). Existing callers unchanged.
+- `pages/about.py`: Header now uses `create_page_header` (same style as Charts and Library) with the stat tiles as `aside`; H1 keeps `id="about-title"` for Back to top. Stat tiles restyled as white cards on the teal header.
+- `components/navbar.py`: Mobile hamburger `<summary>` gets `aria-label="Menu"` (axe `summary-name`, serious, from the develop navbar redesign).
+- Verified: all earlier About behaviors re-tested (Overview jumps 6/6, scroll-spy, pinned clicks 10/10, release-pin 7/7, split button 16/16); skip link visible on top at any scroll position (1288/320px); axe 0 violations at 1288px and 320px; pa11y 4/4; 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright clean.
+- (Agent: Claude Opus 5.5)
+
 ### About page: Overview jumps show the page header
 - `assets/anchor-scroll.js`: Jumps to the first group heading or its first section (`#about-group-overview`, `#overview`) scroll to the top of the page instead of aligning the heading to the viewport top, so the page header and stat tiles stay visible. Focus still moves to the target heading. Applies to the navbar menu, sidebar links, and direct links. Verified 6 scenarios (incl. other sections unchanged); 19/19 tests.
 - (Agent: Claude Opus 5.5)
