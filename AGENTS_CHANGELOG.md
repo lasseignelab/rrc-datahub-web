@@ -6,6 +6,15 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-20
 
+### About page: match the Home page AI chat
+- After merging `develop` (AI chat replaced the Home gene search), updated About copy that described the old search box.
+- `content/about/user-guide.md`: Step 1 is now "Ask a question or pick a gene" (chat usage, chart links, AI caveat, or pick a gene on Charts).
+- `content/about/overview.md`: "search for a gene" → "ask questions about the data in plain language".
+- `content/about/future-directions.md`: Removed the AI-assisted gene search bullet (now built).
+- `content/about/faq.md`: "Searches use" → "Gene names use".
+- `content/about/limitations.md`: New "AI chat answers can be wrong" limitation.
+- (Agent: Claude Opus 5.5)
+
 ### About page: UAB/CHOP group name
 - `content/about/acknowledgments.md`: Use the group's own name, "UAB/CHOP PKD group", instead of expanding CHOP.
 - (Agent: Claude Opus 5.5)

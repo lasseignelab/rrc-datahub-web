@@ -5,8 +5,6 @@ Planned additions, roughly in priority order:
 - **Single-cell datasets** from human and mouse, currently being processed for
   ingestion.
 - **Multi-gene views** to compare several genes within one dataset.
-- **AI-assisted gene search**, adding a chatbot to strengthen the gene search
-  bar.
 - **Quality-control (QC) filtering** to include or exclude datasets and samples
   based on QC metrics.
 - **Transfer learning** approaches, for example to relate findings across

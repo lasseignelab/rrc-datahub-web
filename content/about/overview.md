@@ -10,9 +10,10 @@ genomics in PKD research, increase rigor and reproducibility by harmonizing
 PKD bioinformatics resources, and release web-based analytical tools that
 address outstanding questions in the PKD field.
 
-A point-and-click interface lets you search for a gene, filter datasets by
-study characteristics (organism, underlying variant, sample type, sex, and
-age), and visualize results across experimental groups. No coding or
+A point-and-click interface lets you ask questions about the data in plain
+language, filter datasets by study characteristics (organism, underlying
+variant, sample type, sex, and age), and visualize results across
+experimental groups. No coding or
 bioinformatics expertise is required.
 
 The DataHub is developed by the Lasseigne Lab at the University of Alabama at

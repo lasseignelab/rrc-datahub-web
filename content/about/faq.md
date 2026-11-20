@@ -4,7 +4,7 @@
 Not yet. In v0.1.0 each plot shows one dataset at a time.
 
 **Why can't I find my gene?**
-Searches use gene symbols from the GENCODE mouse annotation (release M37).
+Gene names use symbols from the GENCODE mouse annotation (release M37).
 Try the official symbol (for example, *Pkd2* rather than *polycystin-2*).
 
 **Can I download the full processed datasets?**
