@@ -4,6 +4,104 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-19
+
+### Home page: "Search" feature becomes "AI Chat" (branch `feature/add-ai-chat-openai`)
+- `pages/home.py`: the first About feature card now reads "AI Chat" ("Ask questions about the data in plain language") with the `lucide:bot-message-square` icon, in place of "Search" ("Find genes, datasets, and studies", `lucide:search`), since the chat replaced the gene search box. (Agent: Claude Opus 5.5)
+
+### Home page: title and tagline make way for the chat (branch `feature/add-ai-chat-openai`)
+- `pages/home.py`: removed the visible "PKD RRC DataHub" title and the tagline above the chat. The H1 stays for screen readers and the heading order, with the existing `.visually-hidden` class; the navbar already shows the name. The `.hero` wrapper section is gone. (Agent: Claude Opus 5.5)
+- `assets/style.css`: removed the now-unused `.hero`, `.hero-title` and `.hero-tagline` rules. `.data-chat-log` max-height goes from a fixed 420px to `max(320px, calc(100vh - 270px))`, so the conversation fills the window under the navbar while the disclaimer, question field and status line stay on the same screen. `.hero-section .search-section` gets `position: relative; z-index: 1`: without the title section, the absolutely positioned dot pattern was drawn over the chat box and question field. (Agent: Claude Opus 5.5)
+- `tests/test_app.py`: the H1 tests check its text content and `visually-hidden` class, since it no longer has visible text. (Agent: Claude Opus 5.5)
+
+### Merge `develop` into `feature/add-ai-chat-openai`
+- Resolved conflicts from develop's new home page, library page, navbar and footer. `pages/home.py` takes develop's layout (two-colour title, "About the DataHub" with feature cards, `footer()`) with `data_chat.layout` in place of the gene search box. `components/landing_search.py` stays removed (develop had only restyled it), and so do its `TestGeneSearch` tests and the `.gene-search-input` CSS. `assets/style.css` takes develop's `.hero`/`.hero-section` and title styles, keeping this branch's compact hero padding (24px 16px 20px) and halving develop's new title size (5.5rem → 2.75rem). The chat styles follow develop's footer media query. The changelog keeps both sides. (Agent: Claude Opus 5.5)
+
+### Searching message moves into the conversation (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: "Searching the data, this can take a few seconds…" is no longer shown in the status line under the question field, where it was easy to miss. `render_log()` now also takes the pending store and, while a question is pending, adds a "Data assistant" entry with that message at the bottom of the log; the answer replaces it in the same redraw. `answer_pending`'s `running` now only disables New chat. The log's aria-live region announces the message. (Agent: Claude Opus 5.5)
+- `assets/data_chat_scroll.js`: the answer replacing the searching message leaves the message count unchanged, so the scroll now also starts when the searching message goes away. (Agent: Claude Opus 5.5)
+- `assets/style.css`: `.data-chat-searching`: italic text at full contrast with a small pulsing dot in front of it (decorative; the pulse is off under prefers-reduced-motion). (Agent: Claude Opus 5.5)
+- `tests/test_data_chat.py`: unit test for the searching entry and a browser test that it shows at the bottom of the log and is replaced by the answer. (Agent: Claude Opus 5.5)
+
+## 2026-11-18
+
+### Chat questions on light grey (branch `feature/add-ai-chat-openai`)
+- `assets/style.css`: `.data-chat-user` background changed from light green (`--teal-pale`, #E6F2F0) to light grey (#f0f0f0, already used elsewhere on the site). (Agent: Claude Opus 5.5)
+
+### Remove the Ask button; "New conversation" becomes "New chat" (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: Ask button removed. Enter now sends by setting a new `data-chat-send` store (a fresh timestamp) through `dash_clientside.set_props`, which starts `submit_question`. The Enter/Shift+Enter hint is now visible text under the field (`data-chat-hint`), since there is no button to show how to send. Button relabelled "New chat"; its status message is "Started a new chat."
+- `start_new_conversation` now also clears the pending question when one is set. In one of about 20 full test runs a queued question was sent but never answered, and I couldn't reproduce it to find the cause; a question stuck as pending would make every later question wait in the queue. New chat now always gets the chat going again. It is still disabled while an answer is running, and it only writes pending when something is pending, because any write starts `answer_pending`, whose `running` would blank the status message.
+- `assets/data_chat_input.js`: Enter calls `set_props` instead of clicking Ask. `assets/style.css`: Ask styles removed; hint style added.
+- `tests/test_data_chat.py`: Checks there is no Ask button and the hint is shown; New chat tests updated, including clearing a stuck pending question. (Agent: Claude Opus 5.5)
+
+### Question field grows as the user types (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: The question field is now a one-row `dcc.Textarea` instead of a single-line `dcc.Input`. A textarea has no `n_submit`, so `submit_question` is triggered by Ask's `n_clicks` only and Enter is handled in JS. A visually hidden hint (`data-chat-input-hint`) tells screen-reader users that Enter asks and Shift+Enter adds a line.
+- `assets/data_chat_input.js` (new): Grows the field with its text up to 200px, then it scrolls; shrinks it back once the server clears it after a question is sent (that change fires no input event, so it watches briefly after Ask). Enter clicks Ask; Shift+Enter adds a line; Enter during IME composition is left alone. Sets `aria-describedby` to the hint, which `dcc.Textarea` has no prop for. Listeners are on the document so they survive page navigation.
+- `assets/style.css`: Textarea styling (40px one-line height matching the buttons, no resize handle), focus outline moved to the textarea, buttons aligned to the field's bottom edge, and user messages keep their line breaks (`white-space: pre-wrap`).
+- `tests/test_data_chat.py`: Browser tests that Shift+Enter adds lines and grows the field, Enter asks the multi-line question (shown with its line breaks) and the field shrinks back, and the hint is linked; the New conversation test presses Enter on the button instead of clicking, because a click could land mid-scroll. (Agent: Claude Opus 5.5)
+
+### New conversation button (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: "New conversation" button (`data-chat-new`, `btn-outline-primary`) next to Ask, shown only when there is a conversation (`render_log` outputs its `hidden`). `start_new_conversation` clears the history (session storage, so it stays cleared after a reload) and the question queue, and announces "Started a new conversation." in the status line. The button is disabled while an answer runs (via `answer_pending`'s `running`), and the callback also ignores clicks while a question is pending, because the arriving answer is appended to the history read when it started and would bring the old conversation back. A clientside callback moves focus to the question field, since the button hides itself after clearing.
+- `assets/style.css`: Button sizing, `[hidden]` override for Bootstrap's `.btn` display, and on screens ≤640px the question field takes its own line with the buttons under it.
+- `tests/test_data_chat.py`: Unit tests for clearing and for ignoring a clear mid-answer; browser test that the button appears, clears the chat, returns focus to the field, and stays cleared after a reload. (Agent: Claude Opus 5.5)
+
+### Enter (or Ask) during an answer queues the question instead of ignoring it (branch `feature/add-ai-chat-openai`)
+- Enter already submitted a question, but while an answer was on its way it was silently ignored (the typed text stayed in the box). Real OpenAI answers take several seconds, so typing a follow-up and pressing Enter looked broken.
+- `components/data_chat.py`: `submit_question` now queues a question asked during an answer (new `data-chat-queue` store) and clears the box; an "Up next: …" line (`data-chat-queued`, `role="status"`) shows the queue. `ask_next_queued` sends the oldest queued question once the current answer has arrived. It is driven by a `dcc.Interval` that runs only while questions are queued: Dash won't start a callback again from changes its own run set off, so "answer arrived → ask next → answer it" can't be a plain callback chain (tried triggering on the pending store, the history store, and a separate request store; none started the second answer). The Ask button is no longer disabled during an answer, since a click now queues too. `answer_pending` catches any unexpected error and replies with an error message, so a question can never stay pending and block the queue.
+- `assets/style.css`: Style for the "Up next" line.
+- `tests/test_data_chat.py`: Unit tests for queuing, dequeuing, the queue line/timer and the error fallback; browser test that a question entered with Enter during a slow answer is answered next, in order. (Agent: Claude Opus 5.5)
+
+### Smaller hero title; AI disclaimer under the answers (branch `feature/add-ai-chat-openai`)
+- `assets/style.css`: Hero title halved from 6rem to 3rem. Log bottom margin 16px → 6px and disclaimer margin moved below it (0 0 16px) so the disclaimer sits tight under the answers.
+- `components/data_chat.py`: The disclaimer (now `id="data-chat-disclaimer"`) moved to directly under the conversation log and starts `hidden`; `render_log` also outputs its `hidden` prop, so it shows only once a question has been asked, together with the log.
+- `tests/test_data_chat.py`: `render_log` tests check the disclaimer's visibility; new test checks it follows the log and starts hidden. (Agent: Claude Opus 5.5)
+
+### Chat results above the question box; compact hero (branch `feature/add-ai-chat-openai`)
+- `components/data_chat.py`: The conversation log now comes first, with the question field, status line and disclaimer under it, as in a typical chat. The log is a fixed-height scroll box, so the field doesn't move down the page as the conversation grows.
+- `assets/style.css`: Hero padding reduced from 64px/48px to 24px/20px and the title's bottom margin from 0.75rem to 0.25rem, so the chat has more room on the first screen. The log's gap moved from above it to below it.
+- `assets/data_chat_scroll.js`: When a message is added, the page scroll now brings the log's top and the question field and status line under it into view (the log's top wins if both don't fit).
+- `tests/test_data_chat.py`: Tests for the log coming before the question field and for both staying on screen after an answer. (Agent: Claude Opus 5.5)
+
+### Chat log scrolls to the newest exchange (branch `feature/add-ai-chat-openai`)
+- `assets/data_chat_scroll.js` (new): A MutationObserver keeps the fixed-height chat log scrolled to the newest exchange: the newest question at the top of the box with its answer under it, or the start of the answer when the two don't fit together. When a message is added it also scrolls the page just enough to bring the log into view; restoring a saved conversation on load doesn't move the page. The scroll is re-applied for 1.5 s while the answer finishes drawing and stops as soon as the user scrolls, clicks or types. Smooth scrolling is skipped under `prefers-reduced-motion`; focus is never moved.
+- A first version used a Dash clientside callback that measured two animation frames after the log update. It didn't scroll in real use: the answer's Markdown (loaded on demand) is drawn later than that on a normal machine, so it measured the old content. Reproduced with Chrome CPU throttling; the observer approach scrolls once the answer is actually drawn.
+- `tests/test_data_chat.py`: Browser tests for a long answer (shown from its start), many short exchanges (newest question and answer in view), and a slow first answer with a Markdown table under 6× CPU throttling. (Agent: Claude Opus 5.5)
+
+### Gunicorn concurrency settings and a chat that survives page changes (branch `feature/add-ai-chat-openai`)
+- `gunicorn.conf.py` (new): 3 workers × 4 threads (`gthread`), 120 s timeout, `preload_app = False` so each worker opens its own DB connections; each overridable by env var (`WEB_CONCURRENCY`, `GUNICORN_THREADS`, `GUNICORN_TIMEOUT`). Gunicorn's default single sync worker would make every visitor wait while one chat answer runs. The bind address is left at gunicorn's default rather than opening `0.0.0.0`.
+- `components/data_chat.py`: `data-chat-history` store now uses `storage_type="session"`, so the conversation survives going to the charts page and back, or a reload, within the same tab. `data-chat-pending` stays in memory: restoring it after a reload mid-answer would block new questions.
+- `components/chat_assistant.py`: Moved a stray line-continuation backslash in the system prompt (from af171cc) to the end of its line; it was sent to the model as a literal `\ ` and failed flake8 (W605, E501). Prompt wording unchanged.
+- `app.py`: Added `server = app.server`. The documented production command `gunicorn app:server` failed before this because `app.py` had no `server` attribute.
+- `AGENTS.md`: documents the gunicorn settings. Tests: `tests/test_app.py` checks `server`; `tests/test_gunicorn_conf.py` (defaults, env overrides); `tests/test_data_chat.py` checks the store types and that a conversation survives a browser reload. (Agent: Claude Opus 5.5)
+
+### OpenAI version of the data chat (branch `feature/add-ai-chat-openai`, from `feature/add-ai-chat`)
+- `components/chat_assistant.py`: Rewritten on the OpenAI SDK (`openai==3.55.1`) with Chat Completions function calling. Default model `gpt-5.4-mini`, overridable with `OPENAI_MODEL`. The module runs the tool loop itself (max 8 tool rounds; the last request sets `tool_choice="none"` so the model must answer). Tools are JSON-schema definitions dispatched to `db/chat_tools.py` and `build_chart_link`; bad tool arguments are returned to the model as an error result instead of raised. Rejected keys show the not-configured message, rate limits/quota show "busy", network errors show "couldn't be reached", refusals and content filtering show a polite refusal.
+- Env var is now `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) in `.env.example` and `AGENTS.md`. `requirements.txt`: replaced `anthropic` with `openai`; removed `docstring_parser` and `opentelemetry-api` (only `anthropic` used them). Verified with a dry-run install into a clean venv.
+- `components/data_chat.py`: Disclaimer names OpenAI. `db/chat_tools.py`: docstring no longer names Claude.
+- `tests/test_chat_assistant.py`: Rewritten for a fake Chat Completions client: tool dispatch and result round trip, loop cap, bad arguments, refusal, empty reply, auth/rate-limit/connection errors, model override, field whitelist and tool/function parity. (Agent: Claude Opus 5.5)
+
+## 2026-11-17
+
+### Fix unresolvable pins in requirements.txt (branch `feature/add-ai-chat`)
+- `requirements.txt`: Bumped `typing_extensions` 4.15.0 → 4.16.0 (required by the pinned `anyio` and `pydantic`) and `idna` 3.11 → 3.20 (required by `httpx2`). The packages added for the chat made `pip install -r requirements.txt` fail with ResolutionImpossible; it went unnoticed locally because the venv already had newer versions. Verified with a dry-run install into a clean venv. (Agent: Claude Opus 5.5)
+
+### Chat links open the charts page filtered to the answer's datasets (branch `feature/add-ai-chat`)
+- `components/chat_assistant.py`: New `chart_link` tool (backed by `build_chart_link`) that builds the URL-encoded `/charts` link: `gene`, `datasets` (comma-separated, answer order), and repeatable `scientific_name`, `sex`, `underlying_variant`, `sample_type` plus `min_age_days`/`max_age_days`. The system prompt now requires every charts link to come from this tool, so the model never hand-writes URLs.
+- `pages/charts.py`: New `apply_url_filters` callback reads those parameters on load and sets the matching dataset filters (case-insensitive match against dropdown options; unmatched values leave the filter at its default; a named filter unticks its "not provided" box). A new `url-datasets` store limits the Found Dataset(s) table to the answer's datasets, and the first one the answer named is selected. A notice with a "Show all datasets" button clears the limit. Helpers `_parse_url_filters`, `_match_options`, `_limit_rows`, `_choose_selected`.
+- Tests: `tests/test_charts.py` (new; URL round-trip, matching, limiting, selection, filter callback) and link-encoding tests in `tests/test_chat_assistant.py`. Verified live: chat answers produce links that open with the expected filters and datasets. (Agent: Claude Opus 5.5)
+
+### Move the chat conversation below the question box (branch `feature/add-ai-chat`)
+- `components/data_chat.py`: The conversation log now comes after the input, status line and disclaimer, so the question box stays in place as the conversation grows. `assets/style.css`: `.data-chat-log` margin moved from bottom to top to match. (Agent: Claude Opus 5.5)
+
+### Replace home-page gene search with an AI data chat (branch `feature/add-ai-chat`)
+- `components/data_chat.py` (new): Chat box that replaces the gene search on the home page. A question is appended to a `dcc.Store` history immediately (so it shows at once), then a second callback asks the assistant and appends the reply. While waiting, the Ask button is disabled and a `role="status"` message announces progress; the conversation container is `role="log"` with `aria-live="polite"`. Replies render with `dcc.Markdown` (no raw HTML). Enter while an answer is pending is ignored so turns cannot interleave.
+- `components/chat_assistant.py` (new): Answers questions with Claude (`claude-opus-5-5`, effort `medium`) through the Anthropic SDK's beta tool runner, capped at 8 tool round-trips and the last 20 history messages. History between turns is text-only, which is always valid under the API's thinking-block history check. Uses top-level prompt caching for the stable system prompt and tools, and server-side refusal fallbacks (`fallbacks="default"`, beta `server-side-fallback-2026-07-01`). Missing credentials, auth, rate-limit, API and connection errors become short user-facing messages instead of exceptions. One `# pyright: ignore[reportCallIssue]` on the `tool_runner` call: the MegaLinter image bundles anthropic 0.84, which predates `fallbacks`; against the pinned SDK the call type-checks cleanly.
+- `db/chat_tools.py` (new): Read-only query functions the assistant calls as tools — `list_field_values`, `find_datasets` (field filters + age-in-days overlap), `describe_dataset`, and `gene_expression_summary` (n/mean/median/min/max TPM per dataset and group, gene names resolved with `db.gene_search.resolve_gene`). Filter and group-by fields are whitelisted in `SAMPLE_FIELDS`; results are capped at 200 rows.
+- Removed `components/landing_search.py` and its tests in `tests/test_app.py`; removed the now-unused `.search-input-wrapper`, `.search-icon`, `.gene-search-input` CSS. `db/gene_search.py` is kept (used by the chat's gene tool).
+- `pages/home.py`: Renders `data_chat.layout` in place of the search box. `assets/style.css`: chat styles using existing color tokens; the inner `.dash-input-element` is styled because Dash 4 wraps `dcc.Input` in a container div.
+- `requirements.txt`: Added `anthropic==2.9.0` and its pinned dependencies. `.env.example` and `AGENTS.md`: documented `ANTHROPIC_API_KEY`; added the new files to the project layout.
+- Tests: `tests/test_chat_tools.py`, `tests/test_chat_assistant.py` (Anthropic client mocked), `tests/test_data_chat.py` (callbacks, ARIA roles, label association, and a `dash_duo` check that the chat renders on the home page). No test needs a database or API key. (Agent: Claude Opus 5.5)
+
 ## 2026-11-11
 
 ### Clear outstanding black/isort MegaLinter findings

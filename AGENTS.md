@@ -47,12 +47,14 @@ Dash + Plotly web application for the RRC DataHub. Built in Python, served via F
 
 ```
 app.py              # Dash app entry point
+gunicorn.conf.py    # Production server settings (workers, threads, timeout)
 config.py           # App configuration (env vars, constants)
 pages/              # Multi-page Dash pages (one file per page)
-components/         # Reusable layout components (charts, filters, navbar)
+components/         # Reusable layout components (charts, filters, navbar, data chat)
 db/
   connection.py     # PostgreSQL connection setup (psycopg2 + python-dotenv)
   queries.py        # SQL query functions
+  chat_tools.py     # Read-only queries the data chat assistant calls as tools
 assets/
   style.css         # Global CSS
 etl/
@@ -103,13 +105,15 @@ cp .env.example .env
 | `DB_NAME` | Database name |
 | `DB_USER` | Database user |
 | `DB_PASSWORD` | Database password |
+| `OPENAI_API_KEY` | OpenAI API key for the home-page data chat (`components/chat_assistant.py`), from https://platform.openai.com/api-keys. Without it the chat replies that it isn't configured. |
+| `OPENAI_MODEL` | Optional model for the data chat (default `gpt-5.4-mini`). |
 | `GITHUB_TOKEN` | Personal access token with `repo` read scope for `lasseignelab/rrc-datahub` |
 | `CHEAHA_HOST` | UAB Cheaha SSH hostname (e.g. `cheaha.rc.uab.edu`) |
 | `CHEAHA_USER` | Your Cheaha username |
 | `CHEAHA_BASE_PATH` | Remote base path containing `PRJNA*` directories on Cheaha |
 | `STAGING_DIR` | Local directory for ETL-downloaded files (default `staging/`) |
 
-Environment variables will be filled in as needed in subsequent setup steps. The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step.
+Environment variables will be filled in as needed in subsequent setup steps. The `GITHUB_TOKEN`, `CHEAHA_*`, and `STAGING_DIR` variables are only required when running the ETL load script (`etl/download.py`). The `DB_*` variables are required for both the app and the ETL load step. `OPENAI_API_KEY` is required only for the home-page data chat.
 
 ## Database
 
@@ -277,6 +281,8 @@ For production:
 ```bash
 gunicorn app:server
 ```
+
+Gunicorn reads its settings from [gunicorn.conf.py](gunicorn.conf.py) automatically: 3 worker processes with 4 threads each (`gthread`) and a 120-second timeout, so a slow data-chat answer doesn't block other visitors. Override with `WEB_CONCURRENCY`, `GUNICORN_THREADS` and `GUNICORN_TIMEOUT`. The listen address is gunicorn's default (`127.0.0.1:8000`, or `0.0.0.0:$PORT` when `PORT` is set); pass `-b` to change it.
 
 ## Linting (MegaLinter)
 

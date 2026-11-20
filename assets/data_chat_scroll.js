@@ -1,0 +1,159 @@
+// Keeps the home-page data chat log (#data-chat-log, components/data_chat.py)
+// scrolled to the newest exchange.
+//
+// The log is a fixed-height scroll box, so without this a new answer lands
+// out of sight below its visible area. The newest question is scrolled to
+// the top of the box with its answer under it; if the two don't fit together
+// the answer's first line is shown instead, so long answers are read from
+// the start, not the end.
+//
+// A MutationObserver is used rather than a Dash callback because the answer's
+// Markdown is drawn some time after Dash updates the log (the Markdown
+// component loads on demand, and slower machines draw later), so a scroll
+// made right after the update measures the old content. Here the scroll runs
+// once the new message is actually in the page, and is re-applied while the
+// message finishes drawing (tables, links) for a short settle period. Any
+// scrolling by the user during that period stops it, so it never fights them.
+//
+// While an answer is on its way, the log ends with a "Searching the data…"
+// message (.data-chat-searching); the answer replaces it, which counts as a
+// new message too.
+//
+// When a message was just added, the page also scrolls just enough to bring
+// the box and the question field under it into view; restoring a saved
+// conversation on page load does not move the page. Smooth scrolling is
+// skipped under prefers-reduced-motion, and focus is never moved (the log's
+// aria-live region announces replies).
+(function () {
+    "use strict";
+
+    var LOG_ID = "data-chat-log";
+    var SETTLE_MS = 1500;
+
+    var log = null;
+    var messageCount = 0;
+    var searching = false;
+    var settleUntil = 0;
+    var revealPage = false;
+    var frameRequested = false;
+
+    function scrollBehavior() {
+        var reduceMotion = window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        return reduceMotion ? "auto" : "smooth";
+    }
+
+    function lastOf(selector) {
+        var items = log.querySelectorAll(selector);
+        return items.length ? items[items.length - 1] : null;
+    }
+
+    // Scroll position (in the log's own coordinates) that puts the element at
+    // the top of the box's visible area.
+    function scrollTopFor(element) {
+        var padding = parseFloat(window.getComputedStyle(log).paddingTop) || 0;
+        return element.getBoundingClientRect().top -
+            log.getBoundingClientRect().top + log.scrollTop - padding;
+    }
+
+    function applyScroll() {
+        frameRequested = false;
+        if (!log || !document.body.contains(log)) { return; }
+        var newest = lastOf(".data-chat-message");
+        if (!newest) { return; }
+        var target = lastOf(".data-chat-user") || newest;
+        if (log.scrollHeight - scrollTopFor(target) > log.clientHeight) {
+            target = newest;
+        }
+        var behavior = scrollBehavior();
+        log.scrollTo({top: scrollTopFor(target), behavior: behavior});
+        if (revealPage) { revealChat(behavior); }
+    }
+
+    // Scroll the page just enough to show the log and, under it, the question
+    // box and status line. If they don't all fit in the window, the top of
+    // the log wins, because that is where the newest exchange starts.
+    function revealChat(behavior) {
+        // The status line sits under the question field (it shows e.g.
+        // "Started a new chat.").
+        var form = document.getElementById("data-chat-status") ||
+            document.querySelector(".data-chat-form");
+        var margin = 8;
+        var top = log.getBoundingClientRect().top;
+        var bottom = form ? form.getBoundingClientRect().bottom
+            : log.getBoundingClientRect().bottom;
+        var delta = 0;
+        if (bottom > window.innerHeight - margin) {
+            delta = bottom - window.innerHeight + margin;
+        }
+        if (top - delta < margin) {
+            delta = top - margin;
+        }
+        if (Math.abs(delta) >= 1) {
+            window.scrollBy({top: delta, behavior: behavior});
+        }
+    }
+
+    function requestScroll() {
+        if (!frameRequested) {
+            frameRequested = true;
+            window.requestAnimationFrame(applyScroll);
+        }
+    }
+
+    function startSettling(movePage) {
+        revealPage = movePage;
+        settleUntil = Date.now() + SETTLE_MS;
+        requestScroll();
+    }
+
+    function onMutation() {
+        var current = document.getElementById(LOG_ID);
+        if (!current) {
+            log = null;
+            return;
+        }
+        var count = current.querySelectorAll(".data-chat-message").length;
+        var nowSearching = !!current.querySelector(".data-chat-searching");
+        if (current !== log) {
+            // The log was just mounted (page load or navigation back to the
+            // home page): show the newest exchange, but leave the page alone.
+            log = current;
+            messageCount = count;
+            searching = nowSearching;
+            if (count > 0) { startSettling(false); }
+            return;
+        }
+        // The answer taking the searching message's place leaves the count
+        // unchanged, so it is detected by the searching message going away.
+        var answered = searching && !nowSearching && count >= messageCount;
+        if (count > messageCount || answered) {
+            startSettling(true);
+        } else if (Date.now() < settleUntil) {
+            requestScroll();
+        }
+        messageCount = count;
+        searching = nowSearching;
+    }
+
+    // The user taking over the scroll ends the settle period.
+    function stopSettling() { settleUntil = 0; }
+
+    function start() {
+        new MutationObserver(onMutation).observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
+        ["wheel", "touchstart", "keydown", "mousedown"].forEach(function (name) {
+            window.addEventListener(name, stopSettling, {passive: true});
+        });
+        onMutation();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+})();

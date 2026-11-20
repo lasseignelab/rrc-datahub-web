@@ -585,13 +585,6 @@ Home page
 
 
 /* ---- Hero ---- */
-.hero {
-    position: relative;
-    width: 100%;
-    padding: 64px 16px 48px;
-    text-align: center;
-    overflow: hidden;
-}
 
 .hero-section {
     position: relative;
@@ -609,6 +602,13 @@ Home page
       #F8FAFA 100%
   );
     border: none;
+}
+
+/* Above the absolutely positioned dot pattern, which would otherwise be
+   drawn over the chat box and question field. */
+.hero-section .search-section {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-motif {
@@ -640,57 +640,11 @@ Home page
   pointer-events: none;
 }
 
-.hero-title {
-    font-size: 5.5rem;
-    font-weight: 700;
-    margin: 0 0 0.75rem;
-    text-align: center;
-    letter-spacing: -0.045em;
-}
 
-.hero-tagline {
-    font-size: 1.75rem;
-    color: var(--meta);
-    font-weight: 400;
-    max-width: 1400px;
-    width: 95%;
-    margin: 0 auto;
-    text-align: center;
-    line-height: 1.3;
-}
 
-.search-input-wrapper {
-  position: relative;
-  width: 100%;
-}
 
-.search-icon {
-  position: absolute;
-  left: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 2;
-}
 
-.gene-search-input {
-  width: 100%;
-  height: 50px;
-  box-sizing: border-box;
-  padding: 0 12px 0 40px;
-  font-size: 18px;
-  border: 1px solid transparent;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(37, 89, 89, 0.16);
-    transition: border-color 0.2s ease,
-                box-shadow 0.2s ease;
-}
 
-.gene-search-input:focus {
-    border-color: var(--uab-green);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37, 89, 89, 0.15);
-}
 
 
 /* Platform Overview — full-width white section */
@@ -1213,4 +1167,200 @@ Responsive
       overflow-wrap: anywhere;
   }
 
+}
+
+/* ---- Home-page data chat (components/data_chat.py) ---- */
+
+.data-chat {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.data-chat-log {
+  /* Fills the window under the navbar, leaving room for the disclaimer,
+     question field and status line (about 270px in all), so the box and
+     the field stay on one screen; never shorter than 320px. */
+  max-height: max(320px, calc(100vh - 270px));
+  overflow-y: auto;
+  margin-bottom: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bs-body-bg);
+}
+
+.data-chat-log-empty {
+  display: none;
+}
+
+.data-chat-message {
+  margin-bottom: 12px;
+}
+
+.data-chat-message:last-child {
+  margin-bottom: 0;
+}
+
+.data-chat-message p:last-child {
+  margin-bottom: 0;
+}
+
+.data-chat-speaker {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--meta);
+}
+
+.data-chat-user {
+  padding: 8px 12px;
+  border-radius: 8px;
+  /* Light grey, the same as other light-grey fills on the site. */
+  background: #f0f0f0;
+  color: var(--ink);
+}
+
+/* Keep the line breaks of a question typed on several lines. */
+.data-chat-user p {
+  white-space: pre-wrap;
+}
+
+.data-chat-assistant table {
+  margin: 8px 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-chat-assistant th,
+.data-chat-assistant td {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+}
+
+.data-chat-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-chat-input-row {
+  display: flex;
+  gap: 10px;
+  /* Buttons stay level with the last line as the question field grows. */
+  align-items: flex-end;
+}
+
+.data-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A one-line textarea that assets/data_chat_input.js grows as the user
+   types (up to 200px, then it scrolls). 40px matches the buttons. */
+textarea.data-chat-input {
+  display: block;
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 18px;
+  line-height: 26px;
+  color: var(--ink);
+  background: var(--bs-body-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  resize: none;
+  overflow-y: hidden;
+}
+
+textarea.data-chat-input:focus-visible {
+  outline: 2px solid var(--uab-green);
+  outline-offset: 1px;
+}
+
+.data-chat-new {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 16px;
+}
+
+/* How to send a question, under the field (there is no Ask button). */
+.data-chat-hint {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--meta);
+}
+
+/* `hidden` would otherwise lose to Bootstrap's .btn display rule. */
+.data-chat-new[hidden] {
+  display: none;
+}
+
+/* On phones the question field gets its own line, buttons under it. */
+@media (max-width: 640px) {
+  .data-chat-input-row {
+    flex-wrap: wrap;
+  }
+
+  .data-chat-input {
+    flex-basis: 100%;
+  }
+}
+
+.data-chat-status {
+  min-height: 1.5rem;
+  margin-top: 8px;
+  text-align: center;
+  color: var(--meta);
+}
+
+/* Questions waiting for the current answer (data_chat.render_queue). */
+.data-chat-queued {
+  margin: 0;
+  text-align: center;
+  color: var(--meta);
+  font-style: italic;
+}
+
+.data-chat-disclaimer {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--meta);
+}
+
+/* Stands in for the answer while it is on its way (data_chat.render_log);
+   the answer replaces it. The text stays at full contrast; only the
+   decorative dot in front of it pulses. */
+.data-chat-searching p {
+  font-style: italic;
+}
+
+.data-chat-searching p::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background: var(--bs-primary);
+  vertical-align: middle;
+  animation: data-chat-searching-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes data-chat-searching-pulse {
+  50% { opacity: 0.25; transform: scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-chat-searching p::before {
+    animation: none;
+  }
 }
