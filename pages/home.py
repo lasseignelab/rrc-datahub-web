@@ -1,7 +1,7 @@
 import dash
 from dash import html
 
-from components import landing_search
+from components import data_chat
 from components.feature_card import feature_card
 from components.footer import footer
 
@@ -27,27 +27,14 @@ layout = html.Div(
         html.Section(
             [
                 html.Div(className="hero-motif", **{"aria-hidden": "true"}),
-                html.Section(
-                    className="hero",
-                    children=[
-                        html.H1(
-                            [
-                                html.Span("PKD RRC", className="brand-primary"),
-                                html.Span(" DataHub", className="brand-accent"),
-                            ],
-                            className="hero-title",
-                        ),
-                        html.P(
-                            "A shared home for polycystic kidney disease "
-                            "(PKD) research datasets.",
-                            className="hero-tagline",
-                        ),
-                    ],
-                ),
-                # ---- Gene search ----
+                # The page's one H1, for screen readers and the heading
+                # order; hidden from view so the chat gets the space (the
+                # navbar already shows the name).
+                html.H1("PKD RRC DataHub", className="visually-hidden"),
+                # ---- Data chat (replaces the gene search box) ----
                 html.Section(
                     className="search-section",
-                    children=[landing_search.layout],
+                    children=[data_chat.layout],
                 ),
             ],
             className="section-card-full-width hero-section",
@@ -91,9 +78,9 @@ layout = html.Div(
                             className="about-features",
                             children=[
                                 feature_card(
-                                    "Search",
-                                    "Find genes, datasets, and studies",
-                                    "lucide:search",
+                                    "AI Chat",
+                                    "Ask questions about the data in plain language",
+                                    "lucide:bot-message-square",
                                 ),
                                 feature_card(
                                     "Filter",

@@ -9,7 +9,17 @@ from urllib.parse import parse_qs
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, callback, clientside_callback, dcc, html
+from dash import (
+    Input,
+    Output,
+    State,
+    callback,
+    clientside_callback,
+    ctx,
+    dcc,
+    html,
+    no_update,
+)
 from sqlalchemy import and_, func, or_
 
 from components.footer import footer
@@ -545,6 +555,84 @@ def _resolve_url_gene(url_search: str | None) -> str | None:
         return match[0] if match else None
     finally:
         session.close()
+
+
+# Dataset-filter query parameters that the home-page data chat puts in its
+# chart links (built by components.chat_assistant.build_chart_link). Each may
+# repeat, e.g. ?sex=female&sex=male.
+_URL_LIST_FILTERS = ("scientific_name", "sex", "underlying_variant", "sample_type")
+
+
+def _parse_url_number(raw: str | None) -> float | None:
+    """Return raw as a finite float, or None if missing or not a number."""
+    try:
+        number = float(raw) if raw is not None else None
+    except ValueError:
+        return None
+    return number if number is not None and math.isfinite(number) else None
+
+
+def _parse_url_filters(url_search: str | None) -> dict:
+    """Return the dataset-filter settings carried in a charts URL query.
+
+    Keys: "datasets" (upper-cased BioProject accessions from the
+    comma-separated ?datasets= list, in the order given), one list per name
+    in _URL_LIST_FILTERS, and "min_age_days"/"max_age_days" (float or None).
+    Absent or malformed parameters come back empty or None.
+    """
+    params = parse_qs((url_search or "").lstrip("?"))
+    accessions = [
+        accession.strip().upper()
+        for raw in params.get("datasets", [])
+        for accession in raw.split(",")
+        if accession.strip()
+    ]
+    parsed: dict = {"datasets": list(dict.fromkeys(accessions))}
+    for name in _URL_LIST_FILTERS:
+        parsed[name] = [
+            value.strip() for value in params.get(name, []) if value.strip()
+        ]
+    for name in ("min_age_days", "max_age_days"):
+        parsed[name] = _parse_url_number(params.get(name, [None])[0])
+    return parsed
+
+
+def _match_options(requested: list[str], available: list[str]) -> list[str]:
+    """Return the available values that match requested ones, ignoring case.
+
+    Results keep the database spelling so they equal the dropdown values.
+    """
+    wanted = {value.lower() for value in requested}
+    return [value for value in available if value.lower() in wanted]
+
+
+def _limit_rows(rows: list[dict], limit: list[str] | None) -> list[dict]:
+    """Keep only table rows whose bioproject is in limit (if a limit is set)."""
+    if not limit:
+        return rows
+    allowed = set(limit)
+    return [row for row in rows if row["bioproject"] in allowed]
+
+
+def _choose_selected(
+    bioprojects: list[str],
+    current: str | None,
+    limit: list[str] | None,
+    limit_just_set: bool,
+) -> str | None:
+    """Pick the dataset to select after the table is rebuilt.
+
+    When a chat link has just limited the table, select the first dataset
+    the answer named (the limit keeps the answer's order), so the plot opens
+    on it. Otherwise keep the current selection if it is still listed.
+    """
+    if limit and (limit_just_set or current not in bioprojects):
+        for bioproject in limit:
+            if bioproject in bioprojects:
+                return bioproject
+    if current in bioprojects:
+        return current
+    return bioprojects[0] if bioprojects else None
 
 
 def _get_genotypes(bioproject: str) -> list[str]:
@@ -1130,6 +1218,25 @@ layout = html.Div(
                                     style={"marginBottom": "4px"},
                                 ),
                                 html.Div(
+                                    [
+                                        html.Span(
+                                            "Showing only the datasets from the "
+                                            "data assistant's answer. "
+                                        ),
+                                        html.Button(
+                                            "Show all datasets",
+                                            id="clear-dataset-limit",
+                                            n_clicks=0,
+                                            className=(
+                                                "btn btn-link btn-sm p-0 align-baseline"
+                                            ),
+                                        ),
+                                    ],
+                                    id="dataset-limit-notice",
+                                    hidden=True,
+                                    className="small mb-2",
+                                ),
+                                html.Div(
                                     html.Table(
                                         [
                                             html.Thead(
@@ -1175,6 +1282,9 @@ layout = html.Div(
                                     data=_datasets[0] if _datasets else None,
                                 ),
                                 dcc.Store(id="url-gene-applied", data=False),
+                                # Datasets a chat link limited the table to
+                                # (None = no limit).
+                                dcc.Store(id="url-datasets", data=None),
                             ],
                             className="section-card",
                             style={"marginBottom": "16px"},
@@ -1483,6 +1593,7 @@ clientside_callback(
     Output("dataset-table-body", "children"),
     Output("dataset-selected", "data"),
     Output("dataset-count", "children"),
+    Output("dataset-limit-notice", "hidden"),
     Input("scientific-name-select", "value"),
     Input("underlying-variant-select", "value"),
     Input("include-unknown-variant", "value"),
@@ -1492,6 +1603,7 @@ clientside_callback(
     Input("include-unknown-sex", "value"),
     Input("age-range-days", "data"),
     Input("include-unknown-age", "value"),
+    Input("url-datasets", "data"),
     State("dataset-selected", "data"),
 )
 def filter_datasets(
@@ -1504,12 +1616,16 @@ def filter_datasets(
     include_unknown_sex,
     age_days,
     include_unknown_age,
+    dataset_limit,
     current_dataset,
 ):
-    """Rebuild the dataset table to show only projects matching all active filters."""
+    """Rebuild the dataset table to show only projects matching all active
+    filters, further limited to a chat answer's datasets when a chat link
+    set one."""
+    hide_notice = not dataset_limit
     variants_exhausted = not selected_variants and not bool(include_unknown_variant)
     if not selected_names or variants_exhausted or not selected_types:
-        return [], None, "0 datasets"
+        return [], None, "0 datasets", hide_notice
 
     effective_age = (
         (int(age_days[0]), int(age_days[1])) if age_days else (_age_min, _age_max)
@@ -1525,15 +1641,89 @@ def filter_datasets(
         bool(include_unknown_variant),
         bool(require_wildtype),
     )
+    rows = _limit_rows(rows, dataset_limit)
     bioprojects = [r["bioproject"] for r in rows]
-    selected = (
-        current_dataset
-        if current_dataset in bioprojects
-        else (bioprojects[0] if bioprojects else None)
+    selected = _choose_selected(
+        bioprojects,
+        current_dataset,
+        dataset_limit,
+        # A chat link changes several filters at once, so check every
+        # triggering input, not just the first.
+        limit_just_set="url-datasets.data" in ctx.triggered_prop_ids,
     )
     n = len(rows)
     count = f"{n} dataset{'s' if n != 1 else ''}"
-    return _build_table_rows(rows, selected), selected, count
+    return _build_table_rows(rows, selected), selected, count, hide_notice
+
+
+# ---------------------------------------------------------------------------
+# Callbacks 1a-b: chat-link URL -> dataset filters; "Show all" clears limit
+# ---------------------------------------------------------------------------
+
+
+@callback(
+    Output("scientific-name-select", "value"),
+    Output("sex-select", "value"),
+    Output("include-unknown-sex", "value"),
+    Output("underlying-variant-select", "value"),
+    Output("include-unknown-variant", "value"),
+    Output("sample-type-select", "value"),
+    Output("age-min-input", "value", allow_duplicate=True),
+    Output("age-max-input", "value", allow_duplicate=True),
+    Output("include-unknown-age", "value"),
+    Output("url-datasets", "data"),
+    Input("url", "search"),
+    prevent_initial_call="initial_duplicate",
+)
+def apply_url_filters(url_search):
+    """Set the dataset filters from a data-chat link's query parameters.
+
+    Only filters named in the URL change. A filter whose requested values
+    match none of the dropdown's options is left at its default rather than
+    emptied, so a stale or mistyped value cannot hide every dataset. Naming
+    a filter also unticks its "include not provided" box, since the answer
+    was about samples that have that value.
+    """
+    parsed = _parse_url_filters(url_search)
+    settings = {
+        "scientific_name": (_all_scientific_names, None),
+        "sex": (_all_sexes, "include-unknown-sex"),
+        "underlying_variant": (_all_underlying_variants, "include-unknown-variant"),
+        "sample_type": (_all_sample_types, None),
+    }
+    values = {}
+    unknown_boxes = {}
+    for name, (available, unknown_box) in settings.items():
+        matched = _match_options(parsed[name], available)
+        values[name] = matched or no_update
+        if matched and unknown_box:
+            unknown_boxes[unknown_box] = []
+
+    min_days, max_days = parsed["min_age_days"], parsed["max_age_days"]
+    has_age = min_days is not None or max_days is not None
+    # The age inputs start in days, so the URL's day counts go straight in.
+    return (
+        values["scientific_name"],
+        values["sex"],
+        unknown_boxes.get("include-unknown-sex", no_update),
+        values["underlying_variant"],
+        unknown_boxes.get("include-unknown-variant", no_update),
+        values["sample_type"],
+        round(min_days) if min_days is not None else no_update,
+        round(max_days) if max_days is not None else no_update,
+        [] if has_age else no_update,
+        parsed["datasets"] or None,
+    )
+
+
+@callback(
+    Output("url-datasets", "data", allow_duplicate=True),
+    Input("clear-dataset-limit", "n_clicks"),
+    prevent_initial_call=True,
+)
+def clear_dataset_limit(_n_clicks):
+    """Drop the chat answer's dataset limit so every matching dataset shows."""
+    return None
 
 
 # ---------------------------------------------------------------------------

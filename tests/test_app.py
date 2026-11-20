@@ -29,16 +29,16 @@ def test_layout_contains_h1():
 
     h1_elements = find_all(home.layout, html.H1)
     assert len(h1_elements) == 1
-    assert (
-        "".join(child.children for child in h1_elements[0].children)
-        == "PKD RRC DataHub"
-    )
+    assert h1_elements[0].children == "PKD RRC DataHub"
 
 
 def test_heading_renders(dash_duo):
-    """H1 is visible in the browser after page load."""
+    """The H1 is in the page for screen readers after page load (it is
+    visually hidden so the home-page chat gets the space)."""
     dash_duo.start_server(app)
-    dash_duo.wait_for_text_to_equal("h1", "PKD RRC DataHub")
+    heading = dash_duo.wait_for_element("h1")
+    assert heading.get_attribute("textContent") == "PKD RRC DataHub"
+    assert "visually-hidden" in heading.get_attribute("class")
 
 
 def test_graph_renders(dash_duo):
@@ -55,113 +55,8 @@ def test_lang_attribute(dash_duo):
     assert lang == "en"
 
 
-class TestGeneSearch:
-    """Tests for the landing-page gene search callback (handle_gene_search).
+def test_exposes_flask_server_for_gunicorn():
+    """`gunicorn app:server` needs a module-level `server` (the Flask app)."""
+    import app as app_module
 
-    resolve_gene() is mocked rather than hitting the real gene database --
-    these tests cover the search bar's own logic (empty input, success,
-    typo-correction, redirect URL, and no-match handling), not the accuracy
-    of the gene reference data itself.
-    """
-
-    def test_empty_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        from dash import no_update
-
-        from components import landing_search
-
-        feedback, redirect = landing_search.handle_gene_search(1, "")
-
-        assert feedback == "Enter a gene name to search."
-        assert redirect is no_update
-
-    def test_none_query_shows_prompt_and_no_redirect(self, monkeypatch):
-        from dash import no_update
-
-        from components import landing_search
-
-        feedback, redirect = landing_search.handle_gene_search(1, None)
-
-        assert feedback == "Enter a gene name to search."
-        assert redirect is no_update
-
-    def test_exact_match_redirects_with_gene_param(self, monkeypatch):
-        from components import landing_search
-        from db.gene_search import GeneSearchResult
-
-        monkeypatch.setattr(
-            landing_search,
-            "resolve_gene",
-            lambda query: GeneSearchResult(
-                query=query, resolved_gene="Pkd1", corrected=False
-            ),
-        )
-
-        feedback, redirect = landing_search.handle_gene_search(1, "Pkd1")
-
-        assert "Pkd1" in feedback
-        assert "matched from" not in feedback
-        assert redirect == f"{landing_search.EXISTING_TAB_PATH}?gene=Pkd1"
-
-    def test_corrected_typo_match_notes_original_query(self, monkeypatch):
-        from components import landing_search
-        from db.gene_search import GeneSearchResult
-
-        monkeypatch.setattr(
-            landing_search,
-            "resolve_gene",
-            lambda query: GeneSearchResult(
-                query=query, resolved_gene="Pkd1", corrected=True
-            ),
-        )
-
-        feedback, redirect = landing_search.handle_gene_search(1, "Pkd11")
-
-        assert "Pkd1" in feedback
-        assert "matched from 'Pkd11'" in feedback
-        assert redirect == f"{landing_search.EXISTING_TAB_PATH}?gene=Pkd1"
-
-    def test_no_match_shows_error_and_no_redirect(self, monkeypatch):
-        from dash import no_update
-
-        from components import landing_search
-        from db.gene_search import GeneSearchResult
-
-        monkeypatch.setattr(
-            landing_search,
-            "resolve_gene",
-            lambda query: GeneSearchResult(
-                query=query,
-                resolved_gene=None,
-                corrected=False,
-                error="No gene matching 'Xyz123' found in DataHub.",
-            ),
-        )
-
-        feedback, redirect = landing_search.handle_gene_search(1, "Xyz123")
-
-        assert feedback == "No gene matching 'Xyz123' found in DataHub."
-        assert redirect is no_update
-
-    def test_search_input_has_associated_label(self):
-        """Accessibility: gene-search-input must have a <label for=...>
-        pointing at its id (regression check for the Pa11y fix)."""
-        from dash import html
-
-        from components import landing_search
-
-        def find_all(node, component_type):
-            found = []
-            if isinstance(node, component_type):
-                found.append(node)
-            children = getattr(node, "children", None)
-            if children is None:
-                return found
-            if not isinstance(children, list):
-                children = [children]
-            for child in children:
-                found.extend(find_all(child, component_type))
-            return found
-
-        labels = find_all(landing_search.layout, html.Label)
-        matching = [label for label in labels if label.htmlFor == "gene-search-input"]
-        assert len(matching) == 1
+    assert app_module.server is app_module.app.server
