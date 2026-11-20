@@ -1,6 +1,6 @@
 We thank all members of the PKD RRC, including the Lasseigne and Mrug labs and
-the UAB/Children's Hospital of Philadelphia (CHOP) PKD group, for their
-feedback and beta testing during the development of the PKD RRC DataHub.
+the UAB/CHOP PKD group, for their feedback and beta testing during the
+development of the PKD RRC DataHub.
 
 We gratefully acknowledge the resources provided by the University of Alabama
 at Birmingham IT-Research Computing group for high performance computing (HPC)

@@ -4,6 +4,12 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-20
+
+### About page: UAB/CHOP group name
+- `content/about/acknowledgments.md`: Use the group's own name, "UAB/CHOP PKD group", instead of expanding CHOP.
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-19
 
 ### Navbar: focus ring on the About menu button
