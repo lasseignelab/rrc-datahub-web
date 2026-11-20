@@ -4,7 +4,61 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-20
+
+### About page: match the Home page AI chat
+- After merging `develop` (AI chat replaced the Home gene search), updated About copy that described the old search box.
+- `content/about/user-guide.md`: Step 1 is now "Ask a question or pick a gene" (chat usage, chart links, AI caveat, or pick a gene on Charts).
+- `content/about/overview.md`: "search for a gene" → "ask questions about the data in plain language".
+- `content/about/future-directions.md`: Removed the AI-assisted gene search bullet (now built).
+- `content/about/faq.md`: "Searches use" → "Gene names use".
+- `content/about/limitations.md`: New "AI chat answers can be wrong" limitation.
+- (Agent: Claude Opus 5.5)
+
+### About page: UAB/CHOP group name
+- `content/about/acknowledgments.md`: Use the group's own name, "UAB/CHOP PKD group", instead of expanding CHOP.
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-19
+
+### Navbar: focus ring on the About menu button
+- `assets/style.css`: The About caret button had no visible keyboard focus indicator (Bootstrap `.btn` removes the outline and the toggle also removed its box-shadow). Restored the site focus ring (2px `--uab-green` outline) on `.about-menu-toggle:focus-visible`, and widened the gap between "About" and the caret (2px -> 6px) so the ring doesn't touch the text. About page audit: 42/42 focus stops show a visible indicator; skip link is the first Tab stop; `<html lang="en">`; no form fields or Dash callbacks on the page; axe 0 violations.
+- (Agent: Claude Opus 5.5)
+
+### Sticky navbar; About header matches Charts/Library
+- `assets/style.css`: `.site-nav` is `position: sticky; top: 0` on every page. `html { scroll-padding-top: calc(68px + 1rem) }` keeps in-page jumps and keyboard focus clear of it (WCAG 2.4.11); removed the per-heading `scroll-margin-top` it replaces. About sidebar sticks below the navbar. Skip link, when focused, is now fixed top-left above the navbar (it previously rendered just above the viewport and was never visible).
+- `assets/toc-scrollspy.js`: Active line measured from the bottom of the sticky navbar (+120px), so group jumps highlight the group's first section.
+- `components/page_header.py`: Optional `title_id` (H1 id) and `aside` (content beside the title at >=1200px, below it otherwise). Existing callers unchanged.
+- `pages/about.py`: Header now uses `create_page_header` (same style as Charts and Library) with the stat tiles as `aside`; H1 keeps `id="about-title"` for Back to top. Stat tiles restyled as white cards on the teal header.
+- `components/navbar.py`: Mobile hamburger `<summary>` gets `aria-label="Menu"` (axe `summary-name`, serious, from the develop navbar redesign).
+- Verified: all earlier About behaviors re-tested (Overview jumps 6/6, scroll-spy, pinned clicks 10/10, release-pin 7/7, split button 16/16); skip link visible on top at any scroll position (1288/320px); axe 0 violations at 1288px and 320px; pa11y 4/4; 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright clean.
+- (Agent: Claude Opus 5.5)
+
+### About page: Overview jumps show the page header
+- `assets/anchor-scroll.js`: Jumps to the first group heading or its first section (`#about-group-overview`, `#overview`) scroll to the top of the page instead of aligning the heading to the viewport top, so the page header and stat tiles stay visible. Focus still moves to the target heading. Applies to the navbar menu, sidebar links, and direct links. Verified 6 scenarios (incl. other sections unchanged); 19/19 tests.
+- (Agent: Claude Opus 5.5)
+
+### Navbar: About as a split button
+- `components/navbar.py`: "About" is now a normal link to /about; the caret beside it is a separate button (`dbc.DropdownMenu`, hidden label "Show About sections", `align_end=True`) that opens the section menu. Replaced deprecated `toggleClassName` with `toggle_class_name`.
+- `assets/style.css`: Split-button layout; hovering either part (or the menu being open) underlines "About"; hover-to-open selector updated for the nested menu.
+- Verified: click About -> /about; hover opens menu (also after click use); caret click and keyboard (Tab to caret, Enter, arrows, Escape) work; menu entries jump to sections; mobile menu unchanged; axe 0 violations (menu open/closed); 19/19 tests; linters clean; pa11y 4/4.
+- (Agent: Claude Opus 5.5)
+
+### Home: fix "geneexpression" typo; modality-neutral wording
+- `pages/home.py`: Fixed the joined "geneexpression" heading, and replaced data-type-specific wording with modality-neutral wording (as on the About page, since future releases add other data types): heading "A simpler way to explore PKD datasets.", description "...makes public polycystic kidney disease (PKD) datasets easier to access and analyze.", Visualize card "Explore results with charts and tables".
+- (Agent: Claude Opus 5.5)
+
+### Merge develop (Library page, new navbar/footer) into feature/add-about-tab
+- `pages/home.py`: Took develop's version (Home no longer shows version/GitHub; moved to footer).
+- `components/navbar.py`: Took develop's navbar (brand, Library link, mobile hamburger) and re-added the About dropdown on desktop plus an "About" link in the mobile menu; restored the `dash_bootstrap_components` import the dropdown needs.
+- `components/footer.py`: Imports `VERSION`, `UPDATED`, `GITHUB_URL` from `config.py` instead of its own copies (which still said 0.1 / 2026-08-24).
+- `assets/style.css`: About toggle vertically centered to line up with the new nav links; hover-opened About menu right-aligned so it stays on screen now that About is the last nav item.
+- Verified on the merged tree: 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright, bandit clean; pa11y 0 errors on /, /library, /charts, /about; axe 0 violations on /about (menu open); mobile menu has Home, Library, Charts, About with no horizontal overflow.
+- (Agent: Claude Opus 5.5)
+
+### About page: release sidebar highlight on other in-page jumps
+- `assets/toc-scrollspy.js`: A clicked sidebar item no longer stays highlighted after Back to top, a sidebar group link, the navbar About menu, or browser back/forward. Clicks on any other in-page link, and URL hash changes to a different section, hand highlighting back to the scroll position. Verified 7 scenarios in headless Chrome (incl. the earlier near-bottom pin); 19/19 tests; pa11y 3/3.
+- (Agent: Claude Opus 5.5)
 
 ### Home page: "Search" feature becomes "AI Chat" (branch `feature/add-ai-chat-openai`)
 - `pages/home.py`: the first About feature card now reads "AI Chat" ("Ask questions about the data in plain language") with the `lucide:bot-message-square` icon, in place of "Search" ("Find genes, datasets, and studies", `lucide:search`), since the chat replaced the gene search box. (Agent: Claude Opus 5.5)
@@ -24,6 +78,52 @@ A log of changes made by AI agents in this project, newest first.
 - `tests/test_data_chat.py`: unit test for the searching entry and a browser test that it shows at the bottom of the log and is replaced by the answer. (Agent: Claude Opus 5.5)
 
 ## 2026-11-18
+
+### About page: PI title and developer role
+- `content/about/contact.md`: Lasseigne listed as Associate Professor — Principal Investigator; Developer added to Crumley's roles.
+- (Agent: Claude Opus 5.5)
+
+### About page: future directions additions
+- `content/about/future-directions.md`: Added transfer learning (e.g. relating findings across species) and an "And more!" bullet.
+- (Agent: Claude Opus 5.5)
+
+### About page: team titles and roles
+- `content/about/contact.md`: Core team now listed as name, degree, job title — role(s): Soelter (Computational Biologist — Project Manager, Team Lead, and Developer), Crumley (Computational Scientist — Team Lead and Software Architect), Casper and Okunbor (Research Assistant — Developer, data pipeline / web application). Dropped "Undergraduate".
+- (Agent: Claude Opus 5.5)
+
+### About page: header layout and sample-count alignment
+- `pages/about.py`: Header card gets `about-header`; release date in the version tile kept on one line (`text-nowrap`).
+- `assets/style.css`: Header split layout at >=1200px (title/subtitle left, stat tiles right); below that the tiles sit in one row under the subtitle, sized by content, with smaller tiles under 576px (wraps 2 + 1 on phones). Datasets "Samples (n)" column centered instead of right-aligned.
+- Verified at 1288, 1000, 768, and 375px: no horizontal overflow; axe 0 violations at 1288px and 320px; 19/19 tests; linters clean.
+- (Agent: Claude Opus 5.5)
+
+### About page: visual polish, header stats, group headings
+- `pages/about.py`: Header stat tiles (datasets, samples, version/release date) via `_stat_tiles()` as a labelled list; group H2 headings now show the shared icons (`GROUP_ICONS`, from `components.navbar.ABOUT_MENU`); "Back to top" link at the end of each group card (targets the H1, now `id="about-title"`); Known limitations rendered as a callout (`CALLOUT_SLUGS`).
+- `config.py`: `DATASET_COUNT` (14) and `SAMPLE_COUNT` (249) for the header tiles; update per release alongside `VERSION` (also stated in `content/about/datasets.md`).
+- `assets/style.css`: Larger group headings with icon and divider; stat tiles; back-to-top link; amber callout; Datasets table with monospace accessions, right-aligned tabular sample counts, zebra rows; Glossary as a two-column term/definition grid (stacks below 576px).
+- `content/about/limitations.md`: Removed the blank line that split the list (extra gap above "Sex is rarely reported").
+- `tests/test_about.py`: Anchor test also accepts H1 ids (back-to-top target).
+- Verified: axe 0 violations at 1288px and 320px; no horizontal page scroll at 320px; back-to-top lands on and focuses the H1; 19/19 tests; black, isort, flake8, pylint, ruff, mypy, pyright, bandit clean.
+- (Agent: Claude Opus 5.5)
+
+### About page: scroll-spy keeps clicked section highlighted
+- `assets/toc-scrollspy.js`: A clicked sidebar link stays the active one until the user scrolls themselves (wheel, touch, or scroll keys). Fixes sections near the end of the page (e.g. Feedback and issues), which cannot scroll up to the active line and were highlighting a neighbouring section. Verified: all 10 tested links stay highlighted after the pointer leaves; wheel scrolling releases the pin; keyboard Enter works.
+- (Agent: Claude Opus 5.5)
+
+### About page: sidebar scroll-spy
+- `assets/toc-scrollspy.js` (new): Sets `aria-current="location"` on the sidebar link for the section currently in view (last H3 above 120px from the top; last section when scrolled to the bottom). Never moves focus, no live-region announcements, and only scrolls the sidebar (not the page) to keep the active link visible on short screens. rAF-throttled scroll/resize listeners plus a MutationObserver for Dash's async rendering; no-op on other pages.
+- `assets/style.css`: The current section keeps the hover look (light teal background + dark left bar) while it is in view; the left bar is the non-color cue (WCAG 1.4.1).
+- Verified in headless Chrome with Flatly loaded: correct section highlighted when scrolled to User guide / Research methodology / Funding, at the top and bottom of the page, and after clicking a sidebar link; focus unchanged by scrolling; no JS errors on /, /charts, /about; axe 0 violations.
+- (Agent: Claude Opus 5.5)
+
+### About page: sidebar restyle
+- `pages/about.py`: Sidebar group links now show the same Bootstrap icons as the navbar About dropdown (looked up from `components.navbar.ABOUT_MENU` by anchor id, so both stay in sync); group/item links get `about-toc-group` / `about-toc-item` classes.
+- `assets/style.css`: Replaced default list styling (bullets, underlines, large heading) with a small uppercase "On this page" label, icon + bold group links, and sub-items on a thin guide line with a teal hover bar. Keyboard focus ring unchanged. axe: 0 violations at 1288px and 320px.
+- (Agent: Claude Opus 5.5)
+
+### About page: team degree
+- `content/about/contact.md`: Added Anthony B. Crumley's degree (BS).
+- (Agent: Claude Opus 5.5)
 
 ### Chat questions on light grey (branch `feature/add-ai-chat-openai`)
 - `assets/style.css`: `.data-chat-user` background changed from light green (`--teal-pale`, #E6F2F0) to light grey (#f0f0f0, already used elsewhere on the site). (Agent: Claude Opus 5.5)
@@ -82,6 +182,97 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-17
 
+### About page: future directions finalized
+- `content/about/future-directions.md`: Replaced cross-dataset comparisons with multi-gene views within one dataset (planned first); added AI-assisted gene search (chatbot for the search bar); removed the last placeholder. The About page now has no placeholders.
+- `content/about/faq.md`: Removed "Cross-dataset comparison is planned" to stay consistent with Future directions.
+- (Agent: Claude Opus 5.5)
+
+### About page: Age column header wrapping
+- `content/about/datasets.md`: Non-breaking space (U+00A0) in "postnatal day" so the header wraps as "Age" / "(postnatal day)" instead of splitting the parenthetical.
+- (Agent: Claude Opus 5.5)
+
+### About page: grant number format, nf-core acknowledgment
+- `content/about/funding.md`: Grant cited by core project number U54DK126087 (NIH acknowledgment convention) instead of 2U54DK126087-06.
+- `content/about/acknowledgments.md`: Removed the nf-core sentence (cited elsewhere, e.g. How to cite and Methodology).
+- (Agent: Claude Opus 5.5)
+
+### About page: funding and acknowledgments
+- `content/about/funding.md`: NIDDK/NIH grant 2U54DK126087-06 (UAB Childhood Cystic Kidney Disease Core Center, PKD RRC); institute confirmed by the DK activity code and NIH RePORTER listings for U54DK126087. Additional-funding placeholder removed; NIH disclaimer kept.
+- `content/about/acknowledgments.md`: PKD RRC feedback/beta-testing acknowledgment adapted from the author's poster (duplicate "PKD RRC" mention merged; CHOP spelled out); UAB IT-Research Computing Cheaha statement from docs.rc.uab.edu/grants/publications (Globus statement omitted); nf-core and dataset depositors kept.
+- (Agent: Claude Opus 5.5)
+
+### About page: team, contact, data license
+- `content/about/contact.md`: Rewritten: single contact email (bnp0001@uab.edu, temporary until the DataHub-specific UAB address exists); core team (Lasseigne, Soelter, Crumley, Casper, Okunbor) with roles, no individual emails, "with support from the other members of the Lasseigne Lab" linking to the lab website.
+- `content/about/feedback.md`: Contact email set to bnp0001@uab.edu (same temporary address).
+- `content/about/license.md`: Processed data licensed CC BY 4.0 (Zenodo default, per author).
+- TODO when the DataHub email exists: replace bnp0001@uab.edu in `content/about/contact.md` and `content/about/feedback.md` (and decide whether `pages/home.py` should switch too).
+- (Agent: Claude Opus 5.5)
+
+### About page: how to cite
+- `content/about/how-to-cite.md`: Preprint expected in 2027; interim citation of the website with version (https://datahub.pkdrrc.lasseigne.org/) and author list (Soelter, Crumley, Casper, Okunbor, Lasseigne; Last, F.M. format), Zenodo DOI for processed data (v0.1.0), and existing dataset/nf-core citation guidance. BibTeX placeholder removed. No placeholders remain.
+- (Agent: Claude Opus 5.5)
+
+### About page: methodology dataset selection and QC
+- `content/about/methodology.md`: Dataset selection (NCBI GEO and PubMed search for mouse kidney bulk RNA-seq in PKD; all v0.1.0 runs Illumina, verified in curated metadata `platform` column) and QC (MultiQC metrics compiled per dataset; no QC-based exclusions; not yet in the app) filled per author. No placeholders remain in this section.
+- (Agent: Claude Opus 5.5)
+
+### About page: methodology filled from the pipeline repo
+- `content/about/methodology.md`: Processing pipeline and Metadata curation rewritten from `lasseignelab/rrc-datahub` (README, `.caprc`, `src/01_geo_download.sh`, `src/04_run_nfcore_rnaseq.sh`, `src/05_transform_metadata.R`, `src/functions/get_bioproject_metadata.R`): ENA FASTQ download with MD5 verification; nf-core/rnaseq v3.25.0, STAR + Salmon (`--aligner star_salmon`), GRCm39 primary assembly, GENCODE M37; Zenodo DOI for processed outputs; Entrez SRA + BioSample metadata and the harmonization rules. Dataset selection and QC placeholders remain (need author input).
+- (Agent: Claude Opus 5.5)
+
+### About page: repository links, licenses, limitations
+- Linked the pipeline (`lasseignelab/rrc-datahub`) and web app (`lasseignelab/rrc-datahub-web`) repos where relevant: `overview.md` ("pipeline"), `methodology.md` (processing pipeline), `license.md`, `feedback.md`. Code stays on GitHub, so removed the "Archived code (Zenodo)" line from `code-availability.md`.
+- `license.md`: Corrected licenses per repo: pipeline is MIT (`rrc-datahub/LICENSE`), web app is GPL-3.0. Previously stated GPL-3.0 for all source code.
+- `feedback.md`: Website problems → `rrc-datahub-web` issues; metadata errors/dataset requests → `rrc-datahub` issues.
+- `limitations.md`: "Bulk tissue only" corrected to "Bulk RNA-seq only" (v0.1.0 includes cell lines and organoids); added sex-reporting limitation (only PRJNA857739 of 14 reports sex). Placeholder removed.
+- (Agent: Claude Opus 5.5)
+
+### About page: FAQ downloads and gene annotation
+- `content/about/faq.md`: Gene search answer now names the GENCODE mouse annotation (release M37), matching the pipeline (`lasseignelab/rrc-datahub` README and `src/02_ref_genome_download.sh`), instead of Ensembl. Download answer points to the Zenodo archive of each release's processed data (v0.1.0: doi:10.5281/zenodo.24325117) and to per-plot CSV downloads.
+- `content/about/code-availability.md`: Split the Zenodo line into processed data (v0.1.0, doi:10.5281/zenodo.24325117) and archived code (link pending).
+- (Agent: Claude Opus 5.5)
+
+### About page: user guide checked against release-0.1 Charts
+- `content/about/user-guide.md`: Button name corrected to **Search Datahub** (matches `components/landing_search.py`); added Age range instructions (min/max + unit: days, weeks, months, years) reflecting the release-0.1 age filter; Q1/Q3 spelled out; removed screenshot placeholder (text-only for now).
+- `content/about/release-history.md`: fixed a remaining two-part version ("v0.1." at sentence end → v0.1.0).
+- (Agent: Claude Opus 5.5)
+
+### About page: release date and future directions
+- `config.py`: `UPDATED` set to `2026-11-17`, the v0.1.0 release date (release-0.1 merged to main/develop today).
+- `content/about/release-history.md`: v0.1.0 dated 2026-11-17.
+- `content/about/future-directions.md`: v0.2.0 human bulk RNA-seq marked as in code review; added single-cell datasets (human and mouse) being processed for ingestion; QC abbreviation introduced.
+- (Agent: Claude Opus 5.5)
+
+### About page: sticky sidebar layout
+- `pages/about.py`: "On this page" moved into a left sidebar (`dbc.Col(lg=3)`) beside the content (`lg=9`); stacks into one column below 992px.
+- `assets/style.css`: Sidebar is `position: sticky` on ≥992px. Removed the 80ch cap on `.about-markdown` (content column now ~110 characters wide). `.about-markdown` gets `overflow-x: auto` so wide tables scroll inside the card on narrow screens / 400% zoom instead of overflowing (WCAG 1.4.10). Table of contents is single-column.
+- Verified with axe-core (WCAG 2.0/2.1/2.2 A+AA + best practice) with Flatly loaded: 0 violations on /about at 1288px and 320px, and with the About dropdown open; keyboard order skip link → nav → sidebar → content; no horizontal page scroll at 320px.
+- Found, not fixed (pre-existing, Charts page): axe `button-name` (critical) on 8 dropdown filters (`#scientific-name-select`, `#sex-select`, `#underlying-variant-select`, `#sample-type-select`, `#group-select`, `#plot-sample-type-select`, `#plot-sex-select`, `#plot-age-select`).
+- (Agent: Claude Opus 5.5)
+
+### About page: dataset publications
+- `content/about/datasets.md`: Filled the publication column (author, year) for all 14 BioProjects from the pipeline repo's dataset table; column renamed "Original publication" to match that table. No DOIs/links yet.
+- (Agent: Claude Opus 5.5)
+
+### About page: centered table headers
+- `assets/style.css`: `.about-markdown th` now `text-align: center; vertical-align: middle` (body cells stay left-aligned).
+- (Agent: Claude Opus 5.5)
+
+### About page: Datasets table filled from curated metadata
+- `content/about/datasets.md`: Filled Underlying variant, Sample type, Age (postnatal day), and Samples (n) for all 14 BioProjects from `staging/transformed-metadata/*_transformed.tsv`, counting each run once (same de-duplication as `etl/load.py`, so PRJNA805541 super-series rows map to PRJNA805542/PRJNA805547). Total 249 samples, added to the intro. Tissue and Treatment columns omitted (tissue is uniformly kidney or not provided; Treatment dropped to reduce wrapping). Added a note that wild-type controls are not listed and that "Not provided" means not reported in the source record. Source publication remains a placeholder.
+- (Agent: Claude Opus 5.5)
+
+### Version format MAJOR.MINOR.PATCH; About overview rewrite
+- `config.py`: `VERSION` is now `"0.1.0"`; comment documents the MAJOR.MINOR.PATCH format. Home and About pick this up automatically.
+- `content/about/*.md`: All version references now use three parts (v0.1.0, v0.2.0). Release-history intro replaced with a one-line statement of the format.
+- `content/about/overview.md`: RRC and PKD abbreviations now introduced in the first sentence; added "no account or login required"; added a mission paragraph adapted from the grant; UAB abbreviation introduced.
+- Abbreviations introduced at first appearance in page order: TPM in `release-history.md`, GEO in `limitations.md`.
+- (Agent: Claude Opus 5.5)
+
+### About page: modality-neutral wording
+- `content/about/{overview,datasets,faq,limitations,methodology}.md`: General descriptions of the DataHub no longer say "gene expression"/"expression data", since future releases add other data modalities; text now says "datasets"/"results". Wording specific to the current v0.1 bulk RNA-seq data (TPM, violin plots, release notes) is unchanged. Methodology now opens by stating it describes v0.1 and that methods for new data types will be added per release.
+- (Agent: Claude Opus 5.5)
+
 ### Fix unresolvable pins in requirements.txt (branch `feature/add-ai-chat`)
 - `requirements.txt`: Bumped `typing_extensions` 4.15.0 → 4.16.0 (required by the pinned `anyio` and `pydantic`) and `idna` 3.11 → 3.20 (required by `httpx2`). The packages added for the chat made `pip install -r requirements.txt` fail with ResolutionImpossible; it went unnoticed locally because the venv already had newer versions. Verified with a dry-run install into a clean venv. (Agent: Claude Opus 5.5)
 
@@ -101,6 +292,33 @@ A log of changes made by AI agents in this project, newest first.
 - `pages/home.py`: Renders `data_chat.layout` in place of the search box. `assets/style.css`: chat styles using existing color tokens; the inner `.dash-input-element` is styled because Dash 4 wraps `dcc.Input` in a container div.
 - `requirements.txt`: Added `anthropic==2.9.0` and its pinned dependencies. `.env.example` and `AGENTS.md`: documented `ANTHROPIC_API_KEY`; added the new files to the project layout.
 - Tests: `tests/test_chat_tools.py`, `tests/test_chat_assistant.py` (Anthropic client mocked), `tests/test_data_chat.py` (callbacks, ARIA roles, label association, and a `dash_duo` check that the chat renders on the home page). No test needs a database or API key. (Agent: Claude Opus 5.5)
+
+## 2026-11-16
+
+### Fix About dropdown: section jumps, hover position, icon spacing
+- `assets/anchor-scroll.js`: Jumps landed ~3000px off because `dcc.Markdown` renders asynchronously after the headings exist, pushing sections down after the scroll. The script now re-aligns the target on every DOM mutation / body resize until the layout is stable for 1.5 s (max 8 s), focuses the heading once, and stops immediately on user wheel/touch/key/mouse input. Also handles direct loads of `/about#...`.
+- `assets/style.css`: Hover-opened menu now overrides the inline Popper position left behind after a click-open (`inset`/`transform` with `!important`, only for `:not(.show)`), so it no longer opens offset and closes before the pointer reaches it. Icon spacing uses `margin-left: auto` + `padding-left` instead of flex `gap` for consistent rendering across browsers.
+- Verified with Flatly + Bootstrap Icons loaded and Markdown JS delayed 1.2 s: click from `/charts`, click on `/about`, hover-after-click, direct hash load, and user-scroll-not-hijacked all pass; pa11y 0 errors.
+- (Agent: Claude Opus 5.5)
+
+### About dropdown menu in navbar
+- `components/navbar.py`: Replaced the plain "About" link with a `dbc.DropdownMenu` listing the four About sections (Overview; Using the DataHub; Methods and reuse; People and support), each linking to `/about#<group id>` with a Bootstrap icon (`aria-hidden`). Entries live in `ABOUT_MENU`; ids must match `pages/about.py` `_group_id`.
+- `assets/anchor-scroll.js` (new): Scrolls to and focuses the element named in the URL hash once Dash renders it (browser anchor-jumping fails because pages render after navigation). Re-runs on `hashchange`, `popstate`, and Dash's `_dashprivate_pushstate`.
+- `assets/style.css`: Dropdown styles matching `.nav-link`; opens on hover for mouse users via `@media (hover: hover)`, while click, keyboard (Enter + arrow keys), and touch use Bootstrap's toggle. Added `scroll-margin-top` to About H2 headings.
+- `tests/test_about.py`: Navbar test now also checks dropdown items; new test asserts `ABOUT_MENU` anchors equal the About page group ids.
+- Verified in headless Chrome: hover opens menu; selecting an entry from `/charts` lands on and focuses the section; keyboard navigation works. pa11y WCAG2AA: 0 errors on `/`, `/charts`, `/about`, and `/charts` with the menu open.
+- (Agent: Claude Opus 5.5)
+
+### Add About page
+- `pages/about.py` (new): Registers `/about` ("About"). Renders one H1, an "On this page" in-page navigation, and four H2 group cards (Overview; Using the DataHub; Methods and reuse; People and support), each holding H3 subsections. Section order and titles come from the `SECTIONS` list; each slug is both the anchor id and the name of its markdown file. The Version and release history subsection also shows the live `VERSION`/`UPDATED` from `config.py`. No database access, so the page renders in CI without PostgreSQL.
+- `content/about/*.md` (new, 15 files): Page copy kept outside Python so it can be edited without touching layout code. Bodies start at `####` because the page supplies H1–H3. Unknown details are marked `\[PLACEHOLDER: ...\]` (brackets escaped so Markdown does not render them as links); `grep -rn PLACEHOLDER content/about` lists what is left to fill in.
+- `config.py` (new): Moved `VERSION`, `UPDATED`, and `GITHUB_URL` out of `pages/home.py` so Home and About show the same version from one place. `pages/home.py` now imports them; no other change to Home.
+- `components/navbar.py`: Added an "About" link after "Charts".
+- `assets/style.css`: Added an "About page" block (table of contents, group/item headings, markdown tables, version line).
+- `.pa11yci`: Added `http://localhost:8050/about`.
+- `tests/test_about.py` (new): Checks single H1, a non-empty markdown file per section, no markdown heading above level 4, every table-of-contents link targets an existing id, one Markdown block per section, navbar link, and a `dash_duo` render test.
+- `AGENTS.md`: Documented `config.py` contents and the `content/about/` folder in Project layout.
+- (Agent: Claude Opus 5.5)
 
 ## 2026-11-11
 

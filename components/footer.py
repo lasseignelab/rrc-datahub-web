@@ -1,10 +1,6 @@
 from dash import html
 
-# Update these two values whenever a new version ships.
-VERSION = "0.1"
-UPDATED = "2026-08-24"
-
-GITHUB_URL = "https://github.com/lasseignelab/rrc-datahub"
+from config import GITHUB_URL, UPDATED, VERSION
 
 
 def logo(src, alt, extra_class=""):

@@ -15,6 +15,10 @@
     {
       "url": "http://localhost:8050/charts",
       "screenCapture": "pa11y-reports/charts.png"
+    },
+    {
+      "url": "http://localhost:8050/about",
+      "screenCapture": "pa11y-reports/about.png"
     }
   ]
 }

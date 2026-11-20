@@ -1,4 +1,49 @@
+import dash_bootstrap_components as dbc
 from dash import dcc, html
+
+# About dropdown entries: (label, anchor id on /about, Bootstrap icon class).
+# Anchor ids must match the H2 group ids built by pages/about.py
+# (_group_id); tests/test_about.py checks that they stay in sync.
+ABOUT_MENU = [
+    ("Overview", "about-group-overview", "bi-info-circle"),
+    ("Using the DataHub", "about-group-using-the-datahub", "bi-question-circle"),
+    ("Methods and reuse", "about-group-methods-and-reuse", "bi-journal-code"),
+    ("People and support", "about-group-people-and-support", "bi-people"),
+]
+
+
+def about_dropdown():
+    """About as a split button.
+
+    "About" is a normal link to /about. The caret next to it is a separate
+    button that opens the section menu for keyboard and touch users; mouse
+    users also get the menu on hover (assets/style.css).
+    """
+    return html.Div(
+        [
+            dcc.Link("About", href="/about", className="nav-link about-menu-link"),
+            dbc.DropdownMenu(
+                [
+                    dbc.DropdownMenuItem(
+                        [
+                            html.Span(label),
+                            html.I(className=f"bi {icon}", **{"aria-hidden": "true"}),
+                        ],
+                        href=f"/about#{anchor}",
+                        className="about-menu-item",
+                    )
+                    for label, anchor, icon in ABOUT_MENU
+                ],
+                label=html.Span("Show About sections", className="visually-hidden"),
+                id="about-menu",
+                color="link",
+                align_end=True,
+                toggle_class_name="nav-link about-menu-toggle",
+                className="about-menu-dropdown",
+            ),
+        ],
+        className="about-menu",
+    )
 
 
 def navbar():
@@ -30,9 +75,11 @@ def navbar():
                             className="hamburger-icon",
                         ),
                         className="hamburger-button",
+                        **{"aria-label": "Menu"},
                     ),
                     html.Div(
-                        [nav_link(label, href) for label, href in links],
+                        [nav_link(label, href) for label, href in links]
+                        + [nav_link("About", "/about")],
                         className="mobile-menu-links",
                     ),
                 ],
@@ -56,7 +103,7 @@ def navbar():
             ),
             # Desktop navigation
             html.Div(
-                [nav_link(label, href) for label, href in links],
+                [nav_link(label, href) for label, href in links] + [about_dropdown()],
                 className="nav-links desktop-nav-links",
             ),
         ],

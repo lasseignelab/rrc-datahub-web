@@ -200,6 +200,13 @@ Custom Components
 Accessibility
 ========================================================================== */
 
+/* Keep in-page jumps and keyboard-focused elements clear of the sticky
+   navbar (68px) with a little breathing room (WCAG 2.4.11). */
+html {
+scroll-padding-top: calc(68px + 1rem);
+}
+
+
 /* Visually hidden but still readable by assistive technology. */
 .visually-hidden {
 clip: rect(0 0 0 0);
@@ -222,12 +229,22 @@ height: 1px;
 overflow: hidden;
 }
 
+/* When focused, show in the top-left corner above the sticky navbar,
+   wherever the page is scrolled to. */
 .skip-nav:focus {
-position: static;
+position: fixed;
+top: 0.5rem;
+left: 0.5rem;
+z-index: 200;
 width: auto;
 height: auto;
 overflow: visible;
 padding: 0.5rem 1rem;
+background: #fff;
+color: var(--teal-deep);
+border: 2px solid var(--teal-deep);
+border-radius: 6px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================================================
@@ -420,7 +437,9 @@ Navbar
 
 /* Main navbar */
 .site-nav {
-    position: relative;
+    /* Stays at the top of the screen on every page. */
+    position: sticky;
+    top: 0;
     z-index: 100;
     display: flex;
     align-items: center;
@@ -555,6 +574,91 @@ Navbar
 .mobile-menu-links .nav-link:hover,
 .mobile-menu-links .nav-link.active {
     border-bottom-color: transparent;
+}
+
+/* ---- About split button (components/navbar.py) ----
+   "About" is a link; the caret beside it is the menu button. */
+
+.about-menu {
+position: relative;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.site-nav .about-menu-toggle {
+background: none;
+border: 0;
+border-bottom: 2px solid transparent;
+border-radius: 0;
+box-shadow: none;
+cursor: pointer;
+padding: 2px 4px 0;
+}
+
+/* Hovering either part, or the menu being open, underlines "About". */
+.site-nav .about-menu:hover .about-menu-link,
+.site-nav .about-menu:has(.dropdown-menu.show) .about-menu-link {
+color: var(--teal-deep);
+border-bottom-color: var(--teal-deep);
+}
+
+.site-nav .about-menu-toggle:hover,
+.site-nav .about-menu-toggle:focus-visible {
+color: var(--teal-deep);
+}
+
+/* Bootstrap's .btn removes the outline; restore the site focus ring. */
+.site-nav .about-menu-toggle:focus-visible {
+outline: 2px solid var(--uab-green);
+outline-offset: 0;
+}
+
+.about-menu .dropdown-menu {
+position: absolute;
+z-index: 1000;
+min-width: 16rem;
+margin: 0;
+list-style: none;
+background: var(--bs-body-bg, #fff);
+border-radius: 6px;
+padding: 6px 0;
+border: 1px solid var(--line);
+box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.about-menu-item {
+display: flex;
+text-decoration: none;
+align-items: center;
+white-space: nowrap;
+padding: 10px 16px;
+color: var(--ink);
+}
+
+.about-menu-item:hover,
+.about-menu-item:focus {
+background: var(--teal-pale);
+color: var(--teal-deep);
+}
+
+/* margin (not flex gap) so spacing is identical in every browser */
+.about-menu-item .bi {
+margin-left: auto;
+padding-left: 1.5rem;
+font-size: 1.1rem;
+color: var(--meta);
+}
+
+/* Open on hover for mouse users; click/keyboard/touch use Bootstrap's toggle. */
+@media (hover: hover) {
+  /* !important overrides the inline position Popper leaves behind after
+  the menu has been opened by click once. */
+  .about-menu:hover .dropdown-menu:not(.show) {
+  display: block;
+  inset: 100% 0 auto auto !important;
+  transform: none !important;
+  }
 }
 
 /* ==========================================================================
@@ -873,6 +977,319 @@ Charts page
 ========================================================================== */
 
 
+
+/* ==========================================================================
+About page
+========================================================================== */
+
+.about-group-heading {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+font-size: 1.75rem;
+font-weight: 600;
+margin-bottom: 1.25rem;
+padding-bottom: 0.75rem;
+border-bottom: 2px solid var(--line);
+}
+
+.about-group-heading .bi {
+font-size: 1.5rem;
+color: var(--teal-deep);
+}
+
+/* ---- Header stat tiles (pages/about.py _stat_tiles) ---- */
+
+/* Tiles sit in the shared page header (components/page_header.py), beside
+   the title on extra-wide screens and below it otherwise. */
+@media (max-width: 1199px) {
+  .page-header-aside {
+  margin-top: 1.25rem;
+  }
+
+  .about-stats .about-stat {
+  flex: 1 1 auto;
+  min-width: 0;
+  }
+}
+
+@media (max-width: 575px) {
+  .about-stats {
+  gap: 0.5rem;
+  }
+
+  .about-stats .about-stat {
+  padding: 0.6rem 0.7rem;
+  }
+
+  .about-stat-value {
+  font-size: 1.2rem;
+  }
+
+  .about-stat-label {
+  font-size: 0.75rem;
+  }
+}
+
+.about-stats {
+  gap: 0.5rem;
+  }
+
+  .about-stats .about-stat {
+  padding: 0.6rem 0.7rem;
+  }
+
+  .about-stat-value {
+  font-size: 1.2rem;
+  }
+
+  .about-stat-label {
+  font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-header .about-stats {
+  flex-wrap: nowrap;
+  }
+}
+
+.about-stats {
+display: flex;
+flex-wrap: wrap;
+gap: 0.75rem;
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+.about-stat {
+display: flex;
+flex-direction: column;
+min-width: 9rem;
+padding: 0.75rem 1rem;
+background: #fff;
+border: 1px solid rgba(43, 99, 99, 0.15);
+border-radius: 8px;
+}
+
+.about-stat-value {
+font-size: 1.6rem;
+font-weight: 600;
+line-height: 1.2;
+color: var(--teal-deep);
+}
+
+.about-stat-label {
+font-size: 0.85rem;
+color: var(--meta);
+}
+
+/* ---- Back to top (end of each group card) ---- */
+
+.about-back-to-top {
+display: inline-flex;
+align-items: center;
+gap: 0.35rem;
+margin-top: 1.5rem;
+font-size: 0.9rem;
+text-decoration: none;
+color: var(--meta);
+}
+
+.about-back-to-top:hover {
+color: var(--teal-deep);
+text-decoration: underline;
+}
+
+/* ---- Known limitations callout ---- */
+
+.about-callout {
+padding: 1rem 1.25rem;
+background: #FFF8E6;
+border-left: 4px solid #C98A00;
+border-radius: 0 6px 6px 0;
+}
+
+.about-callout ul {
+margin-bottom: 0;
+}
+
+/* ---- Datasets table ---- */
+
+#datasets ~ .about-markdown td:first-child a {
+font-family: "IBM Plex Mono", var(--bs-font-monospace);
+font-size: 0.9em;
+}
+
+#datasets ~ .about-markdown td:last-child {
+text-align: center;
+font-variant-numeric: tabular-nums;
+}
+
+#datasets ~ .about-markdown tbody tr:nth-child(even) {
+background-color: #F7F9F8;
+}
+
+/* ---- Glossary (FAQ): term column beside definition ---- */
+
+#faq ~ .about-markdown h4 + ul {
+list-style: none;
+padding-left: 0;
+}
+
+#faq ~ .about-markdown h4 + ul > li {
+display: grid;
+grid-template-columns: 13rem 1fr;
+column-gap: 1rem;
+padding: 0.4rem 0;
+border-bottom: 1px solid var(--line);
+}
+
+#faq ~ .about-markdown h4 + ul > li:last-child {
+border-bottom: 0;
+}
+
+@media (max-width: 575px) {
+  #faq ~ .about-markdown h4 + ul > li {
+  grid-template-columns: 1fr;
+  }
+}
+
+/* ---- "On this page" sidebar ---- */
+
+.about-toc-title {
+font-size: 0.8rem;
+font-weight: 600;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+color: var(--meta);
+margin-bottom: 0.75rem;
+}
+
+.about-toc-list,
+.about-toc-sublist {
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+.about-toc-list > li + li {
+margin-top: 0.9rem;
+}
+
+.about-toc a {
+text-decoration: none;
+border-radius: 4px;
+}
+
+.about-toc-group {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+font-weight: 600;
+color: var(--ink);
+}
+
+.about-toc-group .bi {
+font-size: 1rem;
+color: var(--teal-deep);
+}
+
+/* Sub-items hang off a thin guide line aligned under the group icon. */
+.about-toc-sublist {
+margin: 0.35rem 0 0 0.45rem;
+border-left: 1px solid var(--line);
+}
+
+.about-toc-item {
+display: block;
+margin-left: -1px;
+padding: 0.2rem 0 0.2rem 0.9rem;
+border-left: 2px solid transparent;
+color: var(--meta);
+font-size: 0.92rem;
+line-height: 1.4;
+}
+
+.about-toc-group:hover,
+.about-toc-item:hover {
+color: var(--teal-deep);
+}
+
+/* Hover, and the current section (aria-current, set by
+   assets/toc-scrollspy.js) which keeps the highlight while in view. The left
+   bar marks it without relying on color alone (WCAG 1.4.1). */
+.about-toc-item:hover,
+.about-toc-item[aria-current="location"] {
+color: var(--teal-deep);
+border-left-color: var(--teal-deep);
+background: var(--teal-pale);
+}
+
+/* Sidebar "On this page" stays in view while scrolling on wide screens. */
+@media (min-width: 992px) {
+  .about-toc {
+  position: sticky;
+  top: calc(68px + 1rem);
+  max-height: calc(100vh - 68px - 2rem);
+  overflow-y: auto;
+  }
+}
+
+.about-item + .about-item {
+border-top: 1px solid var(--line);
+margin-top: 1.5rem;
+padding-top: 1.5rem;
+}
+
+.about-item-heading {
+font-size: 1.2rem;
+font-weight: 600;
+}
+
+.about-markdown {
+line-height: 1.65;
+/* Wide tables scroll sideways inside the card on narrow screens / high zoom
+   instead of spilling out (WCAG 1.4.10 allows 2-D scrolling for data tables). */
+overflow-x: auto;
+}
+
+.about-markdown h4 {
+font-size: 1rem;
+font-weight: 600;
+margin-top: 1.25rem;
+}
+
+.about-markdown table {
+border-collapse: collapse;
+margin-bottom: 1rem;
+max-width: none;
+}
+
+.about-markdown th,
+.about-markdown td {
+border: 1px solid #ccc;
+padding: 6px 10px;
+text-align: left;
+}
+
+.about-markdown th {
+background-color: #f0f0f0;
+text-align: center;
+vertical-align: middle;
+}
+
+.about-markdown blockquote {
+border-left: 3px solid var(--line);
+border-radius: 0;
+padding-left: 1rem;
+color: var(--ink);
+}
+
+.about-version-line {
+color: var(--meta);
+}
 
 /* ==========================================================================
 Responsive
