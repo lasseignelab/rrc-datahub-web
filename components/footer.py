@@ -26,7 +26,7 @@ def logo_link(src, name, href, extra_class=""):
     itself is decorative inside the link, hence the empty alt text.
     """
     return html.A(
-        logo(src, "", extra_class),
+        logo(src, name, extra_class),
         href=href,
         target="_blank",
         rel="noopener noreferrer",
