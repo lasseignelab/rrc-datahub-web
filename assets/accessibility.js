@@ -158,7 +158,9 @@
         var metaEl = document.getElementById("download-meta");
         var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
         var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_plot";
-        window.Plotly.toImage(plotEl, { format: "png", width: 1200, height: 700 })
+        // scale: 3 renders at 3x pixel density (3000x1800 px) so the PNG stays
+        // sharp in documents and slides; the smaller canvas keeps text legible.
+        window.Plotly.toImage(plotEl, { format: "png", width: 1000, height: 600, scale: 3 })
             .then(function (dataUrl) {
                 var a = document.createElement("a");
                 a.download = filename + ".png";
