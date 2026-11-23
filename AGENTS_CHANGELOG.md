@@ -4,6 +4,16 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-23
+
+### Charts: automatic statistical test selection; test name in plot title
+- `pages/charts.py`: Replaced the "Statistical test" dropdown (None / Mann-Whitney / Kruskal-Wallis) with "Add statistics" (No / Yes, default No, not clearable) plus a short help line. The callback passes `show_stats=add_stats == "yes"`. Kept the `stat-test` / `stat-test-label` ids so the ARIA patches in `assets/accessibility.js` still apply.
+- `components/tpm_violin_plot_plotly.py`: `stat_test` parameter replaced by `show_stats: bool`. New `select_stat_test(n_groups)` picks the test from the number of groups plotted (2 -> Mann-Whitney U, 3+ -> Kruskal-Wallis, <2 -> none). Title now reads e.g. "Pkd2  (Mann-Whitney U, p=0.0122)"; one group shows "(statistics need 2 or more groups)"; if scipy cannot compute a p-value (e.g. all values identical, where Kruskal-Wallis raised ValueError and broke the plot) the title says "p-value not computable".
+- `tests/test_tpm_violin_plot_plotly.py`: New unit tests for test selection and title text (10 tests).
+- `content/about/user-guide.md`, `content/about/methodology.md`: Describe the Yes/No choice and automatic test selection.
+- Verified: non-browser tests 66/66 (browser tests and pa11y not run: no Chrome in the agent shell); black, isort, pylint, pyright clean on changed files; flake8 only E501 at its default 79 columns (lines up to 88, as elsewhere in the file). MegaLinter not run (no Docker).
+- (Agent: Claude Opus 5.5)
+
 ## 2026-11-20
 
 ### About page: match the Home page AI chat
