@@ -39,9 +39,15 @@ def plot_tpm_violin_plotly(
     jitter: float = 0.3,
     title: Optional[str] = None,
     show_n: bool = True,
-    stat_test: Optional[str] = None,
+    show_stats: bool = False,
     group_label: Optional[str] = None,
 ) -> go.Figure:
+    """Build a violin + box + jittered-points figure of TPM by group.
+
+    When ``show_stats`` is True, the test is picked from the number of
+    groups plotted (see ``select_stat_test``) and its name and p-value are
+    added to the title.
+    """
     data = data.dropna(subset=[group_col, value_col]).copy()
 
     if group_order is None:
@@ -113,10 +119,9 @@ def plot_tpm_violin_plotly(
         )
 
     full_title = title or ""
-    if stat_test:
-        pval = _run_stat_test(data, group_col, plot_col, group_order, stat_test)
-        if pval is not None:
-            full_title = f"{full_title}  (p={pval:.3g})".strip()
+    if show_stats:
+        stat_label = _stat_annotation(data, group_col, plot_col, group_order)
+        full_title = f"{full_title}  ({stat_label})".strip()
 
     axis_label = group_label if group_label is not None else group_col
     fig.update_layout(
@@ -169,6 +174,41 @@ def _resolve_palette(palette: Optional[Union[dict, list]], group_order: list) ->
     return list(palette)
 
 
+STAT_TEST_NAMES = {
+    "mannwhitney": "Mann-Whitney U",
+    "kruskal": "Kruskal-Wallis",
+}
+
+
+def select_stat_test(n_groups: int) -> Optional[str]:
+    """Return the test key for ``n_groups`` groups, or None if fewer than 2.
+
+    2 groups -> Mann-Whitney U; 3 or more -> Kruskal-Wallis.
+    """
+    if n_groups < 2:
+        return None
+    if n_groups == 2:
+        return "mannwhitney"
+    return "kruskal"
+
+
+def _stat_annotation(
+    data: pd.DataFrame,
+    group_col: str,
+    value_col: str,
+    group_order: list,
+) -> str:
+    """Pick and run the test for the plotted groups; return the title text."""
+    stat_test = select_stat_test(len(group_order))
+    if stat_test is None:
+        return "statistics need 2 or more groups"
+    test_name = STAT_TEST_NAMES[stat_test]
+    pval = _run_stat_test(data, group_col, value_col, group_order, stat_test)
+    if pval is None or np.isnan(pval):
+        return f"{test_name}: p-value not computable"
+    return f"{test_name}, p={pval:.3g}"
+
+
 def _run_stat_test(
     data: pd.DataFrame,
     group_col: str,
@@ -176,16 +216,18 @@ def _run_stat_test(
     group_order: list,
     stat_test: str,
 ) -> Optional[float]:
+    """Run ``stat_test`` across the groups; None if scipy cannot compute it."""
     groups = [data.loc[data[group_col] == g, value_col].values for g in group_order]
-    if stat_test == "mannwhitney":
-        if len(groups) != 2:
-            print("Warning: mannwhitney requires exactly 2 groups; skipping stat test.")
-            return None
-        _, p = stats.mannwhitneyu(groups[0], groups[1], alternative="two-sided")
-        return p
-    if stat_test == "kruskal":
-        _, p = stats.kruskal(*groups)
-        return p
+    try:
+        if stat_test == "mannwhitney":
+            _, p = stats.mannwhitneyu(groups[0], groups[1], alternative="two-sided")
+            return float(p)
+        if stat_test == "kruskal":
+            # Raises ValueError when every value is identical (e.g. all TPM 0).
+            _, p = stats.kruskal(*groups)
+            return float(p)
+    except ValueError:
+        return None
     raise ValueError(
-        f"Unknown stat_test: {stat_test!r}. " "Use 'mannwhitney' or 'kruskal'."
+        f"Unknown stat_test: {stat_test!r}. Use 'mannwhitney' or 'kruskal'."
     )
