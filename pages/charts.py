@@ -1384,7 +1384,7 @@ layout = html.Div(
                                     ],
                                     className="g-3 mb-3",
                                 ),
-                                # Row 2: Sex | Age | Statistical Test
+                                # Row 2: Sex | Age | Add statistics
                                 dbc.Row(
                                     [
                                         dbc.Col(
@@ -1432,33 +1432,27 @@ layout = html.Div(
                                         dbc.Col(
                                             [
                                                 html.Label(
-                                                    "Statistical test",
+                                                    "Add statistics",
                                                     id="stat-test-label",
                                                     className="fw-semibold",
                                                 ),
                                                 dcc.Dropdown(
                                                     id="stat-test",
                                                     options=[
+                                                        {"label": "No", "value": "no"},
                                                         {
-                                                            "label": "None",
-                                                            "value": "none",
-                                                        },
-                                                        {
-                                                            "label": (
-                                                                "Mann-Whitney "
-                                                                "(2 groups)"
-                                                            ),
-                                                            "value": "mannwhitney",
-                                                        },
-                                                        {
-                                                            "label": (
-                                                                "Kruskal-Wallis ("
-                                                                "3 or more groups)"
-                                                            ),
-                                                            "value": "kruskal",
+                                                            "label": "Yes",
+                                                            "value": "yes",
                                                         },
                                                     ],
-                                                    value="none",
+                                                    value="no",
+                                                    clearable=False,
+                                                ),
+                                                html.Small(
+                                                    "Mann-Whitney U for 2 groups, "
+                                                    "Kruskal-Wallis for 3 or more.",
+                                                    id="stat-test-help",
+                                                    className="text-muted",
                                                 ),
                                             ],
                                             md=4,
@@ -1886,7 +1880,7 @@ def update_selectors(bioproject, current_gene, url_search, url_gene_applied):
 
 
 # ---------------------------------------------------------------------------
-# Callback 5: gene + groups + stat test -> render plot
+# Callback 5: gene + groups + add-statistics choice -> render plot
 # ---------------------------------------------------------------------------
 
 
@@ -1909,7 +1903,7 @@ def update_plot(
     selected_sample_types,
     selected_sexes,
     selected_age_ranges,
-    stat_test,
+    add_stats,
     all_group_options,
 ):
     """Query TPM values for the selected gene and render the violin plot."""
@@ -1946,7 +1940,7 @@ def update_plot(
         group_col="genotype",
         group_label="Group",
         group_order=[g for g in all_genotypes if g in selected_groups],
-        stat_test=None if stat_test == "none" else stat_test,
+        show_stats=add_stats == "yes",
         title=gene,
         palette=stable_palette,
     )
