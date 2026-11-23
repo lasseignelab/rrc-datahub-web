@@ -6,6 +6,22 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-23
 
+### Charts: dropdown accessible names include their visible label
+- Dash 4 renders `dcc.Dropdown` as a `<button>` whose own `aria-labelledby` points only at its value spans, so screen readers announced e.g. "Yes, button" / "0610005C13Rik, button" without the label. `applyLabels()` in `assets/accessibility.js` skipped any element that already had `aria-labelledby`, so the label was never added.
+- `assets/accessibility.js`: `applyLabels()` now prepends the label id to Dash's `aria-labelledby` (e.g. "stat-test-label stat-test-value-count stat-test-value" -> "Add statistics Yes"). `LABEL_MAP` extended from 6 to all 11 Charts dropdowns (added gene, sample type, scientific name, sex, underlying variant). The MutationObserver also watches `aria-labelledby` so a React re-render can't drop the label; `applyLabels()` writes only when the label id is missing, so no loop.
+- `pages/charts.py`: Gene label gets `id="gene-select-label"` (it only had `htmlFor`, which an explicit `aria-labelledby` overrides).
+- Verified in the browser: all 11 dropdowns named "<label> <value>" on load and after a keyboard value change; keyboard open/select/close unchanged (checked against the committed version); no console errors. Charts is the only page with dropdowns.
+- (Agent: Claude Opus 5.5)
+
+### Charts: plot caption, announced stats result, ARIA for the plot and stats help
+- `pages/charts.py`: Plot container is now an `html.Figure` (same id, so the plot/table toggle still works) with an `html.Figcaption` holding `#plot-caption` (`role="status"`). `update_plot` writes a text description, e.g. "Violin plot of log₁₀(TPM + 1) for Pkd2 across 2 groups: KO, WT. Mann-Whitney U, p=0.00794.", so the stats result reaches screen readers and updates are announced. New helper `_plot_caption`. No-match state says "No samples match the current filters for <gene>."
+- `components/tpm_violin_plot_plotly.py`: `_stat_annotation` -> public `stat_summary`, shared by the plot title and the caption; now runs on raw TPM (same p-value, both tests are rank-based).
+- `assets/accessibility.js`: `dcc.Graph` accepts no aria-* props, so `#violin-plot` gets `role="img"` and an `aria-label` from JS; `#stat-test` (and its focusable descendants) get `aria-describedby="stat-test-help"`.
+- `assets/style.css`: `.plot-caption` style (#212529 on white).
+- `tests/test_charts.py`: 3 caption tests.
+- Verified: non-browser tests 69/69; black, isort clean; no new pylint/pyright findings on changed lines. Browser tests, pa11y, axe and MegaLinter still to run.
+- (Agent: Claude Opus 5.5)
+
 ### Charts: higher-resolution PNG download
 - `assets/accessibility.js`: "Download plot as PNG" now exports at `width: 1000, height: 600, scale: 3` (3000x1800 px) instead of 1200x700 at scale 1, which looked soft once placed in documents. Plotly writes no DPI metadata; resolution comes from pixel count.
 - (Agent: Claude Opus 5.5)
