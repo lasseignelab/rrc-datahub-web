@@ -100,3 +100,37 @@ def test_apply_url_filters_without_params_changes_nothing():
     result = charts.apply_url_filters("")
     assert all(value is no_update for value in result[:-1])
     assert result[-1] is None
+
+
+def _caption_data():
+    """Two groups with clearly different TPM values."""
+    import pandas as pd  # pylint: disable=import-outside-toplevel
+
+    return pd.DataFrame(
+        {
+            "genotype": ["WT"] * 5 + ["KO"] * 5,
+            "TPM": [1, 2, 3, 4, 5, 20, 21, 22, 23, 24],
+        }
+    )
+
+
+def test_plot_caption_describes_plot_without_stats():
+    """Caption names the gene, group count and groups."""
+    caption = charts._plot_caption("Pkd2", ["KO", "WT"], _caption_data(), False)
+    assert caption == (
+        "Violin plot of log₁₀(TPM + 1) for Pkd2 across 2 groups: KO, WT."
+    )
+
+
+def test_plot_caption_includes_stats_result():
+    """With stats on, the caption carries the same test and p-value as the title."""
+    caption = charts._plot_caption("Pkd2", ["KO", "WT"], _caption_data(), True)
+    assert caption.endswith("KO, WT. Mann-Whitney U, p=0.00794.")
+
+
+def test_plot_caption_single_group_wording():
+    """One group uses the singular and explains why no test ran."""
+    data = _caption_data().query("genotype == 'WT'")
+    caption = charts._plot_caption("Pkd2", ["WT"], data, True)
+    assert "across 1 group: WT." in caption
+    assert caption.endswith("WT. Statistics need 2 or more groups.")

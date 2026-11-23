@@ -1781,3 +1781,11 @@ textarea.data-chat-input:focus-visible {
     animation: none;
   }
 }
+
+/* Text description under the Charts violin plot (also announced via
+   role="status" on its inner span). */
+.plot-caption {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: #212529;
+}

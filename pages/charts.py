@@ -25,7 +25,11 @@ from sqlalchemy import and_, func, or_
 from components.footer import footer
 from components.page_header import create_page_header
 from components.section_header import section_header
-from components.tpm_violin_plot_plotly import DEFAULT_COLORS, plot_tpm_violin_plotly
+from components.tpm_violin_plot_plotly import (
+    DEFAULT_COLORS,
+    plot_tpm_violin_plotly,
+    stat_summary,
+)
 from db.connection import SessionLocal
 from db.models import Dataset, Gene, Sample, SampleGene
 
@@ -1497,18 +1501,33 @@ layout = html.Div(
                                 # Filename prefix for downloads — written
                                 # by update_plot, read by JS.
                                 html.Div(id="download-meta", style={"display": "none"}),
-                                html.Div(
-                                    dcc.Graph(
-                                        id="violin-plot",
-                                        config={
-                                            "responsive": True,
-                                            "displayModeBar": False,
-                                        },
-                                        # minHeight prevents collapsing.
-                                        # It also prevents reflow when figure={}
-                                        # during a callback update.
-                                        style={"width": "100%", "minHeight": "450px"},
-                                    ),
+                                html.Figure(
+                                    [
+                                        dcc.Graph(
+                                            id="violin-plot",
+                                            config={
+                                                "responsive": True,
+                                                "displayModeBar": False,
+                                            },
+                                            # minHeight prevents collapsing.
+                                            # It also prevents reflow when
+                                            # figure={} during a callback update.
+                                            style={
+                                                "width": "100%",
+                                                "minHeight": "450px",
+                                            },
+                                        ),
+                                        # Text description of the plot, incl.
+                                        # the stats result; role=status so
+                                        # updates are announced.
+                                        html.Figcaption(
+                                            html.Span(
+                                                id="plot-caption",
+                                                role="status",
+                                            ),
+                                            className="plot-caption",
+                                        ),
+                                    ],
                                     id="plot-container",
                                 ),
                                 html.Div(
@@ -1888,6 +1907,7 @@ def update_selectors(bioproject, current_gene, url_search, url_gene_applied):
 @callback(
     Output("violin-plot", "figure"),
     Output("download-meta", "children"),
+    Output("plot-caption", "children"),
     Input("dataset-selected", "data"),
     Input("gene-select", "value"),
     Input("group-select", "value"),
@@ -1917,13 +1937,13 @@ def update_plot(
         or not selected_sexes
         or not selected_age_ranges
     ):
-        return {}, meta
+        return {}, meta, ""
 
     df = _get_tpm_data(
         bioproject, gene, selected_sample_types, selected_sexes, selected_age_ranges
     )
     if df.empty:
-        return {}, meta
+        return {}, meta, f"No samples match the current filters for {gene}."
 
     all_genotypes = sorted(df["genotype"].unique())
     df = df[df["genotype"].isin(selected_groups)]
@@ -1936,11 +1956,12 @@ def update_plot(
         for i, g in enumerate(all_option_values)
     }
 
+    group_order = [g for g in all_genotypes if g in selected_groups]
     fig = plot_tpm_violin_plotly(
         df,
         group_col="genotype",
         group_label="Group",
-        group_order=[g for g in all_genotypes if g in selected_groups],
+        group_order=group_order,
         show_stats=add_stats == "yes",
         title=gene,
         palette=stable_palette,
@@ -1950,7 +1971,23 @@ def update_plot(
     pad = (y_max - y_min) * 0.05 if y_max > y_min else 0.5
     fig.update_layout(yaxis=dict(range=[y_min - pad, y_max + pad]))
 
-    return fig, meta
+    caption = _plot_caption(gene, group_order, df, add_stats == "yes")
+    return fig, meta, caption
+
+
+def _plot_caption(gene, group_order, df, show_stats):
+    """Describe the plotted data (and stats result) in plain text."""
+    n_groups = len(group_order)
+    group_word = "group" if n_groups == 1 else "groups"
+    caption = (
+        f"Violin plot of log\u2081\u2080(TPM + 1) for {gene} across "
+        f"{n_groups} {group_word}: {', '.join(group_order)}."
+    )
+    if show_stats:
+        summary = stat_summary(df, "genotype", "TPM", group_order)
+        # Capitalised so it reads as its own sentence after the description.
+        caption += f" {summary[0].upper()}{summary[1:]}."
+    return caption
 
 
 # ---------------------------------------------------------------------------
