@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-23
 
+### Dropdowns: site focus ring
+- `assets/style.css`: Dash 4 dropdowns (`button.dash-dropdown`) showed only a 1px dark outline over their gray border on keyboard focus. Added `button.dash-dropdown:focus-visible` with the site ring (2px `--uab-green`, 2px offset). Verified with a real Tab press on the Charts page: computed outline `rgb(37, 89, 89) solid 2px`, offset 2px.
+- (Agent: Claude Opus 5.5)
+
 ### Charts: dropdown accessible names include their visible label
 - Dash 4 renders `dcc.Dropdown` as a `<button>` whose own `aria-labelledby` points only at its value spans, so screen readers announced e.g. "Yes, button" / "0610005C13Rik, button" without the label. `applyLabels()` in `assets/accessibility.js` skipped any element that already had `aria-labelledby`, so the label was never added.
 - `assets/accessibility.js`: `applyLabels()` now prepends the label id to Dash's `aria-labelledby` (e.g. "stat-test-label stat-test-value-count stat-test-value" -> "Add statistics Yes"). `LABEL_MAP` extended from 6 to all 11 Charts dropdowns (added gene, sample type, scientific name, sex, underlying variant). The MutationObserver also watches `aria-labelledby` so a React re-render can't drop the label; `applyLabels()` writes only when the label id is missing, so no loop.
