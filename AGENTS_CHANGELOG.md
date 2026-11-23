@@ -4,6 +4,15 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-23
+
+### Footer: partner logos are now links
+- `components/footer.py`: Lasseigne Lab, PKD RRC and UAB logos each link to their site (`https://www.lasseigne.org/`, `https://www.pkd-rrc.org`, `https://www.uab.edu/`) via new `logo_link()`. Opens in a new tab with `rel="noopener noreferrer"`; link name comes from `aria-label` and the image alt is empty, so screen readers don't announce it twice.
+- `assets/style.css`: The link is now the flex item and carries the width cap (and the Lab logo's `translateY`), so the focus ring hugs the logo and the layout is unchanged.
+- (Agent: Claude Sonnet 5.5)
+
+---
+
 ## 2026-11-20
 
 ### About page: match the Home page AI chat
