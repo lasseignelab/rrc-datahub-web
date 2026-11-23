@@ -51,6 +51,13 @@ outline: 2px solid var(--uab-green);
 outline-offset: 2px;
 }
 
+/* Dash 4 dropdowns are <button>s, but Dash's own CSS replaces the site ring
+   with a 1px dark outline that barely shows over the border. Restore it. */
+button.dash-dropdown:focus-visible {
+outline: 2px solid var(--uab-green);
+outline-offset: 2px;
+}
+
 
 .app-shell {
 min-height: 100vh;
