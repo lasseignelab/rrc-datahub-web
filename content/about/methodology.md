@@ -54,5 +54,6 @@ directions).
 
 #### Statistics
 
-Plots show log₁₀(TPM + 1). Optional group comparisons use the two-sided
-Mann-Whitney U test (2 groups) or the Kruskal-Wallis test (3 or more groups).
+Plots show log₁₀(TPM + 1). Optional group comparisons are chosen
+automatically from the number of groups plotted: the two-sided Mann-Whitney U
+test (2 groups) or the Kruskal-Wallis test (3 or more groups).

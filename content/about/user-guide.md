@@ -26,11 +26,14 @@ the button in the first column.
 #### 3. Set plot parameters
 
 Under **Edit Plot Parameters**, choose the gene, the experimental groups to
-compare, and optionally restrict by sample type, sex, or age. Select a
-statistical test if you want one:
+compare, and optionally restrict by sample type, sex, or age. Set **Add
+statistics** to **Yes** to test for differences between groups. The test is
+chosen from the number of groups plotted:
 
-- **Mann-Whitney** for comparing exactly 2 groups
+- **Mann-Whitney U** for exactly 2 groups
 - **Kruskal-Wallis** for 3 or more groups
+
+The test name and p-value appear in the plot title.
 
 #### 4. Read and export results
 
