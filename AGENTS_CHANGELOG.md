@@ -6,6 +6,10 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-23
 
+### Charts: higher-resolution PNG download
+- `assets/accessibility.js`: "Download plot as PNG" now exports at `width: 1000, height: 600, scale: 3` (3000x1800 px) instead of 1200x700 at scale 1, which looked soft once placed in documents. Plotly writes no DPI metadata; resolution comes from pixel count.
+- (Agent: Claude Opus 5.5)
+
 ### Charts: automatic statistical test selection; test name in plot title
 - `pages/charts.py`: Replaced the "Statistical test" dropdown (None / Mann-Whitney / Kruskal-Wallis) with "Add statistics" (No / Yes, default No, not clearable) plus a short help line. The callback passes `show_stats=add_stats == "yes"`. Kept the `stat-test` / `stat-test-label` ids so the ARIA patches in `assets/accessibility.js` still apply.
 - `components/tpm_violin_plot_plotly.py`: `stat_test` parameter replaced by `show_stats: bool`. New `select_stat_test(n_groups)` picks the test from the number of groups plotted (2 -> Mann-Whitney U, 3+ -> Kruskal-Wallis, <2 -> none). Title now reads e.g. "Pkd2  (Mann-Whitney U, p=0.0122)"; one group shows "(statistics need 2 or more groups)"; if scipy cannot compute a p-value (e.g. all values identical, where Kruskal-Wallis raised ValueError and broke the plot) the title says "p-value not computable".
