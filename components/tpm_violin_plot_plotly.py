@@ -120,7 +120,7 @@ def plot_tpm_violin_plotly(
 
     full_title = title or ""
     if show_stats:
-        stat_label = _stat_annotation(data, group_col, plot_col, group_order)
+        stat_label = stat_summary(data, group_col, value_col, group_order)
         full_title = f"{full_title}  ({stat_label})".strip()
 
     axis_label = group_label if group_label is not None else group_col
@@ -192,13 +192,18 @@ def select_stat_test(n_groups: int) -> Optional[str]:
     return "kruskal"
 
 
-def _stat_annotation(
+def stat_summary(
     data: pd.DataFrame,
     group_col: str,
     value_col: str,
-    group_order: list,
+    group_order: Sequence[str],
 ) -> str:
-    """Pick and run the test for the plotted groups; return the title text."""
+    """Pick and run the test for the plotted groups; return a short summary.
+
+    Used for both the plot title and the Charts page caption. Both tests are
+    rank-based, so raw and log-transformed values give the same p-value.
+    """
+    group_order = list(group_order)
     stat_test = select_stat_test(len(group_order))
     if stat_test is None:
         return "statistics need 2 or more groups"
