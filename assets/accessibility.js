@@ -118,8 +118,46 @@
         });
     }
 
+    // Map control id -> id of its help text. Set on the wrapper and on its
+    // focusable descendants, since screen readers read the description of
+    // the element that has focus (WCAG 1.3.1 / 3.3.2).
+    var DESCRIBED_BY_MAP = {
+        "stat-test": "stat-test-help",
+    };
+
+    function applyDescriptions() {
+        Object.keys(DESCRIBED_BY_MAP).forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) { return; }
+            var targets = [el].concat(Array.prototype.slice.call(
+                el.querySelectorAll("input, button, [role=\"combobox\"], [tabindex]")
+            ));
+            targets.forEach(function (target) {
+                if (!target.getAttribute("aria-describedby")) {
+                    target.setAttribute("aria-describedby", DESCRIBED_BY_MAP[id]);
+                }
+            });
+        });
+    }
+
+    // dcc.Graph accepts no aria-* props. Expose the violin plot as a single
+    // labelled image; the full text description (incl. stats) is the
+    // figcaption (#plot-caption) that follows it (WCAG 1.1.1).
+    function labelViolinPlot() {
+        var el = document.getElementById("violin-plot");
+        if (el && !el.getAttribute("aria-label")) {
+            el.setAttribute("role", "img");
+            el.setAttribute(
+                "aria-label",
+                "Violin plot of TPM expression by group. Description follows."
+            );
+        }
+    }
+
     function applyAll() {
         applyLabels();
+        applyDescriptions();
+        labelViolinPlot();
         fixOptionContainerARIA();
         fixSingleOptionContainerLabels();
         fixDropdownClearButtons();
