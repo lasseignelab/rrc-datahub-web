@@ -9,19 +9,33 @@
     // Fixes WCAG 4.1.2: role=listbox and role=radiogroup require accessible names.
     var LABEL_MAP = {
         "age-unit": "age-unit-label",
+        "gene-select": "gene-select-label",
         "group-select": "group-select-label",
         "plot-age-select": "plot-age-label",
         "plot-sample-type-select": "plot-sample-type-label",
         "plot-sex-select": "plot-sex-label",
+        "sample-type-select": "sample-type-label",
+        "scientific-name-select": "scientific-name-label",
+        "sex-select": "sex-select-label",
         "stat-test": "stat-test-label",
+        "underlying-variant-select": "underlying-variant-label",
     };
 
+    // Dash 4 renders dcc.Dropdown as a <button> whose own aria-labelledby
+    // points only at its value spans, so it is announced as e.g. "Yes,
+    // button". Prepend the visible label's id instead of skipping elements
+    // that already have aria-labelledby, so the name becomes "Add statistics
+    // Yes" (WCAG 1.3.1 / 2.5.3 / 4.1.2).
     function applyLabels() {
         Object.keys(LABEL_MAP).forEach(function (id) {
             var el = document.getElementById(id);
-            if (el && !el.getAttribute("aria-labelledby")) {
-                el.setAttribute("aria-labelledby", LABEL_MAP[id]);
-            }
+            if (!el) { return; }
+            var labelId = LABEL_MAP[id];
+            var current = (el.getAttribute("aria-labelledby") || "")
+                .split(/\s+/).filter(Boolean);
+            if (current.indexOf(labelId) === 0) { return; }
+            current = current.filter(function (ref) { return ref !== labelId; });
+            el.setAttribute("aria-labelledby", [labelId].concat(current).join(" "));
         });
     }
 
@@ -111,10 +125,15 @@
         fixDropdownClearButtons();
     }
 
+    // aria-labelledby is also watched: React rewrites it when a dropdown's
+    // value changes, which would drop the prepended label. applyLabels()
+    // only writes when the label id is missing, so this cannot loop.
     var observer = new MutationObserver(applyAll);
     observer.observe(document.documentElement, {
         childList: true,
         subtree: true,
+        attributes: true,
+        attributeFilter: ["aria-labelledby"],
     });
 
     applyAll();

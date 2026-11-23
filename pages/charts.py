@@ -1315,6 +1315,7 @@ layout = html.Div(
                                             [
                                                 html.Label(
                                                     "Gene",
+                                                    id="gene-select-label",
                                                     htmlFor="gene-select",
                                                     className="fw-semibold",
                                                 ),
