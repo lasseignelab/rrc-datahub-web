@@ -936,30 +936,46 @@ color:#000000;
     padding: 0;
 }
 
+/* Each logo is wrapped in a link; the link is the flex item and carries the
+   width cap, so the keyboard focus ring hugs the logo. */
+.footer-logos .logo-link {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 32%;
+}
+
 .footer-logos img {
     display: block;
     flex: 0 1 auto;
     width: auto !important;
     height: 70px !important;
-    max-width: 32% !important;
+    max-width: 100% !important;
     object-fit: contain;
 }
 
 /* PKD RRC logo - primary logo */
+.info-panel .footer-logos .logo-link-rrc {
+    max-width: 38%;
+}
+
 .info-panel .footer-logos img.logo-rrc {
     height: 90px !important;
-    max-width: 38% !important;
+    max-width: 100% !important;
     object-fit: contain !important;
 }
 
 /* Lasseigne Lab logo */
+.info-panel .footer-logos .logo-link-lab {
+    transform: translateY(9px);
+}
+
 .info-panel .footer-logos img.logo-lab {
     flex: 0 1 auto;
     width: 130px !important;
     height: 130px !important;
-    max-width: 32% !important;
+    max-width: 100% !important;
     object-fit: contain !important;
-    transform: translateY(9px);
 }
 
 /* ==========================================================================
@@ -1541,13 +1557,19 @@ Responsive
       box-sizing: border-box;
   }
 
+  /* Links around the logos */
+  .info-panel .footer-logos .logo-link {
+      flex: 0 0 auto;
+      max-width: 90%;
+  }
+
   /* UAB and PKD RRC logos */
   .info-panel .footer-logos img:not(.logo-lab) {
       display: block;
       flex: 0 0 auto;
       width: auto !important;
       height: 90px !important;
-      max-width: 90% !important;
+      max-width: 100% !important;
       margin: 0 auto;
       object-fit: contain;
   }
