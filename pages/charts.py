@@ -1272,7 +1272,7 @@ layout = html.Div(
                                         **{"aria-labelledby": "dataset-table-label"},
                                     ),
                                     id="dataset-table-wrapper",
-                                    style={"height": "280px", "overflowY": "scroll"},
+                                    style={"maxHeight": "650px", "overflowY": "auto"},
                                     role="region",
                                     tabIndex=0,
                                     **{"aria-label": "Dataset selection table"},
