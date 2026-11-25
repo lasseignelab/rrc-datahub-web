@@ -9,19 +9,33 @@
     // Fixes WCAG 4.1.2: role=listbox and role=radiogroup require accessible names.
     var LABEL_MAP = {
         "age-unit": "age-unit-label",
+        "gene-select": "gene-select-label",
         "group-select": "group-select-label",
         "plot-age-select": "plot-age-label",
         "plot-sample-type-select": "plot-sample-type-label",
         "plot-sex-select": "plot-sex-label",
+        "sample-type-select": "sample-type-label",
+        "scientific-name-select": "scientific-name-label",
+        "sex-select": "sex-select-label",
         "stat-test": "stat-test-label",
+        "underlying-variant-select": "underlying-variant-label",
     };
 
+    // Dash 4 renders dcc.Dropdown as a <button> whose own aria-labelledby
+    // points only at its value spans, so it is announced as e.g. "Yes,
+    // button". Prepend the visible label's id instead of skipping elements
+    // that already have aria-labelledby, so the name becomes "Add statistics
+    // Yes" (WCAG 1.3.1 / 2.5.3 / 4.1.2).
     function applyLabels() {
         Object.keys(LABEL_MAP).forEach(function (id) {
             var el = document.getElementById(id);
-            if (el && !el.getAttribute("aria-labelledby")) {
-                el.setAttribute("aria-labelledby", LABEL_MAP[id]);
-            }
+            if (!el) { return; }
+            var labelId = LABEL_MAP[id];
+            var current = (el.getAttribute("aria-labelledby") || "")
+                .split(/\s+/).filter(Boolean);
+            if (current.indexOf(labelId) === 0) { return; }
+            current = current.filter(function (ref) { return ref !== labelId; });
+            el.setAttribute("aria-labelledby", [labelId].concat(current).join(" "));
         });
     }
 
@@ -104,17 +118,60 @@
         });
     }
 
+    // Map control id -> id of its help text. Set on the wrapper and on its
+    // focusable descendants, since screen readers read the description of
+    // the element that has focus (WCAG 1.3.1 / 3.3.2).
+    var DESCRIBED_BY_MAP = {
+        "stat-test": "stat-test-help",
+    };
+
+    function applyDescriptions() {
+        Object.keys(DESCRIBED_BY_MAP).forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) { return; }
+            var targets = [el].concat(Array.prototype.slice.call(
+                el.querySelectorAll("input, button, [role=\"combobox\"], [tabindex]")
+            ));
+            targets.forEach(function (target) {
+                if (!target.getAttribute("aria-describedby")) {
+                    target.setAttribute("aria-describedby", DESCRIBED_BY_MAP[id]);
+                }
+            });
+        });
+    }
+
+    // dcc.Graph accepts no aria-* props. Expose the violin plot as a single
+    // labelled image; the full text description (incl. stats) is the
+    // figcaption (#plot-caption) that follows it (WCAG 1.1.1).
+    function labelViolinPlot() {
+        var el = document.getElementById("violin-plot");
+        if (el && !el.getAttribute("aria-label")) {
+            el.setAttribute("role", "img");
+            el.setAttribute(
+                "aria-label",
+                "Violin plot of TPM expression by group. Description follows."
+            );
+        }
+    }
+
     function applyAll() {
         applyLabels();
+        applyDescriptions();
+        labelViolinPlot();
         fixOptionContainerARIA();
         fixSingleOptionContainerLabels();
         fixDropdownClearButtons();
     }
 
+    // aria-labelledby is also watched: React rewrites it when a dropdown's
+    // value changes, which would drop the prepended label. applyLabels()
+    // only writes when the label id is missing, so this cannot loop.
     var observer = new MutationObserver(applyAll);
     observer.observe(document.documentElement, {
         childList: true,
         subtree: true,
+        attributes: true,
+        attributeFilter: ["aria-labelledby"],
     });
 
     applyAll();
@@ -158,7 +215,9 @@
         var metaEl = document.getElementById("download-meta");
         var metaPrefix = metaEl ? metaEl.textContent.trim().replace(/[^a-zA-Z0-9_-]/g, "_") : "";
         var filename = metaPrefix ? metaPrefix + "_tpm_expression" : "tpm_expression_plot";
-        window.Plotly.toImage(plotEl, { format: "png", width: 1200, height: 700 })
+        // scale: 3 renders at 3x pixel density (3000x1800 px) so the PNG stays
+        // sharp in documents and slides; the smaller canvas keeps text legible.
+        window.Plotly.toImage(plotEl, { format: "png", width: 1000, height: 600, scale: 3 })
             .then(function (dataUrl) {
                 var a = document.createElement("a");
                 a.download = filename + ".png";

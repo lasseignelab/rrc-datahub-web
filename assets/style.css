@@ -51,6 +51,13 @@ outline: 2px solid var(--uab-green);
 outline-offset: 2px;
 }
 
+/* Dash 4 dropdowns are <button>s, but Dash's own CSS replaces the site ring
+   with a 1px dark outline that barely shows over the border. Restore it. */
+button.dash-dropdown:focus-visible {
+outline: 2px solid var(--uab-green);
+outline-offset: 2px;
+}
+
 
 .app-shell {
 min-height: 100vh;
@@ -1802,4 +1809,12 @@ textarea.data-chat-input:focus-visible {
   .data-chat-searching p::before {
     animation: none;
   }
+}
+
+/* Text description under the Charts violin plot (also announced via
+   role="status" on its inner span). */
+.plot-caption {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: #212529;
 }

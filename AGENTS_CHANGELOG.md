@@ -6,6 +6,38 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-23
 
+### Dropdowns: site focus ring
+- `assets/style.css`: Dash 4 dropdowns (`button.dash-dropdown`) showed only a 1px dark outline over their gray border on keyboard focus. Added `button.dash-dropdown:focus-visible` with the site ring (2px `--uab-green`, 2px offset). Verified with a real Tab press on the Charts page: computed outline `rgb(37, 89, 89) solid 2px`, offset 2px.
+- (Agent: Claude Opus 5.5)
+
+### Charts: dropdown accessible names include their visible label
+- Dash 4 renders `dcc.Dropdown` as a `<button>` whose own `aria-labelledby` points only at its value spans, so screen readers announced e.g. "Yes, button" / "0610005C13Rik, button" without the label. `applyLabels()` in `assets/accessibility.js` skipped any element that already had `aria-labelledby`, so the label was never added.
+- `assets/accessibility.js`: `applyLabels()` now prepends the label id to Dash's `aria-labelledby` (e.g. "stat-test-label stat-test-value-count stat-test-value" -> "Add statistics Yes"). `LABEL_MAP` extended from 6 to all 11 Charts dropdowns (added gene, sample type, scientific name, sex, underlying variant). The MutationObserver also watches `aria-labelledby` so a React re-render can't drop the label; `applyLabels()` writes only when the label id is missing, so no loop.
+- `pages/charts.py`: Gene label gets `id="gene-select-label"` (it only had `htmlFor`, which an explicit `aria-labelledby` overrides).
+- Verified in the browser: all 11 dropdowns named "<label> <value>" on load and after a keyboard value change; keyboard open/select/close unchanged (checked against the committed version); no console errors. Charts is the only page with dropdowns.
+- (Agent: Claude Opus 5.5)
+
+### Charts: plot caption, announced stats result, ARIA for the plot and stats help
+- `pages/charts.py`: Plot container is now an `html.Figure` (same id, so the plot/table toggle still works) with an `html.Figcaption` holding `#plot-caption` (`role="status"`). `update_plot` writes a text description, e.g. "Violin plot of log₁₀(TPM + 1) for Pkd2 across 2 groups: KO, WT. Mann-Whitney U, p=0.00794.", so the stats result reaches screen readers and updates are announced. New helper `_plot_caption`. No-match state says "No samples match the current filters for <gene>."
+- `components/tpm_violin_plot_plotly.py`: `_stat_annotation` -> public `stat_summary`, shared by the plot title and the caption; now runs on raw TPM (same p-value, both tests are rank-based).
+- `assets/accessibility.js`: `dcc.Graph` accepts no aria-* props, so `#violin-plot` gets `role="img"` and an `aria-label` from JS; `#stat-test` (and its focusable descendants) get `aria-describedby="stat-test-help"`.
+- `assets/style.css`: `.plot-caption` style (#212529 on white).
+- `tests/test_charts.py`: 3 caption tests.
+- Verified: non-browser tests 69/69; black, isort clean; no new pylint/pyright findings on changed lines. Browser tests, pa11y, axe and MegaLinter still to run.
+- (Agent: Claude Opus 5.5)
+
+### Charts: higher-resolution PNG download
+- `assets/accessibility.js`: "Download plot as PNG" now exports at `width: 1000, height: 600, scale: 3` (3000x1800 px) instead of 1200x700 at scale 1, which looked soft once placed in documents. Plotly writes no DPI metadata; resolution comes from pixel count.
+- (Agent: Claude Opus 5.5)
+
+### Charts: automatic statistical test selection; test name in plot title
+- `pages/charts.py`: Replaced the "Statistical test" dropdown (None / Mann-Whitney / Kruskal-Wallis) with "Add statistics" (No / Yes, default No, not clearable) plus a short help line. The callback passes `show_stats=add_stats == "yes"`. Kept the `stat-test` / `stat-test-label` ids so the ARIA patches in `assets/accessibility.js` still apply.
+- `components/tpm_violin_plot_plotly.py`: `stat_test` parameter replaced by `show_stats: bool`. New `select_stat_test(n_groups)` picks the test from the number of groups plotted (2 -> Mann-Whitney U, 3+ -> Kruskal-Wallis, <2 -> none). Title now reads e.g. "Pkd2  (Mann-Whitney U, p=0.0122)"; one group shows "(statistics need 2 or more groups)"; if scipy cannot compute a p-value (e.g. all values identical, where Kruskal-Wallis raised ValueError and broke the plot) the title says "p-value not computable".
+- `tests/test_tpm_violin_plot_plotly.py`: New unit tests for test selection and title text (10 tests).
+- `content/about/user-guide.md`, `content/about/methodology.md`: Describe the Yes/No choice and automatic test selection.
+- Verified: non-browser tests 66/66 (browser tests and pa11y not run: no Chrome in the agent shell); black, isort, pylint, pyright clean on changed files; flake8 only E501 at its default 79 columns (lines up to 88, as elsewhere in the file). MegaLinter not run (no Docker).
+- (Agent: Claude Opus 5.5)
+
 ### Footer: partner logos are now links
 - `components/footer.py`: Lasseigne Lab, PKD RRC and UAB logos each link to their site (`https://www.lasseigne.org/`, `https://www.pkd-rrc.org`, `https://www.uab.edu/`) via new `logo_link()`. Opens in a new tab with `rel="noopener noreferrer"`; link name comes from `aria-label` and the image alt is empty, so screen readers don't announce it twice.
 - `assets/style.css`: The link is now the flex item and carries the width cap (and the Lab logo's `translateY`), so the focus ring hugs the logo and the layout is unchanged.
