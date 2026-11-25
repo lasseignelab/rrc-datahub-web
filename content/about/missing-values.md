@@ -6,8 +6,7 @@ DataHub uses two labels, kept separate throughout the site:
   blank, or no value was recorded for that sample. For example, a sample
   with no sex listed shows Not provided.
 - **Not applicable:** the source record states that the field does not apply
-  to that sample. For example, cell cultures often have no age, strain, or
-  genotype to report.
+  to that sample. For example, cell cultures do not record biological age.
 
 How these labels affect what you see:
 
