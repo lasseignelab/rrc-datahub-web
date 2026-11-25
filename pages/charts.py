@@ -943,6 +943,21 @@ layout = html.Div(
                                     header_id="dataset-filter",
                                     heading_id="dataset-filter-title",
                                 ),
+                                html.P(
+                                    [
+                                        "Some values are shown as Not provided or Not "
+                                        "applicable. Learn what Not provided and Not "
+                                        "applicable mean ",
+                                        html.A(
+                                            "here",
+                                            href="/about#missing-values",
+                                            **{"aria-label": "here: what Not provided and Not applicable mean (About page)"},
+                                        ),
+                                        ".",
+                                    ],
+                                    id="missing-values-note",
+                                    className="small",
+                                ),
                                 # Row 1: Scientific Name | Sex | Age Range (wider)
                                 dbc.Row(
                                     [
@@ -991,9 +1006,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets sex "
-                                                                "with not "
-                                                                "provided or N/A"
+                                                                "Include datasets with sex "
+                                                                "Not provided or "
+                                                                "Not applicable"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1097,9 +1112,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets"
-                                                                " with age not "
-                                                                "provided or N/A"
+                                                                "Include datasets with age "
+                                                                "Not provided or "
+                                                                "Not applicable"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1142,9 +1157,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets with "
-                                                                "underlying variant "
-                                                                "not provided or N/A"
+                                                                "Include datasets with underlying variant "
+                                                                "Not provided or "
+                                                                "Not applicable"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1214,6 +1229,17 @@ layout = html.Div(
                                             id="dataset-count",
                                             style={
                                                 "marginLeft": "8px",
+                                                "color": "#555",
+                                                "fontSize": "0.9em",
+                                            },
+                                        ),
+                                        # Same muted style as the count, so the
+                                        # (n) explanation reads as part of that line.
+                                        html.Span(
+                                            " · Values in parentheses, (n), are "
+                                            "sample counts.",
+                                            id="sample-count-note",
+                                            style={
                                                 "color": "#555",
                                                 "fontSize": "0.9em",
                                             },
