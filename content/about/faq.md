@@ -24,12 +24,12 @@ You can also download the data behind any plot as CSV from the Charts page.
 - **Underlying variant:** the PKD-related gene variant modeled in a dataset.
 - **Violin plot:** a plot that shows the full distribution of values in each
   group. Wider sections mean more samples at that expression level.
-- **NP (Not provided):** the depositor did not supply this value, or it was
-  missing from the record. See [Missing values](#missing-values).
-- **NA (Not applicable):** the source record states that the field does not
-  apply to the sample (for example, age for a cell culture). See
-  [Missing values](#missing-values).
+- **Not provided:** the depositor did not supply this value, or it was
+  missing from the record. See [Missing values](#missing-values) for more
+  detail.
+- **Not applicable:** the source record states that the field does not
+  apply to the sample. See [Missing values](#missing-values) for more detail.
 - **(n):** in a table column or group label, the number of samples with that
   value.
 - **Wild-type:** a control sample with no PKD-related variant. Wild-type
-  samples are labeled as such, not as NP.
+  samples are labeled as such, not as Not provided.

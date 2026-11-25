@@ -1161,12 +1161,20 @@ list-style: none;
 padding-left: 0;
 }
 
+/* Term is pinned in a left column; the definition flows as normal inline
+   text, so links inside it stay in line (a grid split each node into a cell). */
 #faq ~ .about-markdown h4 + ul > li {
-display: grid;
-grid-template-columns: 13rem 1fr;
-column-gap: 1rem;
-padding: 0.4rem 0;
+position: relative;
+min-height: 2.2rem;
+padding: 0.4rem 0 0.4rem 14rem;
 border-bottom: 1px solid var(--line);
+}
+
+#faq ~ .about-markdown h4 + ul > li > strong:first-child {
+position: absolute;
+left: 0;
+top: 0.4rem;
+width: 13rem;
 }
 
 #faq ~ .about-markdown h4 + ul > li:last-child {
@@ -1175,7 +1183,13 @@ border-bottom: 0;
 
 @media (max-width: 575px) {
   #faq ~ .about-markdown h4 + ul > li {
-  grid-template-columns: 1fr;
+  padding-left: 0;
+  }
+
+  #faq ~ .about-markdown h4 + ul > li > strong:first-child {
+  position: static;
+  display: block;
+  width: auto;
   }
 }
 
