@@ -127,7 +127,7 @@ def plot_tpm_violin_plotly(
 
     axis_label = group_label if group_label is not None else group_col
     fig.update_layout(
-        title=dict(text=full_title, x=0, xanchor="left"),
+        title=dict(text=full_title, x=0.05, xanchor="left"),
         xaxis_title=axis_label,
         yaxis_title=ylabel,
         xaxis=dict(
