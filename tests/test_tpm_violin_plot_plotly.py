@@ -37,7 +37,7 @@ def test_two_groups_title_names_mann_whitney():
     fig = plot_tpm_violin_plotly(
         _make_data(["WT", "KO"]), group_col="genotype", title="Pkd2", show_stats=True
     )
-    assert _title(fig).startswith("Pkd2  (Mann-Whitney U, p=")
+    assert _title(fig).startswith("Pkd2<br><sup>Mann-Whitney U, p=")
 
 
 def test_three_groups_title_names_kruskal_wallis():
@@ -48,7 +48,7 @@ def test_three_groups_title_names_kruskal_wallis():
         title="Pkd2",
         show_stats=True,
     )
-    assert _title(fig).startswith("Pkd2  (Kruskal-Wallis, p=")
+    assert _title(fig).startswith("Pkd2<br><sup>Kruskal-Wallis, p=")
 
 
 def test_one_group_title_explains_no_test():
@@ -56,7 +56,7 @@ def test_one_group_title_explains_no_test():
     fig = plot_tpm_violin_plotly(
         _make_data(["WT"]), group_col="genotype", title="Pkd2", show_stats=True
     )
-    assert _title(fig) == "Pkd2  (statistics need 2 or more groups)"
+    assert _title(fig) == "Pkd2<br><sup>statistics need 2 or more groups</sup>"
 
 
 def test_identical_values_do_not_crash():
@@ -74,3 +74,28 @@ def test_stats_off_leaves_title_unchanged():
         _make_data(["WT", "KO"]), group_col="genotype", title="Pkd2"
     )
     assert _title(fig) == "Pkd2"
+
+
+def test_dataset_accession_in_subtitle():
+    """The dataset accession appears on the subtitle line under the title."""
+    fig = plot_tpm_violin_plotly(
+        _make_data(["WT", "KO"]),
+        group_col="genotype",
+        title="Pkd2 expression by group",
+        dataset_accession="PRJNA123456",
+    )
+    assert _title(fig) == "Pkd2 expression by group<br><sup>Dataset PRJNA123456</sup>"
+
+
+def test_accession_and_stats_share_subtitle():
+    """Accession and p-value sit together on the subtitle, not the main line."""
+    fig = plot_tpm_violin_plotly(
+        _make_data(["WT", "KO"]),
+        group_col="genotype",
+        title="Pkd2 expression by group",
+        dataset_accession="PRJNA123456",
+        show_stats=True,
+    )
+    main, subtitle = _title(fig).split("<br>")
+    assert main == "Pkd2 expression by group"
+    assert subtitle.startswith("<sup>Dataset PRJNA123456 \u00b7 Mann-Whitney U, p=")
