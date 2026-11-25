@@ -41,12 +41,14 @@ def plot_tpm_violin_plotly(
     show_n: bool = True,
     show_stats: bool = False,
     group_label: Optional[str] = None,
+    dataset_accession: Optional[str] = None,
 ) -> go.Figure:
     """Build a violin + box + jittered-points figure of TPM by group.
 
-    When ``show_stats`` is True, the test is picked from the number of
-    groups plotted (see ``select_stat_test``) and its name and p-value are
-    added to the title.
+    The title is the main line (``title``) with a smaller subtitle line
+    beneath it holding the dataset accession and, when ``show_stats`` is
+    True, the test name and p-value. The test is picked from the number of
+    groups plotted (see ``select_stat_test``).
     """
     data = data.dropna(subset=[group_col, value_col]).copy()
 
@@ -118,14 +120,14 @@ def plot_tpm_violin_plotly(
             )
         )
 
-    full_title = title or ""
-    if show_stats:
-        stat_label = stat_summary(data, group_col, value_col, group_order)
-        full_title = f"{full_title}  ({stat_label})".strip()
+    stat_label = (
+        stat_summary(data, group_col, value_col, group_order) if show_stats else None
+    )
+    full_title = build_title(title, dataset_accession, stat_label)
 
     axis_label = group_label if group_label is not None else group_col
     fig.update_layout(
-        title=full_title,
+        title=dict(text=full_title, x=0.05, xanchor="left"),
         xaxis_title=axis_label,
         yaxis_title=ylabel,
         xaxis=dict(
@@ -159,6 +161,34 @@ def plot_tpm_violin_plotly(
     )
 
     return fig
+
+
+# Middle dot between the pieces of the subtitle line.
+SUBTITLE_SEPARATOR = " \u00b7 "
+
+
+def build_title(
+    title: Optional[str],
+    dataset_accession: Optional[str] = None,
+    stat_label: Optional[str] = None,
+) -> str:
+    """Return the plot title: a main line plus an optional subtitle line.
+
+    The subtitle joins the dataset accession and the statistics summary with
+    a middle dot, e.g. ``Dataset PRJNA123456 · Mann-Whitney U, p=0.012``.
+    Plotly renders the ``<sup>`` text smaller, which keeps the p-value out of
+    the main heading. With neither extra, the title is returned unchanged.
+    """
+    main = title or ""
+    parts = []
+    if dataset_accession:
+        parts.append(f"Dataset {dataset_accession}")
+    if stat_label:
+        parts.append(stat_label)
+    if not parts:
+        return main
+    subtitle = "<sup>" + SUBTITLE_SEPARATOR.join(parts) + "</sup>"
+    return f"{main}<br>{subtitle}" if main else subtitle
 
 
 def _resolve_palette(palette: Optional[Union[dict, list]], group_order: list) -> list:

@@ -6,12 +6,29 @@ A log of changes made by AI agents in this project, newest first.
 
 ## 2026-11-25
 
-- Claude (Anthropic): Clarified missing-value terminology and abbreviations
-  (issues #25 and #42). Added an About-page "Missing values"
-  section (`#missing-values`) and glossary entries; spelled out NP/NA in the
-  Charts filter labels and added a note linking to the new section; aligned
-  wording in methodology, user guide and limitations; added
-  `assets/anchor_scroll.js` so cross-page hash links scroll to their target.
+### Issues #25 and #42: missing-value terminology
+- Clarified missing-value terminology. Added an About-page "Missing values"
+  section (`#missing-values`) and glossary entries (Not provided, Not
+  applicable, (n), wild-type); aligned wording in methodology, user guide and
+  limitations; added `assets/anchor_scroll.js` so cross-page hash links scroll
+  to their target.
+- Labels are always spelled out ("Not provided", "Not applicable"), capitalized
+  as stored in the data; NP/NA abbreviations removed from the Charts filters,
+  the About sidebar and every About section.
+- `pages/charts.py`: Dataset Filter note links to `/about#missing-values`; the
+  (n) sample-count note sits on the Found Dataset(s) count line.
+- `assets/style.css`: glossary rows pin the term in a left column instead of a
+  grid, so inline links stay on the definition line.
+- (Agent: Claude Opus 5.5)
+
+### Issue #33: dataset accession and p-value in the TPM plot title
+- `components/tpm_violin_plot_plotly.py`: New `dataset_accession` argument and `build_title()`. The title is now a main line plus a smaller subtitle line (`<sup>`), e.g. `Dataset PRJNA123456 · Mann-Whitney U, p=0.012`, so the p-value no longer sits in the heading. Title is left-aligned. With no accession and no stats the title is unchanged.
+- `pages/charts.py`: Plot title is now `"{gene} expression by group"` (was just the gene) and passes the selected BioProject as `dataset_accession`.
+- `tests/test_tpm_violin_plot_plotly.py`: Updated the stats-title assertions for the subtitle format; added tests for the accession subtitle.
+- Built on the `feature/automatic-stats-test-selection` branch (PR #57).
+- (Agent: Claude Sonnet 5.5)
+
+---
 
 ## 2026-11-23
 

@@ -1989,7 +1989,8 @@ def update_plot(
         group_label="Group",
         group_order=group_order,
         show_stats=add_stats == "yes",
-        title=gene,
+        title=f"{gene} expression by group",
+        dataset_accession=bioproject,
         palette=stable_palette,
     )
 
