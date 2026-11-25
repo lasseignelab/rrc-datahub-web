@@ -39,8 +39,9 @@ type, sex, age, underlying variant, genotype, strain, tissue, and treatment):
   different units can be filtered together.
 - Sample type was derived from the sample source description, and treatment
   group (experimental, vehicle control, or untreated) from the treatment.
-- Missing values are labeled "Not provided"; values recorded as not
-  applicable in the source are labeled "Not applicable".
+- Missing values are labeled "Not provided" (NP); values recorded as not
+  applicable in the source are labeled "Not applicable" (NA). See
+  [Missing values](#missing-values).
 - Only RNA-seq runs were kept; for example, miRNA-seq runs in PRJNA342113
   were excluded.
 

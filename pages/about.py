@@ -39,6 +39,7 @@ SECTIONS = [
         [
             ("user-guide", "User guide"),
             ("faq", "FAQ and glossary"),
+            ("missing-values", "Missing values (NP and NA)"),
             ("limitations", "Known limitations"),
         ],
     ),

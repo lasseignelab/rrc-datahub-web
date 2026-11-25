@@ -4,6 +4,15 @@ A log of changes made by AI agents in this project, newest first.
 
 ---
 
+## 2026-11-25
+
+- Claude (Anthropic): Clarified missing-value terminology and abbreviations
+  (issues #25 and #42). Added an About-page "Missing values (NP and NA)"
+  section (`#missing-values`) and glossary entries; spelled out NP/NA in the
+  Charts filter labels and added a note linking to the new section; aligned
+  wording in methodology, user guide and limitations; added
+  `assets/anchor_scroll.js` so cross-page hash links scroll to their target.
+
 ## 2026-11-23
 
 ### Dropdowns: site focus ring

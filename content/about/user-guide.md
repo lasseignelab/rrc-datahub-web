@@ -15,8 +15,7 @@ under **Edit Plot Parameters** (step 3).
 On the Charts page, use the **Dataset Filter** panel to narrow the list by
 scientific name, sex, age range, underlying variant, and sample type. For
 **Age range**, enter a minimum and maximum and choose a unit (days, weeks,
-months, or years). By default, datasets where a characteristic is "not provided" or "not
-applicable" are included; uncheck those boxes to exclude them. Tick **Only
+months, or years). By default, datasets where a characteristic is Not provided (NP) or Not applicable (NA) are included; uncheck those boxes to exclude them. See [Missing values](#missing-values) for what these mean. Tick **Only
 include datasets with matching controls** to keep only datasets that include
 wild-type samples.
 

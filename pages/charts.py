@@ -943,6 +943,21 @@ layout = html.Div(
                                     header_id="dataset-filter",
                                     heading_id="dataset-filter-title",
                                 ),
+                                html.P(
+                                    [
+                                        "Some values are shown as NP (Not provided) or NA "
+                                        "(Not applicable). Values in parentheses, (n), are "
+                                        "sample counts. Learn what NP and NA mean ",
+                                        html.A(
+                                            "here",
+                                            href="/about#missing-values",
+                                            **{"aria-label": "here: what NP and NA mean (About page)"},
+                                        ),
+                                        ".",
+                                    ],
+                                    id="missing-values-note",
+                                    className="small",
+                                ),
                                 # Row 1: Scientific Name | Sex | Age Range (wider)
                                 dbc.Row(
                                     [
@@ -991,9 +1006,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets sex "
-                                                                "with not "
-                                                                "provided or N/A"
+                                                                "Include datasets with sex "
+                                                                "not provided (NP) or "
+                                                                "not applicable (NA)"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1097,9 +1112,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets"
-                                                                " with age not "
-                                                                "provided or N/A"
+                                                                "Include datasets with age "
+                                                                "not provided (NP) or "
+                                                                "not applicable (NA)"
                                                             ),
                                                             "value": "include",
                                                         }
@@ -1142,9 +1157,9 @@ layout = html.Div(
                                                     options=[
                                                         {
                                                             "label": (
-                                                                "Include datasets with "
-                                                                "underlying variant "
-                                                                "not provided or N/A"
+                                                                "Include datasets with underlying variant "
+                                                                "not provided (NP) or "
+                                                                "not applicable (NA)"
                                                             ),
                                                             "value": "include",
                                                         }
